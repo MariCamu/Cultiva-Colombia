@@ -64,38 +64,45 @@ const recentArticles = [
 export default function HomePage() {
   return (
     <div className="space-y-10">
-      <section className="text-center pt-10 pb-8 md:pt-12 md:pb-10">
-        <h1 className="text-4xl font-bold font-headline tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-          Cultiva con conciencia. Conoce lo que crece en tu tierra
-        </h1>
-        <p className="mt-4 text-lg leading-7 text-muted-foreground max-w-2xl mx-auto font-sans">
-          Una guía ecológica para sembrar, cuidar y transformar tus plantas.
-        </p>
-      </section>
-
-      <section className="w-full max-w-xl mx-auto px-4 -mt-2">
-        <form action="/cultivos" method="GET" className="flex w-full items-center space-x-2">
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="search"
-                name="q"
-                placeholder="¿Qué planta estás buscando?"
-                className="pl-10 h-12 text-base" 
-              />
-            </div>
-            <Button 
-              type="submit" 
-              size="lg"
-              className="bg-accent hover:bg-accent/90 text-accent-foreground h-12"
-            >
-              Explorar Cultivos
+      <section 
+        className="relative bg-cover bg-center py-20 md:py-28" 
+        style={{ backgroundImage: "url('https://placehold.co/1200x600.png')" }}
+        data-ai-hint="farming landscape"
+      >
+        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="relative z-10 container mx-auto px-4 text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            Cultiva con conciencia. Conoce lo que crece en tu tierra
+          </h1>
+          <p className="mt-4 text-lg leading-7 text-neutral-200 max-w-2xl mx-auto font-sans">
+            Una guía ecológica para sembrar, cuidar y transformar tus plantas.
+          </p>
+          
+          <div className="mt-8 w-full max-w-xl mx-auto">
+            <form action="/cultivos" method="GET" className="flex w-full items-center space-x-2">
+                <div className="relative flex-grow">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    name="q"
+                    placeholder="¿Qué planta estás buscando?"
+                    className="pl-10 h-12 text-base bg-white/90 text-gray-900 placeholder-gray-500 focus:bg-white" 
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  size="lg"
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground h-12"
+                >
+                  Explorar Cultivos
+                </Button>
+            </form>
+          </div>
+          <div className="text-center mt-6">
+            <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white/20 hover:text-white">
+              <Link href="/test">Haz el test y encuentra tu planta ideal</Link>
             </Button>
-        </form>
-        <div className="text-center mt-6">
-          <Button asChild variant="outline" size="lg">
-            <Link href="/test">Haz el test y encuentra tu planta ideal</Link>
-          </Button>
+          </div>
         </div>
       </section>
 
@@ -113,7 +120,7 @@ export default function HomePage() {
                 data-ai-hint={crop.hint}
               />
               <CardHeader>
-                <CardTitle className="font-headline">{crop.name}</CardTitle>
+                <CardTitle>{crop.name}</CardTitle>
               </CardHeader>
               <CardContent className="flex-grow space-y-2">
                 <div className="flex flex-wrap gap-2">
@@ -170,7 +177,7 @@ export default function HomePage() {
                 data-ai-hint={article.hint}
               />
               <CardHeader>
-                <CardTitle className="font-headline text-xl">{article.title}</CardTitle>
+                <CardTitle className="text-xl">{article.title}</CardTitle>
               </CardHeader>
               <CardContent className="flex-grow">
                 <p className="text-muted-foreground text-sm">{article.description}</p>
@@ -211,3 +218,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
