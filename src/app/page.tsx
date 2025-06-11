@@ -99,7 +99,7 @@ export default function HomePage() {
             </form>
           </div>
           <div className="text-center mt-6">
-            <Button asChild variant="secondary" size="lg">
+            <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
               <Link href="/test">Haz el test y encuentra tu planta ideal</Link>
             </Button>
           </div>
