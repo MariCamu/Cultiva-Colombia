@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Map, Leaf, BookOpen, Lightbulb, Menu } from 'lucide-react';
+import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Search } from 'lucide-react'; // Added Search
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Input } from '@/components/ui/input'; // Added Input
 
 const navItems = [
   { href: '/', label: 'Inicio', icon: Home },
@@ -26,7 +27,7 @@ function AppName() {
   return (
     <Link href="/" className="flex items-center gap-2 mr-6">
       <Leaf className="h-7 w-7 text-primary" />
-      <span className="text-xl font-semibold text-foreground">Cultivando Saberes</span>
+      <span className="text-xl font-semibold text-foreground">Cultiva Colombia</span>
     </Link>
   );
 }
@@ -93,7 +94,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
              <div className="md:hidden ml-4">
                 <Link href="/" className="flex items-center gap-2">
                     <Leaf className="h-7 w-7 text-primary" />
-                    <span className="text-lg font-semibold text-foreground sr-only sm:not-sr-only">Cultivando Saberes</span>
+                    <span className="text-lg font-semibold text-foreground sr-only sm:not-sr-only">Cultiva Colombia</span>
                 </Link>
             </div>
           </div>

@@ -3,7 +3,7 @@ import './globals.css';
 import { AppLayout } from '@/components/layout/app-layout';
 
 export const metadata: Metadata = {
-  title: 'Cultivando Saberes',
+  title: 'Cultiva Colombia',
   description: 'Plataforma educativa interactiva sobre cultivos en Colombia.',
 };
 
