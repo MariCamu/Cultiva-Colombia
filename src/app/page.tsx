@@ -1,14 +1,37 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge"; // Added Badge import
 import { Search, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
 const popularCrops = [
-  { name: "Café", imgSrc: "https://placehold.co/300x200.png", imgAlt: "Planta de café", hint: "coffee plant", href: "/cultivos/cafe" },
-  { name: "Papa", imgSrc: "https://placehold.co/300x200.png", imgAlt: "Cultivo de papa", hint: "potato plant", href: "/cultivos/papa" },
-  { name: "Maíz", imgSrc: "https://placehold.co/300x200.png", imgAlt: "Planta de maíz", hint: "corn plant", href: "/cultivos/maiz" },
+  { 
+    name: "Café", 
+    imgSrc: "https://placehold.co/300x200.png", 
+    imgAlt: "Planta de café", 
+    hint: "coffee beans", 
+    href: "/cultivos/cafe",
+    tags: ["Región: Andina", "Dificultad: Media", "Arbusto"] 
+  },
+  { 
+    name: "Papa", 
+    imgSrc: "https://placehold.co/300x200.png", 
+    imgAlt: "Cultivo de papa", 
+    hint: "potato harvest", 
+    href: "/cultivos/papa",
+    tags: ["Región: Andina", "Dificultad: Fácil", "Tubérculo"]
+  },
+  { 
+    name: "Maíz", 
+    imgSrc: "https://placehold.co/300x200.png", 
+    imgAlt: "Planta de maíz", 
+    hint: "corn field", 
+    href: "/cultivos/maiz",
+    tags: ["Región: Varias", "Dificultad: Fácil", "Cereal"]
+  },
 ];
 
 const recentArticles = [
@@ -17,7 +40,7 @@ const recentArticles = [
     description: "Aprende a proteger tus cultivos de forma natural y efectiva sin químicos.",
     imgSrc: "https://placehold.co/400x250.png",
     imgAlt: "Control de plagas orgánico",
-    hint: "organic pest control",
+    hint: "garden pests",
     href: "/articulos/control-plagas" 
   },
   { 
@@ -25,7 +48,7 @@ const recentArticles = [
     description: "Descubre cómo transformar desechos orgánicos en abono rico para tus plantas.",
     imgSrc: "https://placehold.co/400x250.png",
     imgAlt: "Compostaje casero",
-    hint: "composting guide",
+    hint: "compost bin",
     href: "/articulos/compostaje"
   },
   { 
@@ -33,7 +56,7 @@ const recentArticles = [
     description: "Ideal para espacios pequeños. Cultiva tus propios alimentos en balcones y patios.",
     imgSrc: "https://placehold.co/400x250.png",
     imgAlt: "Siembra en macetas",
-    hint: "pot gardening",
+    hint: "potted plants",
     href: "/articulos/siembra-macetas"
   },
 ];
@@ -42,15 +65,15 @@ export default function HomePage() {
   return (
     <div className="space-y-10">
       <section className="text-center pt-10 pb-8 md:pt-12 md:pb-10">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+        <h1 className="text-4xl font-bold font-headline tracking-tight text-foreground sm:text-5xl lg:text-6xl">
           Cultiva con conciencia. Conoce lo que crece en tu tierra
         </h1>
-        <p className="mt-4 text-lg leading-7 text-muted-foreground max-w-2xl mx-auto">
+        <p className="mt-4 text-lg leading-7 text-muted-foreground max-w-2xl mx-auto font-sans">
           Una guía ecológica para sembrar, cuidar y transformar tus plantas.
         </p>
       </section>
 
-      <section className="w-full max-w-xl mx-auto px-4">
+      <section className="w-full max-w-xl mx-auto px-4 -mt-2">
         <form action="/cultivos" method="GET" className="flex w-full items-center space-x-2">
             <div className="relative flex-grow">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -80,7 +103,7 @@ export default function HomePage() {
         <h2 className="text-3xl font-bold tracking-tight text-foreground text-center mb-8">Cultivos Populares en Colombia</h2>
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8 px-4">
           {popularCrops.map((crop) => (
-            <Card key={crop.name} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+            <Card key={crop.name} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
               <Image
                 src={crop.imgSrc}
                 alt={crop.imgAlt}
@@ -92,11 +115,18 @@ export default function HomePage() {
               <CardHeader>
                 <CardTitle className="font-headline">{crop.name}</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-grow space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {crop.tags.map(tag => (
+                    <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                  ))}
+                </div>
+              </CardContent>
+              <div className="p-6 pt-2">
                 <Button asChild variant="link" className="p-0 h-auto text-primary">
                   <Link href={crop.href}>Ver detalles <ExternalLink className="ml-1 h-4 w-4" /></Link>
                 </Button>
-              </CardContent>
+              </div>
             </Card>
           ))}
         </div>
@@ -171,6 +201,20 @@ export default function HomePage() {
             </Button>
          </div>
        </section>
+
+       <section className="text-center py-16 px-4 bg-primary/5">
+         <h2 className="text-3xl font-bold tracking-tight text-foreground">Únete a Nuestra Comunidad</h2>
+         <p className="mt-4 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto">
+            ¿Eres agricultor, investigador o apasionado por el campo? ¡Tu conocimiento y experiencia son valiosos! Ayúdanos a enriquecer esta plataforma.
+         </p>
+         <div className="mt-8">
+            <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                Haz Parte de la Comunidad
+            </Button>
+         </div>
+       </section>
     </div>
   );
 }
+
+    
