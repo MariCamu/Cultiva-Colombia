@@ -3,19 +3,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 export default function CultivosPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold font-headline tracking-tight text-foreground sm:text-4xl">
-        Cultivos
+      <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        Información de Cultivos
       </h1>
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Gestión de Cultivos</CardTitle>
-          <CardDescription>Información y seguimiento detallado de sus cultivos.</CardDescription>
+          <CardTitle>Fichas Detalladas de Cultivos</CardTitle>
+          <CardDescription>Aprenda todo sobre los diferentes cultivos, desde su siembra hasta su cosecha.</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Aquí podrá registrar y monitorear el progreso de sus diferentes cultivos, gestionar tareas y analizar rendimientos.
-            Funcionalidad en desarrollo.
+            Aquí encontrará información detallada para cada cultivo, incluyendo origen, clima ideal, datos técnicos, guías de siembra,
+            y mucho más. Podrá agregar cultivos a su dashboard personalizado una vez implementada la funcionalidad de usuario.
           </p>
+          <p className="mt-4 text-sm text-muted-foreground">Contenido y funcionalidad en desarrollo.</p>
         </CardContent>
       </Card>
     </div>
