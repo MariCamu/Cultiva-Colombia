@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 100 27% 93%; /* #EDF2E8 */
-    --foreground: 88 40% 18%; /* Darker version of #4A6E29 */
-    --card: 100 27% 96%;
+    --background: 100 27% 96%; /* Lighter #EDF2E8, e.g., #F2F5EF */
+    --foreground: 88 40% 18%; 
+    --card: 100 0% 100%; /* White cards */
     --card-foreground: 88 40% 18%;
-    --popover: 100 27% 96%;
+    --popover: 100 0% 100%; /* White popovers */
     --popover-foreground: 88 40% 18%;
     --primary: 88 45% 30%; /* #4A6E29 */
     --primary-foreground: 100 30% 90%;
     --secondary: 93 13% 55%; /* Lighter version of #708266 */
     --secondary-foreground: 88 40% 20%;
-    --muted: 93 13% 85%; /* #DBE0D6 */
+    --muted: 93 13% 88%; /* Lightened #DBE0D6 */
     --muted-foreground: 93 10% 40%;
     --accent: 94 30% 45%; /* #73964F */
     --accent-foreground: 100 30% 95%;
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 93 13% 78%; /* Slightly darker #DBE0D6 */
-    --input: 100 20% 89%; /* Off-white for inputs */
-    --ring: 88 45% 30%; /* Primary color */
+    --border: 93 13% 78%; 
+    --input: 100 20% 94%; /* Lightened input background */
+    --ring: 88 45% 30%; 
     --radius: 0.5rem;
 
     --chart-1: 88 45% 30%;
@@ -32,36 +32,36 @@
     --chart-5: 95 29% 44%;
 
     /* Sidebar specific colors */
-    --sidebar-background: 100 20% 90%;
+    --sidebar-background: 100 20% 94%; /* Lightened sidebar */
     --sidebar-foreground: 88 40% 18%;
     --sidebar-primary: 88 45% 30%;
     --sidebar-primary-foreground: 100 30% 90%;
-    --sidebar-accent: 93 13% 80%;
+    --sidebar-accent: 93 13% 85%; /* Lightened sidebar accent */
     --sidebar-accent-foreground: 88 40% 18%;
     --sidebar-border: 93 13% 75%;
     --sidebar-ring: 88 45% 30%;
   }
 
   .dark {
-    --background: 88 25% 10%; /* Very dark green */
-    --foreground: 100 25% 88%; /* Light text */
+    --background: 88 25% 10%; 
+    --foreground: 100 25% 88%; 
     --card: 88 25% 12%;
     --card-foreground: 100 25% 88%;
     --popover: 88 25% 12%;
     --popover-foreground: 100 25% 88%;
-    --primary: 94 30% 55%; /* Lighter #73964F for dark primary */
-    --primary-foreground: 88 45% 15%; /* Dark text on light primary */
+    --primary: 94 30% 55%; 
+    --primary-foreground: 88 45% 15%; 
     --secondary: 93 13% 30%;
     --secondary-foreground: 100 20% 80%;
     --muted: 93 13% 20%;
     --muted-foreground: 93 10% 60%;
-    --accent: 88 45% 40%; /* Lighter #4A6E29 for dark accent */
+    --accent: 88 45% 40%; 
     --accent-foreground: 100 25% 90%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 93 13% 25%;
     --input: 93 13% 22%;
-    --ring: 94 30% 55%; /* Primary for dark mode */
+    --ring: 94 30% 55%; 
     
     --chart-1: 94 30% 55%;
     --chart-2: 88 45% 40%;
