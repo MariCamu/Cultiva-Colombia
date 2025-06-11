@@ -99,7 +99,7 @@ export default function HomePage() {
             </form>
           </div>
           <div className="text-center mt-6">
-            <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white/20 hover:text-white">
+            <Button asChild variant="secondary" size="lg">
               <Link href="/test">Haz el test y encuentra tu planta ideal</Link>
             </Button>
           </div>
@@ -218,5 +218,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
