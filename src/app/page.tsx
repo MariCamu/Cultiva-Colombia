@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge"; // Added Badge import
+import { Badge } from "@/components/ui/badge";
 import { Search, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -138,11 +138,6 @@ export default function HomePage() {
           <p className="mt-4 text-muted-foreground">
             Navegue por nuestro mapa interactivo para explorar los cultivos asociados a cada región de Colombia. Aprenda sobre su siembra, cuidado y cosecha de una manera fácil y divertida.
           </p>
-          <ul className="mt-6 space-y-2 text-muted-foreground">
-            <li>🌱 Información detallada de cada cultivo.</li>
-            <li>🗺️ Visualización por regiones geográficas.</li>
-            <li>🎨 Indicadores de dificultad para todos los niveles.</li>
-          </ul>
            <div className="mt-8">
             <Button asChild size="lg">
               <Link href="/mapa">Explorar Mapa Interactivo</Link>
@@ -216,5 +211,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    

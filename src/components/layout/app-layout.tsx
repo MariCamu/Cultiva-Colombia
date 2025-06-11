@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Search } from 'lucide-react'; // Added Search
+import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Search } from 'lucide-react';
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Input } from '@/components/ui/input'; // Added Input
+import { Input } from '@/components/ui/input';
 
 const navItems = [
   { href: '/', label: 'Inicio', icon: Home },
@@ -25,7 +25,7 @@ const navItems = [
 
 function AppName() {
   return (
-    <Link href="/" className="flex items-center gap-2 mr-6">
+    <Link href="/" className="flex items-center gap-2">
       <Leaf className="h-7 w-7 text-primary" />
       <span className="text-xl font-semibold text-foreground">Cultiva Colombia</span>
     </Link>
@@ -37,50 +37,37 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background/95 px-4 shadow-sm backdrop-blur-sm md:px-6">
-        <div className="flex w-full items-center justify-between">
-          <div className="hidden md:flex">
-             <AppName />
-          </div>
-          <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={cn(
-                  "transition-colors hover:text-foreground",
-                  pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
-                    ? "text-foreground font-semibold border-b-2 border-primary"
-                    : "text-muted-foreground"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="md:hidden flex items-center">
+      <header className="sticky top-0 z-50 flex h-16 items-center border-b bg-background/95 px-4 shadow-sm backdrop-blur-sm md:px-6">
+        <div className="flex w-full items-center justify-between gap-4">
+          {/* Left side: App Name (Desktop) and Mobile Menu Trigger + App Icon (Mobile) */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Mobile Menu Trigger */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0"
-                >
+                <Button variant="outline" size="icon" className="shrink-0 md:hidden">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left">
-                <nav className="grid gap-6 text-lg font-medium pt-8">
+              <SheetContent side="left" className="flex flex-col p-0">
+                <div className="p-4 border-b">
                   <AppName />
+                </div>
+                <div className="p-4">
+                  <form className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type="search" placeholder="Buscar..." className="w-full pl-10 h-10 rounded-md" />
+                  </form>
+                </div>
+                <nav className="flex-grow grid gap-1 px-4">
                   {navItems.map((item) => (
                     <Link
                       key={item.label}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-foreground",
-                        pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
-                          ? "bg-muted text-foreground"
+                        "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-all hover:bg-muted hover:text-primary",
+                        (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href)))
+                          ? "bg-muted text-primary"
                           : "text-muted-foreground"
                       )}
                     >
@@ -91,12 +78,45 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 </nav>
               </SheetContent>
             </Sheet>
-             <div className="md:hidden ml-4">
-                <Link href="/" className="flex items-center gap-2">
-                    <Leaf className="h-7 w-7 text-primary" />
-                    <span className="text-lg font-semibold text-foreground sr-only sm:not-sr-only">Cultiva Colombia</span>
-                </Link>
+            
+            {/* Desktop App Name */}
+            <div className="hidden md:block">
+              <AppName />
             </div>
+            {/* Mobile App Icon (if AppName component is too large for mobile header) */}
+            <div className="md:hidden">
+               <Link href="/" className="flex items-center">
+                   <Leaf className="h-7 w-7 text-primary" />
+               </Link>
+            </div>
+          </div>
+
+          {/* Center: Desktop Navigation Links */}
+          <nav className="hidden md:flex md:items-center md:gap-3 lg:gap-5">
+            {navItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-primary",
+                  (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href)))
+                    ? "text-primary border-b-2 border-primary pb-0.5" // pb-0.5 to align border better
+                    : "text-foreground/70"
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Right side: Desktop Search Bar */}
+          <div className="relative hidden md:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar..."
+              className="h-9 rounded-md pl-9 md:w-[150px] lg:w-[230px] xl:w-[280px]"
+            />
           </div>
         </div>
       </header>
