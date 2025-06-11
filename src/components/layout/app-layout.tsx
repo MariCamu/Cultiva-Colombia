@@ -1,23 +1,18 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Map, Leaf, BookOpen, Lightbulb } from 'lucide-react'; // Updated icons
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarInset,
-  SidebarTrigger,
-  useSidebar,
-} from '@/components/ui/sidebar';
+import { Home, Map, Leaf, BookOpen, Lightbulb, Menu } from 'lucide-react';
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const navItems = [
   { href: '/', label: 'Inicio', icon: Home },
@@ -28,16 +23,8 @@ const navItems = [
 ];
 
 function AppName() {
-  const { state, isMobile } = useSidebar();
-  if (state === 'collapsed' && !isMobile) {
-    return (
-      <Link href="/" className="flex items-center justify-center">
-        <Leaf className="h-7 w-7 text-primary" />
-      </Link>
-    );
-  }
   return (
-    <Link href="/" className="flex items-center gap-2">
+    <Link href="/" className="flex items-center gap-2 mr-6">
       <Leaf className="h-7 w-7 text-primary" />
       <span className="text-xl font-semibold text-foreground">Cultivando Saberes</span>
     </Link>
@@ -48,52 +35,74 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <SidebarProvider defaultOpen>
-        <Sidebar>
-          <SidebarHeader className="p-3">
-             <div className="flex items-center justify-between">
-                <AppName />
-                <div className="md:hidden">
-                   <SidebarTrigger className="text-foreground hover:text-primary" />
-                </div>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <Link href={item.href} legacyBehavior passHref>
-                    <SidebarMenuButton
+    <div className="flex min-h-screen w-full flex-col">
+      <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background/95 px-4 shadow-sm backdrop-blur-sm md:px-6">
+        <div className="flex w-full items-center justify-between">
+          <div className="hidden md:flex">
+             <AppName />
+          </div>
+          <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+            {navItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={cn(
+                  "transition-colors hover:text-foreground",
+                  pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+                    ? "text-foreground font-semibold border-b-2 border-primary"
+                    : "text-muted-foreground"
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="md:hidden flex items-center">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                >
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle navigation menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                <nav className="grid gap-6 text-lg font-medium pt-8">
+                  <AppName />
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
                       className={cn(
-                        "w-full justify-start gap-3",
-                        "group-data-[collapsible=icon]:justify-center"
+                        "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-foreground",
+                        pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground"
                       )}
-                      isActive={pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))}
-                      tooltip={{children: item.label, className: ""}}
                     >
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      <span className="group-data-[collapsible=icon]:sr-only">{item.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarContent>
-        </Sidebar>
-        <SidebarInset>
-            <header className="flex h-14 items-center gap-4 border-b bg-background/90 px-4 sticky top-0 z-30 backdrop-blur-sm">
-                <div className="hidden md:block">
-                  <SidebarTrigger className="text-foreground hover:text-primary" />
-                </div>
-                <div className="flex-1">
-                  {/* Dynamic page title or breadcrumbs could go here */}
-                </div>
-            </header>
-          <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6">
-            {children}
-          </main>
-        </SidebarInset>
+                      <item.icon className="h-5 w-5" />
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+             <div className="md:hidden ml-4">
+                <Link href="/" className="flex items-center gap-2">
+                    <Leaf className="h-7 w-7 text-primary" />
+                    <span className="text-lg font-semibold text-foreground sr-only sm:not-sr-only">Cultivando Saberes</span>
+                </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        {children}
+      </main>
       <Toaster />
-    </SidebarProvider>
+    </div>
   );
 }
