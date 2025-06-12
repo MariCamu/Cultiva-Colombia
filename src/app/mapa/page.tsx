@@ -46,6 +46,11 @@ const regionsData = [
     slug: "pacifica",
     description: "Costa selvática y lluviosa, con una agricultura diversa y rica en productos exóticos.",
   },
+  {
+    name: "Insular",
+    slug: "insular",
+    description: "Islas caribeñas y del Pacífico con ecosistemas únicos y cultivos tropicales.",
+  }
 ];
 
 export default function MapaPage() {
@@ -95,3 +100,4 @@ export default function MapaPage() {
     </div>
   );
 }
+
