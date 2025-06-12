@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { MapPin, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
+import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed } from 'lucide-react';
 
 interface SampleCrop {
   id: string;
@@ -39,6 +39,27 @@ const sampleCropsData: SampleCrop[] = [
   { id: 'pan_de_fruta_insular', name: 'Pan de Fruta (Región Insular)', description: 'Fruto grande y almidonado, básico en la alimentación de las islas caribeñas.', regionSlug: 'insular', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'breadfruit tree' },
 ];
 
+// Definición aproximada de cajas delimitadoras para las regiones de Colombia
+// Estas son estimaciones y pueden no ser geográficamente precisas.
+const regionBoundingBoxes = [
+  { slug: 'andina', name: 'Andina', bounds: { minLat: -1.5, maxLat: 11.5, minLng: -78.0, maxLng: -71.5 } },
+  { slug: 'amazonia', name: 'Amazonía', bounds: { minLat: -4.25, maxLat: 1.5, minLng: -75.5, maxLng: -66.8 } },
+  { slug: 'caribe', name: 'Caribe', bounds: { minLat: 7.0, maxLat: 12.5, minLng: -76.0, maxLng: -71.0 } },
+  { slug: 'orinoquia', name: 'Orinoquía', bounds: { minLat: 1.0, maxLat: 7.5, minLng: -72.5, maxLng: -67.0 } },
+  { slug: 'pacifica', name: 'Pacífica', bounds: { minLat: 0.5, maxLat: 8.0, minLng: -79.5, maxLng: -75.8 } },
+  { slug: 'insular', name: 'Insular', bounds: { minLat: 12.0, maxLat: 16.5, minLng: -82.0, maxLng: -78.0 } }, // Cubre San Andrés y Providencia, muy aproximado
+];
+
+function getRegionFromCoordinates(lat: number, lng: number): { slug: string; name: string } | null {
+  for (const region of regionBoundingBoxes) {
+    if (lat >= region.bounds.minLat && lat <= region.bounds.maxLat &&
+        lng >= region.bounds.minLng && lng <= region.bounds.maxLng) {
+      return { slug: region.slug, name: region.name };
+    }
+  }
+  return null;
+}
+
 function capitalizeFirstLetter(string: string | null) {
   if (!string) return "";
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -49,21 +70,23 @@ type GeolocationStatus = 'idle' | 'pending' | 'success' | 'error';
 export default function CultivosPage() {
   const searchParams = useSearchParams();
   const regionQueryParam = searchParams.get('region');
-  const capitalizedRegion = capitalizeFirstLetter(regionQueryParam);
 
   const [geolocationStatus, setGeolocationStatus] = useState<GeolocationStatus>('idle');
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [geolocationErrorMsg, setGeolocationErrorMsg] = useState<string | null>(null);
+  const [detectedRegionSlug, setDetectedRegionSlug] = useState<string | null>(null);
+  const [detectedRegionName, setDetectedRegionName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!regionQueryParam && navigator.geolocation) {
       setGeolocationStatus('pending');
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setCoordinates({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
+          const { latitude, longitude } = position.coords;
+          const regionInfo = getRegionFromCoordinates(latitude, longitude);
+          if (regionInfo) {
+            setDetectedRegionSlug(regionInfo.slug);
+            setDetectedRegionName(regionInfo.name);
+          }
           setGeolocationStatus('success');
         },
         (error) => {
@@ -84,21 +107,27 @@ export default function CultivosPage() {
         }
       );
     } else if (regionQueryParam) {
-      setGeolocationStatus('idle'); // If region is in URL, don't attempt geolocation
+      setGeolocationStatus('idle'); 
     }
   }, [regionQueryParam]);
 
-  const displayedCrops = regionQueryParam
-    ? sampleCropsData.filter(crop => crop.regionSlug === regionQueryParam)
-    : sampleCropsData; // Show all if no region param (and geolocation not yet used for filtering)
+  const activeFilterRegionSlug = regionQueryParam || detectedRegionSlug;
+  const activeFilterRegionName = regionQueryParam ? capitalizeFirstLetter(regionQueryParam) : detectedRegionName;
 
-  const pageTitle = regionQueryParam
-    ? `Cultivos de la Región ${capitalizedRegion}`
-    : "Todos los Cultivos";
-  
-  const pageDescription = regionQueryParam
-    ? `Explora los cultivos característicos de la región ${capitalizedRegion}.`
-    : "Descubre una variedad de cultivos de diferentes regiones de Colombia.";
+  const displayedCrops = activeFilterRegionSlug
+    ? sampleCropsData.filter(crop => crop.regionSlug === activeFilterRegionSlug)
+    : sampleCropsData;
+
+  let pageTitle = "Todos los Cultivos";
+  let pageDescription = "Descubre una variedad de cultivos de diferentes regiones de Colombia.";
+
+  if (regionQueryParam) {
+    pageTitle = `Cultivos de la Región ${capitalizeFirstLetter(regionQueryParam)}`;
+    pageDescription = `Explora los cultivos característicos de la región ${capitalizeFirstLetter(regionQueryParam)}.`;
+  } else if (detectedRegionName) {
+    pageTitle = `Cultivos Sugeridos para tu Región: ${detectedRegionName}`;
+    pageDescription = `Basado en tu ubicación (aproximada), te sugerimos estos cultivos de la región ${detectedRegionName}.`;
+  }
 
   return (
     <div className="space-y-6">
@@ -108,36 +137,46 @@ export default function CultivosPage() {
 
       {!regionQueryParam && geolocationStatus === 'pending' && (
         <Alert>
-          <MapPin className="h-4 w-4" />
+          <LocateFixed className="h-4 w-4 animate-ping" />
           <AlertTitle>Obteniendo Ubicación</AlertTitle>
-          <AlertDescription>Estamos intentando obtener tu ubicación para mostrarte cultivos relevantes...</AlertDescription>
-        </Alert>
-      )}
-      {!regionQueryParam && geolocationStatus === 'success' && coordinates && (
-        <Alert variant="default" className="bg-green-50 border-green-300 text-green-700">
-           <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertTitle>Ubicación Obtenida</AlertTitle>
-          <AlertDescription>
-            Latitud: {coordinates.lat.toFixed(4)}, Longitud: {coordinates.lng.toFixed(4)}.
-            <br />
-            La funcionalidad para mostrar cultivos de tu región automáticamente está en desarrollo. Por ahora, te mostramos todos los cultivos.
-          </AlertDescription>
+          <AlertDescription>Estamos intentando detectar tu región para mostrarte cultivos relevantes...</AlertDescription>
         </Alert>
       )}
       {!regionQueryParam && geolocationStatus === 'error' && geolocationErrorMsg && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error de Geolocalización</AlertTitle>
-          <AlertDescription>{geolocationErrorMsg}</AlertDescription>
+          <AlertDescription>{geolocationErrorMsg} Mostrando todos los cultivos.</AlertDescription>
         </Alert>
+      )}
+      {!regionQueryParam && geolocationStatus === 'success' && (
+        <>
+          {detectedRegionName ? (
+            <Alert variant="default" className="bg-green-50 border-green-300 text-green-700">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertTitle>Región Detectada: {detectedRegionName}</AlertTitle>
+              <AlertDescription>
+                Mostrando cultivos sugeridos para tu región. La detección de región es aproximada.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert>
+              <HelpCircle className="h-4 w-4" />
+              <AlertTitle>Ubicación Obtenida</AlertTitle>
+              <AlertDescription>
+                No pudimos determinar una región específica para tu ubicación. Mostrando todos los cultivos.
+              </AlertDescription>
+            </Alert>
+          )}
+        </>
       )}
       
       {regionQueryParam && (
         <Alert variant="default" className="bg-accent/10 border-accent/30 text-accent-foreground">
           <MapPin className="h-4 w-4 text-accent" />
-          <AlertTitle>Filtro Activo</AlertTitle>
+          <AlertTitle>Filtro Activo por URL</AlertTitle>
           <AlertDescription>
-            Mostrando cultivos para la región: <strong>{capitalizedRegion}</strong>.
+            Mostrando cultivos para la región: <strong>{capitalizeFirstLetter(regionQueryParam)}</strong>.
           </AlertDescription>
         </Alert>
       )}
@@ -166,7 +205,7 @@ export default function CultivosPage() {
                   />
                   <CardHeader>
                     <CardTitle className="text-xl">{crop.name}</CardTitle>
-                    {regionQueryParam ? null : <Badge variant="outline" className="mt-1 w-fit">{capitalizeFirstLetter(crop.regionSlug)}</Badge>}
+                    {!activeFilterRegionSlug && <Badge variant="outline" className="mt-1 w-fit">{capitalizeFirstLetter(crop.regionSlug)}</Badge>}
                   </CardHeader>
                   <CardContent className="flex-grow">
                     <p className="text-sm text-muted-foreground">{crop.description}</p>
@@ -179,14 +218,15 @@ export default function CultivosPage() {
                 <HelpCircle className="h-4 w-4" />
                 <AlertTitle>No se encontraron cultivos</AlertTitle>
                 <AlertDescription>
-                {regionQueryParam 
-                    ? `No se encontraron cultivos de ejemplo para la región ${capitalizedRegion}. Puedes probar con otra región o ver todos los cultivos.`
+                {activeFilterRegionName 
+                    ? `No se encontraron cultivos de ejemplo para la región ${activeFilterRegionName}. Puedes probar seleccionando otra región manualmente o ver todos los cultivos.`
                     : "No hay cultivos de ejemplo para mostrar."}
                 </AlertDescription>
             </Alert>
           )}
           <p className="mt-6 text-sm text-muted-foreground">
             Estos son datos de ejemplo. La funcionalidad completa con información detallada y más cultivos estará disponible pronto.
+             {(!regionQueryParam && geolocationStatus === 'success') && " La detección de región por geolocalización es una aproximación."}
           </p>
         </CardContent>
       </Card>
@@ -194,3 +234,4 @@ export default function CultivosPage() {
   );
 }
 
+    
