@@ -3,8 +3,11 @@
 
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { MapPin, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 
 interface SampleCrop {
   id: string;
@@ -41,17 +44,56 @@ function capitalizeFirstLetter(string: string | null) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+type GeolocationStatus = 'idle' | 'pending' | 'success' | 'error';
+
 export default function CultivosPage() {
   const searchParams = useSearchParams();
   const regionQueryParam = searchParams.get('region');
   const capitalizedRegion = capitalizeFirstLetter(regionQueryParam);
 
+  const [geolocationStatus, setGeolocationStatus] = useState<GeolocationStatus>('idle');
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [geolocationErrorMsg, setGeolocationErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!regionQueryParam && navigator.geolocation) {
+      setGeolocationStatus('pending');
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCoordinates({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+          setGeolocationStatus('success');
+        },
+        (error) => {
+          let message = "No se pudo obtener tu ubicación.";
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              message = "Permiso de geolocalización denegado.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              message = "Información de ubicación no disponible.";
+              break;
+            case error.TIMEOUT:
+              message = "Se agotó el tiempo de espera para obtener la ubicación.";
+              break;
+          }
+          setGeolocationErrorMsg(message);
+          setGeolocationStatus('error');
+        }
+      );
+    } else if (regionQueryParam) {
+      setGeolocationStatus('idle'); // If region is in URL, don't attempt geolocation
+    }
+  }, [regionQueryParam]);
+
   const displayedCrops = regionQueryParam
     ? sampleCropsData.filter(crop => crop.regionSlug === regionQueryParam)
-    : sampleCropsData;
+    : sampleCropsData; // Show all if no region param (and geolocation not yet used for filtering)
 
-  const pageTitle = regionQueryParam 
-    ? `Cultivos de la Región ${capitalizedRegion}` 
+  const pageTitle = regionQueryParam
+    ? `Cultivos de la Región ${capitalizedRegion}`
     : "Todos los Cultivos";
   
   const pageDescription = regionQueryParam
@@ -64,10 +106,40 @@ export default function CultivosPage() {
         {pageTitle}
       </h1>
 
+      {!regionQueryParam && geolocationStatus === 'pending' && (
+        <Alert>
+          <MapPin className="h-4 w-4" />
+          <AlertTitle>Obteniendo Ubicación</AlertTitle>
+          <AlertDescription>Estamos intentando obtener tu ubicación para mostrarte cultivos relevantes...</AlertDescription>
+        </Alert>
+      )}
+      {!regionQueryParam && geolocationStatus === 'success' && coordinates && (
+        <Alert variant="default" className="bg-green-50 border-green-300 text-green-700">
+           <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertTitle>Ubicación Obtenida</AlertTitle>
+          <AlertDescription>
+            Latitud: {coordinates.lat.toFixed(4)}, Longitud: {coordinates.lng.toFixed(4)}.
+            <br />
+            La funcionalidad para mostrar cultivos de tu región automáticamente está en desarrollo. Por ahora, te mostramos todos los cultivos.
+          </AlertDescription>
+        </Alert>
+      )}
+      {!regionQueryParam && geolocationStatus === 'error' && geolocationErrorMsg && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error de Geolocalización</AlertTitle>
+          <AlertDescription>{geolocationErrorMsg}</AlertDescription>
+        </Alert>
+      )}
+      
       {regionQueryParam && (
-        <h2 className="text-xl font-semibold text-accent">
-          Filtrando por: {capitalizedRegion}
-        </h2>
+        <Alert variant="default" className="bg-accent/10 border-accent/30 text-accent-foreground">
+          <MapPin className="h-4 w-4 text-accent" />
+          <AlertTitle>Filtro Activo</AlertTitle>
+          <AlertDescription>
+            Mostrando cultivos para la región: <strong>{capitalizedRegion}</strong>.
+          </AlertDescription>
+        </Alert>
       )}
       
       <Card>
@@ -99,22 +171,19 @@ export default function CultivosPage() {
                   <CardContent className="flex-grow">
                     <p className="text-sm text-muted-foreground">{crop.description}</p>
                   </CardContent>
-                  {/* Futuro enlace a detalles del cultivo:
-                  <CardFooter>
-                    <Button asChild variant="link" className="p-0 h-auto text-primary">
-                      <Link href={`/cultivos/${crop.id}`}>Ver detalles</Link>
-                    </Button>
-                  </CardFooter>
-                  */}
                 </Card>
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground">
-              {regionQueryParam 
-                ? `No se encontraron cultivos de ejemplo para la región ${capitalizedRegion}.`
-                : "No hay cultivos de ejemplo para mostrar."}
-            </p>
+             <Alert variant="default" className="mt-4">
+                <HelpCircle className="h-4 w-4" />
+                <AlertTitle>No se encontraron cultivos</AlertTitle>
+                <AlertDescription>
+                {regionQueryParam 
+                    ? `No se encontraron cultivos de ejemplo para la región ${capitalizedRegion}. Puedes probar con otra región o ver todos los cultivos.`
+                    : "No hay cultivos de ejemplo para mostrar."}
+                </AlertDescription>
+            </Alert>
           )}
           <p className="mt-6 text-sm text-muted-foreground">
             Estos son datos de ejemplo. La funcionalidad completa con información detallada y más cultivos estará disponible pronto.
@@ -124,3 +193,4 @@ export default function CultivosPage() {
     </div>
   );
 }
+
