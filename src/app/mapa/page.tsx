@@ -5,7 +5,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from "next/image";
 // import { Skeleton } from '@/components/ui/skeleton';
 
 // const InteractiveMap = dynamic(
@@ -26,41 +25,26 @@ const regionsData = [
     name: "Andina",
     slug: "andina",
     description: "Montañas, valles fértiles y una gran diversidad de climas y cultivos.",
-    imgSrc: "https://placehold.co/400x300.png",
-    imgAlt: "Paisaje de la región Andina",
-    imgHint: "andes mountains"
   },
   {
     name: "Amazonía",
     slug: "amazonia",
     description: "Selva tropical exuberante, hogar de una biodiversidad única y cultivos ancestrales.",
-    imgSrc: "https://placehold.co/400x300.png",
-    imgAlt: "Paisaje de la región Amazónica",
-    imgHint: "amazon rainforest"
   },
   {
     name: "Caribe",
     slug: "caribe",
     description: "Costas soleadas, llanuras y una rica tradición agrícola adaptada al trópico.",
-    imgSrc: "https://placehold.co/400x300.png",
-    imgAlt: "Paisaje de la región Caribe",
-    imgHint: "caribbean coast"
   },
   {
     name: "Orinoquía",
     slug: "orinoquia",
     description: "Extensas llanuras, ganadería y cultivos adaptados a sus sabanas.",
-    imgSrc: "https://placehold.co/400x300.png",
-    imgAlt: "Paisaje de la región Orinoquía",
-    imgHint: "colombian plains"
   },
   {
     name: "Pacífica",
     slug: "pacifica",
     description: "Costa selvática y lluviosa, con una agricultura diversa y rica en productos exóticos.",
-    imgSrc: "https://placehold.co/400x300.png",
-    imgAlt: "Paisaje de la región Pacífica",
-    imgHint: "pacific coast jungle"
   },
 ];
 
@@ -92,29 +76,18 @@ export default function MapaPage() {
         <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 text-center sm:text-left">
           Explora Cultivos por Región
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {regionsData.map((region) => (
-            <Card key={region.slug} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-              <Image
-                src={region.imgSrc}
-                alt={region.imgAlt}
-                width={400}
-                height={300}
-                className="w-full h-48 object-cover"
-                data-ai-hint={region.imgHint}
-              />
-              <CardHeader>
-                <CardTitle>{region.name}</CardTitle>
-                <CardDescription className="text-sm h-16 line-clamp-3">{region.description}</CardDescription>
+            <Card key={region.slug} className="shadow-md hover:shadow-lg transition-shadow flex flex-col">
+              <CardHeader className="p-4 flex-grow">
+                <CardTitle className="text-lg font-semibold">{region.name}</CardTitle>
+                <CardDescription className="text-xs pt-1 line-clamp-3">{region.description}</CardDescription>
               </CardHeader>
-              <CardContent className="flex-grow">
-                {/* Contenido adicional si es necesario */}
-              </CardContent>
-              <div className="p-6 pt-2">
-                <Button asChild className="w-full">
-                  <Link href={`/cultivos?region=${region.slug}`}>Ver Cultivos de {region.name}</Link>
+              <CardContent className="p-4 pt-2">
+                <Button asChild size="sm" className="w-full">
+                  <Link href={`/cultivos?region=${region.slug}`}>Explorar {region.name}</Link>
                 </Button>
-              </div>
+              </CardContent>
             </Card>
           ))}
         </div>
