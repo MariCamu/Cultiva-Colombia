@@ -65,7 +65,7 @@ function getRegionFromCoordinates(lat: number, lng: number): { slug: string; nam
   return null;
 }
 
-function capitalizeFirstLetter(string: string | null) {
+function capitalizeFirstLetter(string: string | null | undefined) {
   if (!string) return "";
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
@@ -105,11 +105,10 @@ const difficultyOptions = [
   { value: '5', label: '⭐⭐⭐⭐⭐ (Muy Difícil)' },
 ];
 
-// Mapeo de valores de parámetros del test a valores de filtro
 const testPlantTypeMap: { [key: string]: string | null } = {
-  'comestibles': null, // No preselecciona tipo, el usuario refina. Alerta especial.
+  'comestibles': null, 
   'aromaticas': 'Plantas aromáticas',
-  'coloridas': 'Hortalizas de flor', // Proxy
+  'coloridas': 'Hortalizas de flor', 
   'frutales': 'Frutales',
   'cualquiera': null,
 };
@@ -117,11 +116,7 @@ const testPlantTypeMap: { [key: string]: string | null } = {
 
 export default function CultivosPage() {
   const searchParams = useSearchParams();
-  const regionQueryParam = searchParams.get('region');
-  const plantTypeQueryParam = searchParams.get('plantType');
-  const careQueryParam = searchParams.get('care');
-  const learningQueryParam = searchParams.get('learning');
-
+  
   const [geolocationStatus, setGeolocationStatus] = useState<GeolocationStatus>('idle');
   const [geolocationErrorMsg, setGeolocationErrorMsg] = useState<string | null>(null);
   const [detectedRegionSlug, setDetectedRegionSlug] = useState<string | null>(null);
@@ -130,57 +125,67 @@ export default function CultivosPage() {
   const [manualRegionSlug, setManualRegionSlug] = useState<string | null>(null);
   const [manualRegionFilterActive, setManualRegionFilterActive] = useState(false);
   
-  // Estados para filtros, inicializados a 'all' o null
-  const [selectedPrice, setSelectedPrice] = useState<string | null>('all');
-  const [selectedDuration, setSelectedDuration] = useState<string | null>('all');
-  const [selectedSpace, setSelectedSpace] = useState<string | null>('all');
-  const [selectedPlantType, setSelectedPlantType] = useState<string | null>('all');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>('all');
+  const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
+  const [selectedSpace, setSelectedSpace] = useState<string | null>(null);
+  const [selectedPlantType, setSelectedPlantType] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
 
   const [isTestFilterActive, setIsTestFilterActive] = useState(false);
   const [testFilterAlertMessage, setTestFilterAlertMessage] = useState<string | null>(null);
 
+  // Efecto para procesar parámetros del test
   useEffect(() => {
-    // Procesar parámetros del test si existen
+    const plantTypeQueryParam = searchParams.get('plantType');
+    const careQueryParam = searchParams.get('care');
+    const learningQueryParam = searchParams.get('learning');
+    // El regionQueryParam se maneja en la lógica de prioridad de región, no directamente aquí para los Selects de filtro.
+
     const plantTypeFromTest = plantTypeQueryParam ? testPlantTypeMap[plantTypeQueryParam] : undefined;
     
     if (plantTypeQueryParam || careQueryParam || learningQueryParam) {
       setIsTestFilterActive(true);
       let alertMsgParts = [];
+
       if (plantTypeQueryParam) {
         alertMsgParts.push(`Tipo de planta: ${capitalizeFirstLetter(plantTypeQueryParam)}`);
         if (plantTypeFromTest !== undefined) {
-          setSelectedPlantType(plantTypeFromTest); // Puede ser null para 'comestibles' o 'cualquiera'
+          setSelectedPlantType(plantTypeFromTest); 
         } else {
-            setSelectedPlantType('all'); // Si el param no mapea, default a todos
+          setSelectedPlantType(null); // 'all' es representado por null en el estado
         }
       } else {
-        setSelectedPlantType('all');
+        setSelectedPlantType(null);
       }
+
       if (careQueryParam) alertMsgParts.push(`Cuidado: ${capitalizeFirstLetter(careQueryParam)}`);
       if (learningQueryParam) alertMsgParts.push(`Interés en aprender: ${capitalizeFirstLetter(learningQueryParam)}`);
       
       setTestFilterAlertMessage(`Preferencias del test aplicadas: ${alertMsgParts.join(', ')}. Puedes ajustar los filtros abajo.`);
       
-      // Resetea otros filtros a 'all' si vienen del test para no confundir
-      // Opcional: podrías decidir mantenerlos si el usuario navegó con params de test Y params de filtro manual
-      setSelectedPrice('all');
-      setSelectedDuration('all');
-      setSelectedSpace('all');
-      setSelectedDifficulty('all');
-      // No reseteamos manualRegionSlug aquí, la lógica de prioridad se encargará
+      setSelectedPrice(null);
+      setSelectedDuration(null);
+      setSelectedSpace(null);
+      setSelectedDifficulty(null);
+      // manualRegionSlug y manualRegionFilterActive no se resetean aquí.
+      // Si el usuario llega con ?region=andina desde el test, el Select de región se poblará
+      // gracias a la lógica del value prop del Select y regionQueryParam.
+      // Si el usuario luego cambia el selector de región manualmente, manualRegionFilterActive se activará.
 
     } else {
       setIsTestFilterActive(false);
       setTestFilterAlertMessage(null);
-      // Si no hay params de test, no sobreescribir los filtros que pudieron haber estado activos
+      // No reseteamos los filtros individuales si no vienen parámetros del test, 
+      // para permitir que persistan si el usuario navega sin ellos después de haberlos ajustado.
     }
-  }, [plantTypeQueryParam, careQueryParam, learningQueryParam, searchParams]);
+  }, [searchParams]); // Dependencia principal es searchParams
 
 
+  // Efecto para geolocalización
   useEffect(() => {
+    const regionQueryParamFromUrl = searchParams.get('region');
     // Geolocalización solo si no hay filtro manual de región activo, ni filtro por URL de región, NI filtros del test activos
-    if (!manualRegionFilterActive && !regionQueryParam && !isTestFilterActive && navigator.geolocation) {
+    if (!manualRegionFilterActive && !regionQueryParamFromUrl && !isTestFilterActive && navigator.geolocation) {
       setGeolocationStatus('pending');
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -201,41 +206,38 @@ export default function CultivosPage() {
           setGeolocationStatus('error');
         }
       );
-    } else if (manualRegionFilterActive || regionQueryParam || isTestFilterActive) {
-      setGeolocationStatus('idle'); // No necesitamos geolocalización si otros filtros tienen prioridad
+    } else if (manualRegionFilterActive || regionQueryParamFromUrl || isTestFilterActive) {
+      setGeolocationStatus('idle'); 
     }
-  }, [regionQueryParam, manualRegionFilterActive, isTestFilterActive]);
+  }, [searchParams, manualRegionFilterActive, isTestFilterActive]);
 
 
   let activeRegionSlugForFiltering: string | null = null;
   let activeRegionNameForDisplay: string | null = null;
   let filterSource: FilterSource = 'none';
+  const regionQueryParam = searchParams.get('region');
 
   if (isTestFilterActive) {
     filterSource = 'test_params';
-    // La región para 'test_params' se manejará por la lógica de prioridad general si el test no especifica región
-    // O podría ser que el test *sí* especifique región en el futuro.
-    // Por ahora, 'test_params' principalmente afecta otros filtros, y la región sigue la cascada normal si no está en params del test.
-    // Si queremos que test_params fuerce "Todas las regiones" si no hay region especifica del test:
-    if (manualRegionFilterActive) {
-         if (manualRegionSlug) {
+    // Si el test pasó un regionQueryParam, Y no hay un filtro manual de región activo, usamos la región del test.
+    if (regionQueryParam && !manualRegionFilterActive) {
+        activeRegionSlugForFiltering = regionQueryParam;
+        activeRegionNameForDisplay = regionOptions.find(r => r.value === regionQueryParam)?.label || capitalizeFirstLetter(regionQueryParam);
+    } else if (manualRegionFilterActive) { // Si hay filtro manual, tiene prioridad incluso sobre la región del test.
+        if (manualRegionSlug) {
             activeRegionSlugForFiltering = manualRegionSlug;
             activeRegionNameForDisplay = regionOptions.find(r => r.value === manualRegionSlug)?.label || null;
-            // No cambiamos filterSource, test_params ya está activo
         } else {
             activeRegionSlugForFiltering = null;
             activeRegionNameForDisplay = "Todas las Regiones";
         }
-    } else if (regionQueryParam) {
-        activeRegionSlugForFiltering = regionQueryParam;
-        activeRegionNameForDisplay = regionOptions.find(r => r.value === regionQueryParam)?.label || capitalizeFirstLetter(regionQueryParam);
-    } else if (detectedRegionSlug) {
+    } else if (detectedRegionSlug) { // Si el test no pasó región y no hay manual, intentamos geolocalización.
         activeRegionSlugForFiltering = detectedRegionSlug;
         activeRegionNameForDisplay = detectedRegionName;
-    } else {
-        activeRegionSlugForFiltering = null; // Default a todas si test y ninguna otra fuente
+    } else { // Si no hay región del test, ni manual, ni geolocalización.
+        activeRegionSlugForFiltering = null; 
+        activeRegionNameForDisplay = "Todas las Regiones";
     }
-
   } else if (manualRegionFilterActive) {
     if (manualRegionSlug) { 
       activeRegionSlugForFiltering = manualRegionSlug;
@@ -259,7 +261,6 @@ export default function CultivosPage() {
     filterSource = 'none';
   }
 
-
   const displayedCrops = sampleCropsData.filter(crop => {
     let matches = true;
     if (activeRegionSlugForFiltering && crop.regionSlug !== activeRegionSlugForFiltering) {
@@ -274,8 +275,6 @@ export default function CultivosPage() {
     if (selectedSpace && selectedSpace !== 'all' && crop.spaceRequired !== selectedSpace) {
       matches = false;
     }
-    // Si selectedPlantType es null (ej. 'comestibles' o 'cualquiera' desde el test), no se filtra por tipo.
-    // Si es 'all', tampoco se filtra.
     if (selectedPlantType && selectedPlantType !== 'all' && crop.plantType !== selectedPlantType) {
       matches = false;
     }
@@ -363,14 +362,12 @@ export default function CultivosPage() {
      );
   }
 
-
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
         {pageTitle}
       </h1>
 
-      {/* Alertas de Geolocalización y Filtros */}
       {filterSource !== 'test_params' && filterSource !== 'manual_specific' && filterSource !== 'manual_all' && filterSource !== 'url_region' && geolocationStatus === 'pending' && (
         <Alert>
           <LocateFixed className="h-4 w-4 animate-ping" />
@@ -387,7 +384,6 @@ export default function CultivosPage() {
       )}
       {alertMessageForPage}
       
-      {/* Sección de Filtros Manuales */}
       <Card>
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2">
@@ -400,7 +396,7 @@ export default function CultivosPage() {
           <div>
             <Label htmlFor="manualRegionSelect" className="text-sm font-medium">Región</Label>
             <Select 
-              value={manualRegionSlug || (regionQueryParam && !manualRegionFilterActive && !isTestFilterActive ? regionQueryParam : 'all')} 
+              value={manualRegionSlug || (regionQueryParam && !manualRegionFilterActive ? regionQueryParam : 'all')} 
               onValueChange={(value) => {
                 setManualRegionSlug(value === 'all' ? null : value);
                 setManualRegionFilterActive(true);
@@ -498,7 +494,6 @@ export default function CultivosPage() {
                   />
                   <CardHeader>
                     <CardTitle className="text-xl">{crop.name}</CardTitle>
-                     {/* Mostrar la región del cultivo solo si no hay un filtro de región activo O si el filtro activo es "manual_all" O si vienen de "test_params" sin region especifica */}
                     {(filterSource !== 'manual_specific' && filterSource !== 'url_region' && filterSource !== 'geo' || filterSource === 'manual_all' || (filterSource === 'test_params' && !activeRegionSlugForFiltering )) && (
                         <Badge variant="outline" className="mt-1 w-fit">{capitalizeFirstLetter(crop.regionSlug)}</Badge>
                     )}
@@ -542,5 +537,7 @@ export default function CultivosPage() {
     </div>
   );
 }
+
+    
 
     
