@@ -1,12 +1,11 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L, { type LatLngExpression } from 'leaflet';
 import Link from 'next/link';
-import { db } from '@/lib/firebase';
 import { collection, getDocs, type QueryDocumentSnapshot, type DocumentData } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Info, AlertTriangle } from 'lucide-react';
@@ -37,115 +36,89 @@ const createDifficultyIcon = (difficulty: 'easy' | 'medium' | 'hard') => {
   return L.divIcon({
     className: `difficulty-marker-icon ${bgColorClass}`,
     iconSize: [20, 20],
-    html: ``, 
+    html: ``,
   });
 };
 
 const sampleCropsData: Crop[] = [
   {
-    id: 'lechuga_cundinamarca_sample', 
+    id: 'lechuga_cundinamarca_sample',
     name: 'Lechuga',
-    location: { lat: 5.0671, lng: -74.0000 },
+    location: { lat: 5.0671, lng: -74.0 },
     difficulty: 'easy',
-    regionHint: 'Cundinamarca (Andina)'
+    regionHint: 'Cundinamarca (Andina)',
   },
-  {
-    id: 'cafe_colombiano_sample',
-    name: 'Café Colombiano (Ejemplo)',
-    location: { lat: 4.0, lng: -73.0 },
-    difficulty: 'medium',
-    regionHint: 'Andino'
-  },
-  {
-    id: 'platano_uraba_sample',
-    name: 'Plátano del Urabá (Ejemplo)',
-    location: { lat: 7.8, lng: -76.6 },
-    difficulty: 'easy',
-    regionHint: 'Caribe'
-  },
-  {
-    id: 'quinua_narino_sample',
-    name: 'Quinua de Nariño (Ejemplo)',
-    location: { lat: 1.0, lng: -77.5 },
-    difficulty: 'hard',
-    regionHint: 'Andino (Sur)'
-  },
-  {
-    id: 'cacao_araucano_sample',
-    name: 'Cacao Araucano (Ejemplo)',
-    location: { lat: 6.7, lng: -71.5 },
-    difficulty: 'medium',
-    regionHint: 'Orinoquía'
-  },
-  {
-    id: 'yuca_amazonica_sample',
-    name: 'Yuca Amazónica (Ejemplo)',
-    location: { lat: -1.0, lng: -70.0 },
-    difficulty: 'easy',
-    regionHint: 'Amazonas'
-  }
 ];
 
-
 export function InteractiveMap() {
+  const [mounted, setMounted] = useState(false);
   const [crops, setCrops] = useState<Crop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSampleData, setIsSampleData] = useState(false);
-  
+
+  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+
   const colombiaCenter: LatLngExpression = [4.5709, -74.2973];
   const initialZoom = 6;
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (mapInstance) {
+        mapInstance.remove();
+      }
+      const container = document.querySelector('.leaflet-container') as any;
+      if (container && container._leaflet_id) {
+        container._leaflet_id = null;
+      }
+    };
+  }, [mapInstance]);
+
+  useEffect(() => {
     const fetchCrops = async () => {
-      setIsLoading(true); 
+      setIsLoading(true);
       setError(null);
       setIsSampleData(false);
       try {
-        if (!db) {
-          throw new Error("La base de datos Firestore no está inicializada. Asegúrate de configurar tus credenciales en src/lib/firebase.ts.");
-        }
-        const cropsCollection = collection(db, 'crops');
-        const cropSnapshot = await getDocs(cropsCollection);
-        
-        if (cropSnapshot.empty) {
-          console.log("Firestore 'crops' collection is empty, using sample data.");
+        if (!db) throw new Error('Firestore no inicializada');
+        const snapshot = await getDocs(collection(db, 'crops'));
+        if (snapshot.empty) {
           setCrops(sampleCropsData);
           setIsSampleData(true);
         } else {
-          const cropsList: Crop[] = cropSnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
+          const list = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
             const data = doc.data();
-            const location = data.location && typeof data.location.lat === 'number' && typeof data.location.lng === 'number' 
-                             ? data.location 
-                             : { lat: 0, lng: 0 }; 
+            const location = data.location && typeof data.location.lat === 'number' && typeof data.location.lng === 'number'
+              ? data.location
+              : { lat: 0, lng: 0 };
             return {
               id: doc.id,
               name: data.name || 'Sin nombre',
-              location: location,
+              location,
               difficulty: data.difficulty || 'medium',
               regionHint: data.regionHint || '',
             } as Crop;
           });
-          setCrops(cropsList);
-          setIsSampleData(false);
+          setCrops(list);
         }
       } catch (err) {
-        console.error("Error fetching crops from Firestore:", err);
-        setError(err instanceof Error ? err.message : "No se pudieron cargar los datos de los cultivos desde Firestore.");
-        console.log("Falling back to sample data due to Firestore error.");
-        setCrops(sampleCropsData); 
+        console.error(err);
+        setError('Error cargando cultivos, mostrando datos de ejemplo.');
+        setCrops(sampleCropsData);
         setIsSampleData(true);
       } finally {
         setIsLoading(false);
       }
     };
+    if (mounted) fetchCrops();
+  }, [mounted]);
 
-    fetchCrops();
-  }, []);
-
-  if (isLoading) {
-    return <p className="text-center p-4">Cargando mapa y cultivos...</p>;
-  }
+  if (!mounted) return null;
+  if (isLoading) return <p className="text-center p-4">Cargando mapa y cultivos...</p>;
 
   return (
     <div className="w-full">
@@ -153,29 +126,30 @@ export function InteractiveMap() {
         <Alert variant="destructive" className="mb-4">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error de Carga</AlertTitle>
-          <AlertDescription>
-            {error} Se están mostrando datos de ejemplo en el mapa.
-          </AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       {isSampleData && !error && (
         <Alert variant="default" className="mb-4">
           <Info className="h-4 w-4" />
-          <AlertTitle>Mostrando Datos de Ejemplo</AlertTitle>
-          <AlertDescription>
-            No se encontraron cultivos en tu base de datos Firestore. El mapa muestra datos de demostración.
-            Para ver tus propios datos, agrega documentos a la colección 'crops' en Firestore.
-          </AlertDescription>
+          <AlertTitle>Mostrando Ejemplo</AlertTitle>
+          <AlertDescription>No se encontraron cultivos en Firestore.</AlertDescription>
         </Alert>
       )}
 
-      <MapContainer center={colombiaCenter} zoom={initialZoom} scrollWheelZoom={true} className="leaflet-container">
+      <MapContainer
+        key={`map-${colombiaCenter[0]}-${colombiaCenter[1]}-${initialZoom}`}
+        whenCreated={setMapInstance}
+        center={colombiaCenter}
+        zoom={initialZoom}
+        scrollWheelZoom={true}
+        className="leaflet-container"
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {crops.map((crop) => (
-          crop.location && typeof crop.location.lat === 'number' && typeof crop.location.lng === 'number' &&
           <Marker
             key={crop.id}
             position={[crop.location.lat, crop.location.lng]}
@@ -185,10 +159,16 @@ export function InteractiveMap() {
               <div className="font-sans">
                 <h3 className="font-bold text-base mb-1">{crop.name}</h3>
                 {crop.regionHint && <p className="text-xs text-muted-foreground mb-1">Región (aprox.): {crop.regionHint}</p>}
-                <p className="text-xs capitalize mb-2">Dificultad: <span className={`font-semibold ${
-                  crop.difficulty === 'easy' ? 'text-green-600' :
-                  crop.difficulty === 'medium' ? 'text-yellow-600' : 'text-red-600'
-                }`}>{crop.difficulty}</span></p>
+                <p className="text-xs capitalize mb-2">
+                  Dificultad:{' '}
+                  <span className={`font-semibold ${
+                    crop.difficulty === 'easy' ? 'text-green-600' :
+                    crop.difficulty === 'medium' ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {crop.difficulty}
+                  </span>
+                </p>
                 <Link href={`/cultivos/${crop.id.replace('_sample', '')}`} className="text-sm text-primary hover:underline">
                   Ver detalles
                 </Link>
@@ -197,7 +177,8 @@ export function InteractiveMap() {
           </Marker>
         ))}
       </MapContainer>
-      <Card className="map-legend">
+
+      <Card className="map-legend mt-4">
         <h4 className="text-lg font-semibold mb-2 text-foreground">Leyenda de Dificultad:</h4>
         <div className="space-y-1">
           <div className="map-legend-item">

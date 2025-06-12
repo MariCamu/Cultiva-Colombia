@@ -1,22 +1,22 @@
 
 "use client";
 
-import dynamic from 'next/dynamic';
+// import dynamic from 'next/dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from '@/components/ui/skeleton';
+// import { Skeleton } from '@/components/ui/skeleton';
 
-const InteractiveMap = dynamic(
-  () => import('@/app/mapa/components/interactive-map').then(mod => mod.InteractiveMap),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="space-y-4">
-        <Skeleton className="h-[500px] w-full rounded-lg" />
-        <Skeleton className="h-[120px] w-full rounded-lg" />
-      </div>
-    )
-  }
-);
+// const InteractiveMap = dynamic(
+//   () => import('@/app/mapa/components/interactive-map').then(mod => mod.InteractiveMap),
+//   { 
+//     ssr: false,
+//     loading: () => (
+//       <div className="space-y-4">
+//         <Skeleton className="h-[500px] w-full rounded-lg" />
+//         <Skeleton className="h-[120px] w-full rounded-lg" />
+//       </div>
+//     )
+//   }
+// );
 
 export default function MapaPage() {
   return (
@@ -33,7 +33,10 @@ export default function MapaPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <InteractiveMap />
+          {/* <InteractiveMap /> */}
+          <p className="text-muted-foreground">
+            El mapa interactivo está actualmente en desarrollo. ¡Vuelve pronto para explorarlo!
+          </p>
         </CardContent>
       </Card>
       
