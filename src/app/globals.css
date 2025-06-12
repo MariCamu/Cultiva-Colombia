@@ -1,3 +1,5 @@
+@import 'leaflet/dist/leaflet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -87,5 +89,35 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Leaflet map container */
+  .leaflet-container {
+    @apply h-[500px] w-full rounded-lg shadow-md;
+  }
+}
+
+@layer components {
+  /* Custom Leaflet icon styles */
+  .difficulty-marker-icon {
+    @apply rounded-full w-5 h-5 flex items-center justify-center text-white font-bold text-xs shadow-lg border-2 border-white;
+  }
+  .difficulty-easy {
+    @apply bg-green-500;
+  }
+  .difficulty-medium {
+    @apply bg-yellow-500;
+  }
+  .difficulty-hard {
+    @apply bg-red-500;
+  }
+  /* Legend styles */
+  .map-legend {
+    @apply p-4 bg-card rounded-md shadow-lg mt-4;
+  }
+  .map-legend-item {
+    @apply flex items-center mb-1;
+  }
+  .map-legend-color {
+    @apply w-4 h-4 rounded-full mr-2;
   }
 }
