@@ -43,7 +43,7 @@ const createDifficultyIcon = (difficulty: 'easy' | 'medium' | 'hard') => {
 
 const sampleCropsData: Crop[] = [
   {
-    id: 'lechuga_cundinamarca_sample', // Added _sample to avoid conflict if user adds 'lechuga_cundinamarca'
+    id: 'lechuga_cundinamarca_sample', 
     name: 'Lechuga',
     location: { lat: 5.0671, lng: -74.0000 },
     difficulty: 'easy',
@@ -88,46 +88,45 @@ const sampleCropsData: Crop[] = [
 
 
 export function InteractiveMap() {
+  const [isClient, setIsClient] = useState(false);
   const [crops, setCrops] = useState<Crop[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Start true, data fetch will set to false
   const [error, setError] = useState<string | null>(null);
   const [isSampleData, setIsSampleData] = useState(false);
-  const [isClient, setIsClient] = useState(false); // State to confirm client-side execution
-
+  
   const colombiaCenter: LatLngExpression = [4.5709, -74.2973];
   const initialZoom = 6;
 
   useEffect(() => {
-    setIsClient(true); // Set to true once component mounts on the client
+    setIsClient(true);
   }, []);
 
   useEffect(() => {
-    if (!isClient) { // Guard: Don't run fetch logic until client is confirmed
-      return;
+    if (!isClient) {
+      return; 
     }
 
     const fetchCrops = async () => {
-      setIsLoading(true);
+      setIsLoading(true); // Explicitly set loading before fetch attempt
       setError(null);
       setIsSampleData(false);
       try {
-        // Ensure db is initialized, handle potential errors if db is not available
         if (!db) {
-          throw new Error("Firestore database is not initialized.");
+          throw new Error("La base de datos Firestore no está inicializada. Asegúrate de configurar tus credenciales en src/lib/firebase.ts.");
         }
         const cropsCollection = collection(db, 'crops');
         const cropSnapshot = await getDocs(cropsCollection);
         
         if (cropSnapshot.empty) {
+          console.log("Firestore 'crops' collection is empty, using sample data.");
           setCrops(sampleCropsData);
           setIsSampleData(true);
         } else {
           const cropsList: Crop[] = cropSnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
             const data = doc.data();
-            // Basic validation for location data
             const location = data.location && typeof data.location.lat === 'number' && typeof data.location.lng === 'number' 
                              ? data.location 
-                             : { lat: 0, lng: 0 }; // Default location if invalid
+                             : { lat: 0, lng: 0 }; 
             return {
               id: doc.id,
               name: data.name || 'Sin nombre',
@@ -142,7 +141,8 @@ export function InteractiveMap() {
       } catch (err) {
         console.error("Error fetching crops from Firestore:", err);
         setError(err instanceof Error ? err.message : "No se pudieron cargar los datos de los cultivos desde Firestore.");
-        setCrops(sampleCropsData); // Fallback to sample data on error
+        console.log("Falling back to sample data due to Firestore error.");
+        setCrops(sampleCropsData); 
         setIsSampleData(true);
       } finally {
         setIsLoading(false);
@@ -150,12 +150,19 @@ export function InteractiveMap() {
     };
 
     fetchCrops();
-  }, [isClient]); // fetchCrops depends on isClient
+  }, [isClient]);
 
-  if (isLoading || !isClient) { // Prevent rendering map or related UI until client-side and data is ready (or loading)
+  if (!isClient) {
+    // Return null or a minimal placeholder until client-side is confirmed.
+    return null; 
+  }
+
+  // At this point, isClient is true. Now check for data loading.
+  if (isLoading) {
     return <p className="text-center p-4">Cargando mapa y cultivos...</p>;
   }
 
+  // isClient is true and isLoading is false. Ready to render map or error/sample data info.
   return (
     <div className="w-full">
       {error && (
