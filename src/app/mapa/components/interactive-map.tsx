@@ -23,13 +23,13 @@ const createDifficultyIcon = (difficulty: 'easy' | 'medium' | 'hard') => {
   let bgColorClass = '';
   switch (difficulty) {
     case 'easy':
-      bgColorClass = 'difficulty-easy'; // bg-green-500
+      bgColorClass = 'difficulty-easy';
       break;
     case 'medium':
-      bgColorClass = 'difficulty-medium'; // bg-yellow-500
+      bgColorClass = 'difficulty-medium';
       break;
     case 'hard':
-      bgColorClass = 'difficulty-hard'; // bg-red-500
+      bgColorClass = 'difficulty-hard';
       break;
     default:
       bgColorClass = 'bg-gray-400';
@@ -88,9 +88,8 @@ const sampleCropsData: Crop[] = [
 
 
 export function InteractiveMap() {
-  const [isClient, setIsClient] = useState(false);
   const [crops, setCrops] = useState<Crop[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // Start true, data fetch will set to false
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSampleData, setIsSampleData] = useState(false);
   
@@ -98,16 +97,8 @@ export function InteractiveMap() {
   const initialZoom = 6;
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isClient) {
-      return; 
-    }
-
     const fetchCrops = async () => {
-      setIsLoading(true); // Explicitly set loading before fetch attempt
+      setIsLoading(true); 
       setError(null);
       setIsSampleData(false);
       try {
@@ -150,19 +141,12 @@ export function InteractiveMap() {
     };
 
     fetchCrops();
-  }, [isClient]);
+  }, []);
 
-  if (!isClient) {
-    // Return null or a minimal placeholder until client-side is confirmed.
-    return null; 
-  }
-
-  // At this point, isClient is true. Now check for data loading.
   if (isLoading) {
     return <p className="text-center p-4">Cargando mapa y cultivos...</p>;
   }
 
-  // isClient is true and isLoading is false. Ready to render map or error/sample data info.
   return (
     <div className="w-full">
       {error && (
