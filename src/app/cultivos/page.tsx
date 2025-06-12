@@ -39,15 +39,13 @@ const sampleCropsData: SampleCrop[] = [
   { id: 'pan_de_fruta_insular', name: 'Pan de Fruta (Región Insular)', description: 'Fruto grande y almidonado, básico en la alimentación de las islas caribeñas.', regionSlug: 'insular', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'breadfruit tree' },
 ];
 
-// Definición aproximada de cajas delimitadoras para las regiones de Colombia
-// Estas son estimaciones y pueden no ser geográficamente precisas.
 const regionBoundingBoxes = [
-  { slug: 'andina', name: 'Andina', bounds: { minLat: -1.5, maxLat: 11.5, minLng: -78.0, maxLng: -71.5 } },
+  { slug: 'insular', name: 'Insular', bounds: { minLat: 12.0, maxLat: 16.5, minLng: -82.0, maxLng: -78.0 } }, // Cubre San Andrés y Providencia, muy aproximado
   { slug: 'amazonia', name: 'Amazonía', bounds: { minLat: -4.25, maxLat: 1.5, minLng: -75.5, maxLng: -66.8 } },
   { slug: 'caribe', name: 'Caribe', bounds: { minLat: 7.0, maxLat: 12.5, minLng: -76.0, maxLng: -71.0 } },
   { slug: 'orinoquia', name: 'Orinoquía', bounds: { minLat: 1.0, maxLat: 7.5, minLng: -72.5, maxLng: -67.0 } },
   { slug: 'pacifica', name: 'Pacífica', bounds: { minLat: 0.5, maxLat: 8.0, minLng: -79.5, maxLng: -75.8 } },
-  { slug: 'insular', name: 'Insular', bounds: { minLat: 12.0, maxLat: 16.5, minLng: -82.0, maxLng: -78.0 } }, // Cubre San Andrés y Providencia, muy aproximado
+  { slug: 'andina', name: 'Andina', bounds: { minLat: -1.5, maxLat: 11.5, minLng: -78.0, maxLng: -71.5 } },
 ];
 
 function getRegionFromCoordinates(lat: number, lng: number): { slug: string; name: string } | null {
@@ -120,6 +118,7 @@ export default function CultivosPage() {
 
   let pageTitle = "Todos los Cultivos";
   let pageDescription = "Descubre una variedad de cultivos de diferentes regiones de Colombia.";
+  let geolocationNote = "";
 
   if (regionQueryParam) {
     pageTitle = `Cultivos de la Región ${capitalizeFirstLetter(regionQueryParam)}`;
@@ -127,7 +126,12 @@ export default function CultivosPage() {
   } else if (detectedRegionName) {
     pageTitle = `Cultivos Sugeridos para tu Región: ${detectedRegionName}`;
     pageDescription = `Basado en tu ubicación (aproximada), te sugerimos estos cultivos de la región ${detectedRegionName}.`;
+    geolocationNote = `Nota: La región (${detectedRegionName}) ha sido estimada basándose en tu ubicación y puede no ser exacta.`;
+  } else if (geolocationStatus === 'success' && !detectedRegionName) {
+     pageDescription = "No pudimos determinar una región específica para tu ubicación. Mostrando todos los cultivos.";
+     geolocationNote = "Nota: La detección de región por geolocalización es una aproximación.";
   }
+
 
   return (
     <div className="space-y-6">
@@ -164,7 +168,7 @@ export default function CultivosPage() {
               <HelpCircle className="h-4 w-4" />
               <AlertTitle>Ubicación Obtenida</AlertTitle>
               <AlertDescription>
-                No pudimos determinar una región específica para tu ubicación. Mostrando todos los cultivos.
+                No pudimos determinar una región específica para tu ubicación. Mostrando todos los cultivos. La detección de región por geolocalización es una aproximación.
               </AlertDescription>
             </Alert>
           )}
@@ -191,6 +195,7 @@ export default function CultivosPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {geolocationNote && <p className="text-sm text-muted-foreground mb-4">{geolocationNote}</p>}
           {displayedCrops.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {displayedCrops.map((crop) => (
@@ -226,12 +231,9 @@ export default function CultivosPage() {
           )}
           <p className="mt-6 text-sm text-muted-foreground">
             Estos son datos de ejemplo. La funcionalidad completa con información detallada y más cultivos estará disponible pronto.
-             {(!regionQueryParam && geolocationStatus === 'success') && " La detección de región por geolocalización es una aproximación."}
           </p>
         </CardContent>
       </Card>
     </div>
   );
 }
-
-    
