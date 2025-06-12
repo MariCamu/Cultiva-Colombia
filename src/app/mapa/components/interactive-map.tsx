@@ -43,7 +43,7 @@ const createDifficultyIcon = (difficulty: 'easy' | 'medium' | 'hard') => {
 
 const sampleCropsData: Crop[] = [
   {
-    id: 'lechuga_cundinamarca',
+    id: 'lechuga_cundinamarca_sample', // Added _sample to avoid conflict if user adds 'lechuga_cundinamarca'
     name: 'Lechuga',
     location: { lat: 5.0671, lng: -74.0000 },
     difficulty: 'easy',
@@ -92,16 +92,29 @@ export function InteractiveMap() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSampleData, setIsSampleData] = useState(false);
+  const [isClient, setIsClient] = useState(false); // State to confirm client-side execution
 
   const colombiaCenter: LatLngExpression = [4.5709, -74.2973];
   const initialZoom = 6;
 
   useEffect(() => {
+    setIsClient(true); // Set to true once component mounts on the client
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) { // Guard: Don't run fetch logic until client is confirmed
+      return;
+    }
+
     const fetchCrops = async () => {
       setIsLoading(true);
       setError(null);
       setIsSampleData(false);
       try {
+        // Ensure db is initialized, handle potential errors if db is not available
+        if (!db) {
+          throw new Error("Firestore database is not initialized.");
+        }
         const cropsCollection = collection(db, 'crops');
         const cropSnapshot = await getDocs(cropsCollection);
         
@@ -111,10 +124,14 @@ export function InteractiveMap() {
         } else {
           const cropsList: Crop[] = cropSnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
             const data = doc.data();
+            // Basic validation for location data
+            const location = data.location && typeof data.location.lat === 'number' && typeof data.location.lng === 'number' 
+                             ? data.location 
+                             : { lat: 0, lng: 0 }; // Default location if invalid
             return {
               id: doc.id,
               name: data.name || 'Sin nombre',
-              location: data.location || { lat: 0, lng: 0 },
+              location: location,
               difficulty: data.difficulty || 'medium',
               regionHint: data.regionHint || '',
             } as Crop;
@@ -124,7 +141,7 @@ export function InteractiveMap() {
         }
       } catch (err) {
         console.error("Error fetching crops from Firestore:", err);
-        setError("No se pudieron cargar los datos de los cultivos desde Firestore.");
+        setError(err instanceof Error ? err.message : "No se pudieron cargar los datos de los cultivos desde Firestore.");
         setCrops(sampleCropsData); // Fallback to sample data on error
         setIsSampleData(true);
       } finally {
@@ -133,9 +150,9 @@ export function InteractiveMap() {
     };
 
     fetchCrops();
-  }, []);
+  }, [isClient]); // fetchCrops depends on isClient
 
-  if (isLoading) {
+  if (isLoading || !isClient) { // Prevent rendering map or related UI until client-side and data is ready (or loading)
     return <p className="text-center p-4">Cargando mapa y cultivos...</p>;
   }
 
@@ -156,7 +173,7 @@ export function InteractiveMap() {
           <AlertTitle>Mostrando Datos de Ejemplo</AlertTitle>
           <AlertDescription>
             No se encontraron cultivos en tu base de datos Firestore. El mapa muestra datos de demostración.
-            Para ver tus propios datos, agrega documentos a la colección 'crops' en Firestore (puedes ver la estructura sugerida en la consola o en la documentación).
+            Para ver tus propios datos, agrega documentos a la colección 'crops' en Firestore.
           </AlertDescription>
         </Alert>
       )}
