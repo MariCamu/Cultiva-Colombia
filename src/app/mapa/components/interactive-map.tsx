@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, type QueryDocumentSnapshot, type DocumentData } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Info, AlertTriangle } from 'lucide-react';
 
 interface Crop {
   id: string;
@@ -39,10 +41,57 @@ const createDifficultyIcon = (difficulty: 'easy' | 'medium' | 'hard') => {
   });
 };
 
+const sampleCropsData: Crop[] = [
+  {
+    id: 'lechuga_cundinamarca',
+    name: 'Lechuga',
+    location: { lat: 5.0671, lng: -74.0000 },
+    difficulty: 'easy',
+    regionHint: 'Cundinamarca (Andina)'
+  },
+  {
+    id: 'cafe_colombiano_sample',
+    name: 'Café Colombiano (Ejemplo)',
+    location: { lat: 4.0, lng: -73.0 },
+    difficulty: 'medium',
+    regionHint: 'Andino'
+  },
+  {
+    id: 'platano_uraba_sample',
+    name: 'Plátano del Urabá (Ejemplo)',
+    location: { lat: 7.8, lng: -76.6 },
+    difficulty: 'easy',
+    regionHint: 'Caribe'
+  },
+  {
+    id: 'quinua_narino_sample',
+    name: 'Quinua de Nariño (Ejemplo)',
+    location: { lat: 1.0, lng: -77.5 },
+    difficulty: 'hard',
+    regionHint: 'Andino (Sur)'
+  },
+  {
+    id: 'cacao_araucano_sample',
+    name: 'Cacao Araucano (Ejemplo)',
+    location: { lat: 6.7, lng: -71.5 },
+    difficulty: 'medium',
+    regionHint: 'Orinoquía'
+  },
+  {
+    id: 'yuca_amazonica_sample',
+    name: 'Yuca Amazónica (Ejemplo)',
+    location: { lat: -1.0, lng: -70.0 },
+    difficulty: 'easy',
+    regionHint: 'Amazonas'
+  }
+];
+
+
 export function InteractiveMap() {
   const [crops, setCrops] = useState<Crop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSampleData, setIsSampleData] = useState(false);
 
   const colombiaCenter: LatLngExpression = [4.5709, -74.2973];
   const initialZoom = 6;
@@ -51,23 +100,33 @@ export function InteractiveMap() {
     const fetchCrops = async () => {
       setIsLoading(true);
       setError(null);
+      setIsSampleData(false);
       try {
         const cropsCollection = collection(db, 'crops');
         const cropSnapshot = await getDocs(cropsCollection);
-        const cropsList: Crop[] = cropSnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name || 'Sin nombre',
-            location: data.location || { lat: 0, lng: 0 },
-            difficulty: data.difficulty || 'medium',
-            regionHint: data.regionHint || '',
-          } as Crop;
-        });
-        setCrops(cropsList);
+        
+        if (cropSnapshot.empty) {
+          setCrops(sampleCropsData);
+          setIsSampleData(true);
+        } else {
+          const cropsList: Crop[] = cropSnapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.name || 'Sin nombre',
+              location: data.location || { lat: 0, lng: 0 },
+              difficulty: data.difficulty || 'medium',
+              regionHint: data.regionHint || '',
+            } as Crop;
+          });
+          setCrops(cropsList);
+          setIsSampleData(false);
+        }
       } catch (err) {
-        console.error("Error fetching crops:", err);
-        setError("No se pudieron cargar los datos de los cultivos. Por favor, inténtelo más tarde.");
+        console.error("Error fetching crops from Firestore:", err);
+        setError("No se pudieron cargar los datos de los cultivos desde Firestore.");
+        setCrops(sampleCropsData); // Fallback to sample data on error
+        setIsSampleData(true);
       } finally {
         setIsLoading(false);
       }
@@ -80,23 +139,28 @@ export function InteractiveMap() {
     return <p className="text-center p-4">Cargando mapa y cultivos...</p>;
   }
 
-  if (error) {
-    return <p className="text-center p-4 text-red-600">{error}</p>;
-  }
-  
-  if (crops.length === 0 && !isLoading) {
-     return (
-        <div className="text-center p-4">
-            <p>No se encontraron cultivos para mostrar en el mapa.</p>
-            <p className="text-sm text-muted-foreground mt-2">
-                Asegúrate de haber agregado documentos a la colección 'crops' en Firestore con los campos 'name', 'location' (objeto con lat y lng), y 'difficulty' ('easy', 'medium', o 'hard').
-            </p>
-        </div>
-     );
-  }
-
   return (
     <div className="w-full">
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error de Carga</AlertTitle>
+          <AlertDescription>
+            {error} Se están mostrando datos de ejemplo en el mapa.
+          </AlertDescription>
+        </Alert>
+      )}
+      {isSampleData && !error && (
+        <Alert variant="default" className="mb-4">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Mostrando Datos de Ejemplo</AlertTitle>
+          <AlertDescription>
+            No se encontraron cultivos en tu base de datos Firestore. El mapa muestra datos de demostración.
+            Para ver tus propios datos, agrega documentos a la colección 'crops' en Firestore (puedes ver la estructura sugerida en la consola o en la documentación).
+          </AlertDescription>
+        </Alert>
+      )}
+
       <MapContainer center={colombiaCenter} zoom={initialZoom} scrollWheelZoom={true} className="leaflet-container">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -117,7 +181,7 @@ export function InteractiveMap() {
                   crop.difficulty === 'easy' ? 'text-green-600' :
                   crop.difficulty === 'medium' ? 'text-yellow-600' : 'text-red-600'
                 }`}>{crop.difficulty}</span></p>
-                <Link href={`/cultivos/${crop.id}`} className="text-sm text-primary hover:underline">
+                <Link href={`/cultivos/${crop.id.replace('_sample', '')}`} className="text-sm text-primary hover:underline">
                   Ver detalles
                 </Link>
               </div>
