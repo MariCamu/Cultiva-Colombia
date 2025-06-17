@@ -1,15 +1,16 @@
 
 "use client";
 
-import { useState, type FormEvent, useEffect } from 'react';
+import { useState, type FormEvent, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { detectCropDisease, type DetectCropDiseaseOutput } from '@/ai/flows/detect-crop-disease';
+import { analyzePlantImage, type AnalyzePlantImageOutput } from '@/ai/flows/detect-crop-disease'; // Updated import
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { UploadCloud, AlertCircle, CheckCircle2, List } from 'lucide-react';
+import { UploadCloud, AlertCircle, CheckCircle2, List, Sprout, ShieldCheck, ShieldAlert, FlaskConical, FileQuestion, Microscope } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const fileToDataUri = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -24,9 +25,9 @@ export function DetectionForm() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<DetectCropDiseaseOutput | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalyzePlantImageOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [fileInputKey, setFileInputKey] = useState<number>(Date.now()); // For resetting file input
+  const [fileInputKey, setFileInputKey] = useState<number>(Date.now());
 
   useEffect(() => {
     if (file) {
@@ -50,7 +51,7 @@ export function DetectionForm() {
 
     try {
       const photoDataUri = await fileToDataUri(file);
-      const result = await detectCropDisease({ photoDataUri });
+      const result = await analyzePlantImage({ photoDataUri }); // Updated function call
       setAnalysisResult(result);
     } catch (e) {
       console.error(e);
@@ -63,6 +64,19 @@ export function DetectionForm() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
+      // Validate file type and size (optional)
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+      if (!allowedTypes.includes(selectedFile.type)) {
+        setError('Tipo de archivo no permitido. Sube PNG, JPG o WEBP.');
+        setFile(null);
+        return;
+      }
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (selectedFile.size > maxSize) {
+        setError('El archivo es demasiado grande. Máximo 5MB.');
+        setFile(null);
+        return;
+      }
       setFile(selectedFile);
       setError(null);
       setAnalysisResult(null);
@@ -77,22 +91,25 @@ export function DetectionForm() {
     setAnalysisResult(null);
     setError(null);
     setIsLoading(false);
-    setFileInputKey(Date.now()); // Reset file input to allow re-selection of the same file
+    setFileInputKey(Date.now()); 
   };
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader>
-        <CardTitle className="text-2xl">Analizar Cultivo</CardTitle>
+        <CardTitle className="text-2xl flex items-center gap-2">
+            <Microscope className="h-7 w-7 text-primary" />
+            Análisis IA de Plantas
+        </CardTitle>
         <CardDescription>
-          Suba una imagen de su cultivo para detectar posibles enfermedades y obtener sugerencias de tratamiento.
+          Sube una imagen de tu planta para identificarla y conocer su estado de salud.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="cropImage" className="block text-sm font-medium text-foreground mb-1">
-              Imagen del Cultivo
+              Imagen de la Planta
             </label>
             <Input
               id="cropImage"
@@ -109,11 +126,11 @@ export function DetectionForm() {
             <div className="mt-4 border border-dashed border-border rounded-lg p-2">
               <Image
                 src={previewUrl}
-                alt="Vista previa del cultivo"
+                alt="Vista previa de la planta"
                 width={500}
                 height={300}
                 className="rounded-md object-contain max-h-[300px] w-auto mx-auto"
-                data-ai-hint="crop plant"
+                data-ai-hint="plant detail"
               />
             </div>
           )}
@@ -133,7 +150,7 @@ export function DetectionForm() {
           </Button>
            { (file || analysisResult || error) && 
             <Button type="button" variant="outline" className="w-full mt-2" onClick={resetForm} disabled={isLoading}>
-              Limpiar
+              Limpiar y Subir Nueva Imagen
             </Button>
            }
         </form>
@@ -152,38 +169,74 @@ export function DetectionForm() {
           <Card className="mt-6 bg-background/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                {analysisResult.diseaseDetected ? <AlertCircle className="text-destructive h-6 w-6" /> : <CheckCircle2 className="text-green-600 h-6 w-6" />}
-                Resultado del Análisis
+                <FlaskConical className="h-6 w-6 text-primary" />
+                Resultados del Análisis IA
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {analysisResult.diseaseDetected ? (
+            <CardContent className="space-y-4">
+              {!analysisResult.identification.isPlant ? (
+                 <Alert variant="default" className="border-orange-300 bg-orange-50 text-orange-700">
+                    <FileQuestion className="h-5 w-5 text-orange-600" />
+                    <AlertTitle>No se detectó una planta</AlertTitle>
+                    <AlertDescription>
+                        La IA no pudo identificar claramente una planta en la imagen. Intenta con otra foto donde la planta sea el sujeto principal y esté bien iluminada.
+                    </AlertDescription>
+                </Alert>
+              ) : (
                 <>
-                  <p><strong>Enfermedad Detectada:</strong> {analysisResult.diseaseName || 'No especificada'}</p>
-                  <p>
-                    <strong>Nivel de Confianza:</strong>{' '}
-                    {analysisResult.confidenceLevel !== undefined 
-                      ? `${(analysisResult.confidenceLevel * 100).toFixed(0)}%`
-                      : 'No especificado'}
-                  </p>
-                  {analysisResult.remedies && analysisResult.remedies.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold mt-3 mb-1 flex items-center gap-2">
-                        <List className="h-5 w-5 text-primary" />
-                        Remedios Sugeridos:
-                      </h4>
-                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground pl-2">
-                        {analysisResult.remedies.map((remedy, index) => (
-                          <li key={index}>{remedy}</li>
-                        ))}
-                      </ul>
+                  <Card className="p-4 bg-primary/5">
+                    <CardTitle className="text-lg mb-2 flex items-center gap-2">
+                        <Sprout className="h-5 w-5 text-green-600" />
+                        Identificación de la Planta
+                    </CardTitle>
+                    <div className="space-y-1 text-sm">
+                        <p><strong>¿Es una planta?</strong> <Badge variant={analysisResult.identification.isPlant ? "default" : "destructive"}>{analysisResult.identification.isPlant ? 'Sí' : 'No'}</Badge></p>
+                        {analysisResult.identification.commonName && <p><strong>Nombre Común:</strong> {analysisResult.identification.commonName}</p>}
+                        {analysisResult.identification.scientificName && <p><strong>Nombre Científico:</strong> <em>{analysisResult.identification.scientificName}</em></p>}
+                        {!(analysisResult.identification.commonName || analysisResult.identification.scientificName) && <p className="text-muted-foreground">La IA confirmó que es una planta, pero no pudo determinar la especie específica con esta imagen.</p>}
                     </div>
+                  </Card>
+
+                  {analysisResult.health && (
+                    <Card className="p-4 bg-secondary/5">
+                        <CardTitle className="text-lg mb-2 flex items-center gap-2">
+                            {analysisResult.health.isHealthy ? <ShieldCheck className="h-5 w-5 text-green-600" /> : <ShieldAlert className="h-5 w-5 text-destructive" />}
+                            Estado de Salud
+                        </CardTitle>
+                        <p className={`text-sm font-medium ${analysisResult.health.isHealthy ? 'text-green-700' : 'text-destructive'}`}>
+                            {analysisResult.health.isHealthy ? 'La planta parece estar saludable.' : 'La planta podría tener algunos problemas.'}
+                        </p>
+
+                        {analysisResult.health.problems && analysisResult.health.problems.length > 0 && (
+                        <div className="mt-3">
+                            <h4 className="font-semibold text-md mb-1">Problemas Detectados:</h4>
+                            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground pl-2">
+                            {analysisResult.health.problems.map((problem, index) => (
+                                <li key={index}><strong>{problem.name}:</strong> {problem.description}</li>
+                            ))}
+                            </ul>
+                        </div>
+                        )}
+
+                        {analysisResult.health.suggestions && analysisResult.health.suggestions.length > 0 && (
+                        <div className="mt-4">
+                            <h4 className="font-semibold text-md mb-1 flex items-center gap-2">
+                                <List className="h-5 w-5 text-primary" />
+                                Sugerencias:
+                            </h4>
+                            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground pl-2">
+                            {analysisResult.health.suggestions.map((suggestion, index) => (
+                                <li key={index}>{suggestion}</li>
+                            ))}
+                            </ul>
+                        </div>
+                        )}
+                         {(!analysisResult.health.problems || analysisResult.health.problems.length === 0) && !analysisResult.health.isHealthy && (
+                             <p className="text-sm text-muted-foreground mt-2">La IA indica que la planta podría no estar completamente saludable, pero no se especificaron problemas concretos. Considera revisar el entorno y cuidados generales.</p>
+                         )}
+                    </Card>
                   )}
                 </>
-              ) : (
-                <p className="text-green-700 font-medium">
-                  No se detectó ninguna enfermedad aparente en la imagen proporcionada.
-                </p>
               )}
             </CardContent>
           </Card>

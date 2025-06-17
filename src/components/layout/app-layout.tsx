@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Search } from 'lucide-react';
+import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Search, Bot } from 'lucide-react'; // Added Bot
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ const navItems = [
   { href: '/cultivos', label: 'Cultivos', icon: Leaf },
   { href: '/guias', label: 'Guías Educativas', icon: BookOpen },
   { href: '/test', label: 'Test Interactivo', icon: Lightbulb },
+  { href: '/deteccion-ia', label: 'Detección IA', icon: Bot }, // Added Detección IA
 ];
 
 function AppName() {
@@ -67,7 +68,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-all hover:bg-muted hover:text-primary",
                         (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href)))
-                          ? "bg-muted text-primary"
+                          ? "bg-muted text-secondary" // Changed text-primary to text-secondary
                           : "text-muted-foreground"
                       )}
                     >
@@ -98,9 +99,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 key={item.label}
                 href={item.href}
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
+                  "text-sm font-medium transition-colors hover:text-secondary", // Changed hover:text-primary to hover:text-secondary
                   (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href)))
-                    ? "text-primary border-b-2 border-primary pb-0.5" // pb-0.5 to align border better
+                    ? "text-secondary border-b-2 border-secondary pb-0.5" // Changed text-primary and border-primary
                     : "text-foreground/70"
                 )}
               >

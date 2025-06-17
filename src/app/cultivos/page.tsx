@@ -150,7 +150,8 @@ export default function CultivosPage() {
     const careQueryParam = searchParams.get('care');
     const spaceQueryParam = searchParams.get('space');
 
-    const hasActiveTestParams = plantTypeQueryParam || experienceQueryParam || learningQueryParam || careQueryParam || spaceQueryParam;
+    const hasActiveTestParams = plantTypeQueryParam || experienceQueryParam || learningQueryParam || careQueryParam || spaceQueryParam || (regionQueryParam && (plantTypeQueryParam || experienceQueryParam || learningQueryParam || careQueryParam || spaceQueryParam));
+
 
     if (hasActiveTestParams) {
         setIsTestFilterActive(true);
@@ -160,46 +161,44 @@ export default function CultivosPage() {
             setRegionFromTest(regionQueryParam);
             alertMsgParts.push(`Región: ${capitalizeFirstLetter(regionQueryParam)}`);
         } else {
-            setRegionFromTest(null);
+            setRegionFromTest(null); 
         }
         
+        const plantTypeMapped = plantTypeQueryParam ? (testPlantTypeMap[plantTypeQueryParam] ?? null) : null;
+        setSelectedPlantType(plantTypeMapped);
         if (plantTypeQueryParam) {
-            const plantTypeMapped = testPlantTypeMap[plantTypeQueryParam] ?? null;
-            setSelectedPlantType(plantTypeMapped);
-            alertMsgParts.push(`Tipo de planta: ${capitalizeFirstLetter(plantTypeQueryParam)}${plantTypeMapped ? '' : ' (interpretado como todos los tipos)'}`);
-        } else {
-            setSelectedPlantType(null);
+            alertMsgParts.push(`Tipo de planta: ${capitalizeFirstLetter(plantTypeQueryParam)}${plantTypeMapped ? ` (${plantTypeMapped})` : plantTypeMapped === null && plantTypeQueryParam !== 'cualquiera' && plantTypeQueryParam !== 'comestibles' ? ' (interpretado como tipo no especificado)' : ' (interpretado como todos los tipos)'}`);
         }
 
+
+        const spaceMapped = spaceQueryParam ? (testSpaceMap[spaceQueryParam] ?? null) : null;
+        setSelectedSpace(spaceMapped);
         if (spaceQueryParam) {
-            const spaceMapped = testSpaceMap[spaceQueryParam] ?? null;
-            setSelectedSpace(spaceMapped);
-            alertMsgParts.push(`Espacio: ${capitalizeFirstLetter(spaceQueryParam)}${spaceMapped ? ` (${spaceMapped})` : ' (interpretado como todos los espacios)'}`);
-        } else {
-            setSelectedSpace(null);
+             alertMsgParts.push(`Espacio: ${capitalizeFirstLetter(spaceQueryParam)}${spaceMapped ? ` (${spaceMapped})` : ' (interpretado como todos los espacios)'}`);
         }
+
 
         let difficultyValue: string | null = null;
         if (experienceQueryParam) {
             if (experienceQueryParam === 'principiante') {
-                difficultyValue = '1'; // Base para principiante
+                difficultyValue = '1';
                 if (learningQueryParam === 'si' && (careQueryParam === 'diario' || careQueryParam === 'dos_tres_semana')) {
-                    difficultyValue = '2'; // Principiante con interés y cuidado puede manejar algo un poco más complejo
+                    difficultyValue = '2'; 
                 }
             } else if (experienceQueryParam === 'intermedio') {
-                difficultyValue = '2'; // Base para intermedio
+                difficultyValue = '2'; 
                 if (learningQueryParam === 'si') {
                     difficultyValue = '3';
                     if (careQueryParam === 'diario' || careQueryParam === 'dos_tres_semana') {
-                       difficultyValue = '4'; // Intermedio con interés y cuidado puede apuntar más alto
+                       difficultyValue = '4'; 
                     }
                 }
             } else if (experienceQueryParam === 'avanzado') {
-                difficultyValue = '3'; // Base para avanzado
+                difficultyValue = '3'; 
                  if (learningQueryParam === 'si') {
                     difficultyValue = '4';
                     if (careQueryParam === 'diario' || careQueryParam === 'dos_tres_semana') {
-                        difficultyValue = '5'; // Avanzado con interés y cuidado puede con lo más difícil
+                        difficultyValue = '5'; 
                     }
                 }
             }
@@ -216,23 +215,24 @@ export default function CultivosPage() {
         
         setTestFilterAlertMessage(`Preferencias del test aplicadas: ${alertMsgParts.join(', ')}. Puedes ajustar los filtros.`);
         
-        // Reset only filters NOT set by test
         setSelectedPrice(null);
-        setSelectedDuration(null); // Duration is not sent by test
+        setSelectedDuration(null);
+        if (!spaceQueryParam) setSelectedSpace(null); // Reset space if not from test
+        if (!plantTypeQueryParam) setSelectedPlantType(null); // Reset plant type if not from test
         
     } else {
         setIsTestFilterActive(false);
         setTestFilterAlertMessage(null);
         setRegionFromTest(null); 
-        // When no test params are active, we don't reset manual filters.
-        // They persist or geolocation/URL region logic takes over.
     }
   }, [searchParams]);
 
 
   useEffect(() => {
     const generalRegionQueryParam = searchParams.get('region');
-    if (!manualRegionFilterActive && !generalRegionQueryParam && !isTestFilterActive && navigator.geolocation) {
+    const hasAnyTestParam = searchParams.get('plantType') || searchParams.get('experience') || searchParams.get('learning') || searchParams.get('care') || searchParams.get('space');
+
+    if (!manualRegionFilterActive && !(generalRegionQueryParam && hasAnyTestParam) && !isTestFilterActive && navigator.geolocation) {
       setGeolocationStatus('pending');
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -282,11 +282,11 @@ export default function CultivosPage() {
     activeRegionSlugForFiltering = manualRegionSlug;
     activeRegionNameForDisplay = manualRegionSlug ? regionOptions.find(r => r.value === manualRegionSlug)?.label || null : "Todas las Regiones";
     filterSource = manualRegionSlug ? 'manual_specific' : 'manual_all';
-  } else if (generalRegionQueryParam) { 
+  } else if (generalRegionQueryParam && !isTestFilterActive) { 
     activeRegionSlugForFiltering = generalRegionQueryParam;
     activeRegionNameForDisplay = regionOptions.find(r => r.value === generalRegionQueryParam)?.label || capitalizeFirstLetter(generalRegionQueryParam);
     filterSource = 'url_region_only';
-  } else if (detectedRegionSlug) { 
+  } else if (detectedRegionSlug && !isTestFilterActive && !generalRegionQueryParam) { 
     activeRegionSlugForFiltering = detectedRegionSlug;
     activeRegionNameForDisplay = detectedRegionName;
     filterSource = 'geo';
@@ -437,7 +437,7 @@ export default function CultivosPage() {
       )}
       {alertMessageForPage}
       
-      <Card>
+      <Card className="bg-primary">
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2">
             <Filter className="h-5 w-5" />

@@ -1,61 +1,76 @@
-// 'use server';
-
-/**
- * @fileOverview Detects crop diseases from an image and provides potential remedies.
- *
- * - detectCropDisease - A function that handles the crop disease detection process.
- * - DetectCropDiseaseInput - The input type for the detectCropDisease function.
- * - DetectCropDiseaseOutput - The return type for the detectCropDisease function.
- */
 
 'use server';
+
+/**
+ * @fileOverview Analyzes a plant image to identify the plant and assess its health.
+ *
+ * - analyzePlantImage - A function that handles the plant image analysis process.
+ * - AnalyzePlantImageInput - The input type for the analyzePlantImage function.
+ * - AnalyzePlantImageOutput - The return type for the analyzePlantImage function.
+ */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const DetectCropDiseaseInputSchema = z.object({
+const AnalyzePlantImageInputSchema = z.object({
   photoDataUri: z
     .string()
     .describe(
-      "A photo of a crop, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
+      "A photo of a plant, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
 });
-export type DetectCropDiseaseInput = z.infer<typeof DetectCropDiseaseInputSchema>;
+export type AnalyzePlantImageInput = z.infer<typeof AnalyzePlantImageInputSchema>;
 
-const DetectCropDiseaseOutputSchema = z.object({
-  diseaseDetected: z.boolean().describe('Whether a disease is detected or not.'),
-  diseaseName: z.string().describe('The name of the detected disease, if any.'),
-  confidenceLevel: z
-    .number()
-    .describe('The confidence level of the disease detection (0-1).'),
-  remedies: z.array(z.string()).describe('Suggested remedies for the detected disease.'),
+const PlantIdentificationSchema = z.object({
+  isPlant: z.boolean().describe('Whether or not the image primarily contains a plant.'),
+  commonName: z.string().optional().describe('The common name of the identified plant, if it is a plant and identifiable.'),
+  scientificName: z.string().optional().describe('The scientific (Latin) name of the identified plant, if it is a plant and identifiable.'),
 });
 
-export type DetectCropDiseaseOutput = z.infer<typeof DetectCropDiseaseOutputSchema>;
+const PlantHealthProblemSchema = z.object({
+    name: z.string().describe('Name of the detected problem (e.g., disease, pest, nutrient deficiency).'),
+    description: z.string().describe('Brief description of the problem.'),
+});
 
-export async function detectCropDisease(input: DetectCropDiseaseInput): Promise<DetectCropDiseaseOutput> {
-  return detectCropDiseaseFlow(input);
+const PlantHealthSchema = z.object({
+  isHealthy: z.boolean().describe('Whether the identified plant appears healthy.'),
+  problems: z.array(PlantHealthProblemSchema).optional().describe('A list of detected problems if the plant is not healthy. Empty if healthy or no problems detected.'),
+  suggestions: z.array(z.string()).optional().describe('General care suggestions or potential remedies for any identified problems or for general plant care.'),
+});
+
+const AnalyzePlantImageOutputSchema = z.object({
+  identification: PlantIdentificationSchema,
+  health: PlantHealthSchema.optional().describe('Health assessment, provided if a plant is identified.'),
+});
+
+export type AnalyzePlantImageOutput = z.infer<typeof AnalyzePlantImageOutputSchema>;
+
+export async function analyzePlantImage(input: AnalyzePlantImageInput): Promise<AnalyzePlantImageOutput> {
+  return analyzePlantImageFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'detectCropDiseasePrompt',
-  input: {schema: DetectCropDiseaseInputSchema},
-  output: {schema: DetectCropDiseaseOutputSchema},
-  prompt: `You are an AI assistant that helps farmers detect diseases in their crops.
+  name: 'analyzePlantImagePrompt',
+  input: {schema: AnalyzePlantImageInputSchema},
+  output: {schema: AnalyzePlantImageOutputSchema},
+  prompt: `You are an expert botanist and plant pathologist. Analyze the provided image.
+1. Determine if the image primarily contains a plant. Set 'identification.isPlant' accordingly.
+2. If it is a plant, attempt to identify its common name and scientific (Latin) name. Populate 'identification.commonName' and 'identification.scientificName'. If you cannot confidently identify the species, you can omit these fields but still confirm it's a plant.
+3. If a plant is identified, assess its health.
+    - Set 'health.isHealthy' to true if it appears healthy, or false otherwise.
+    - If it's not healthy, identify any visible problems (e.g., diseases, pests, nutrient deficiencies). For each problem, provide a 'name' and a 'description'. Populate 'health.problems' with these objects. If the plant is healthy or no specific problems are identifiable from the image, this array can be empty or omitted.
+    - Provide general care 'suggestions' or potential remedies. These suggestions should be helpful whether the plant is healthy or has issues. This array can be empty if no specific suggestions come to mind.
+If no plant is detected in the image, the 'health' section of the output can be omitted.
 
-You will be provided with a photo of a crop, and you will need to analyze the image to determine if there are any diseases present.
-
-Based on the image, identify if a disease is present, the name of the disease, the confidence level of your detection, and suggest remedies.
-
-Photo: {{media url=photoDataUri}}
+Image: {{media url=photoDataUri}}
 `,
 });
 
-const detectCropDiseaseFlow = ai.defineFlow(
+const analyzePlantImageFlow = ai.defineFlow(
   {
-    name: 'detectCropDiseaseFlow',
-    inputSchema: DetectCropDiseaseInputSchema,
-    outputSchema: DetectCropDiseaseOutputSchema,
+    name: 'analyzePlantImageFlow',
+    inputSchema: AnalyzePlantImageInputSchema,
+    outputSchema: AnalyzePlantImageOutputSchema,
   },
   async input => {
     const {output} = await prompt(input);
