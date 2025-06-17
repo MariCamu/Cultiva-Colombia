@@ -8,23 +8,23 @@
 @layer base {
   :root {
     --background: 120 100% 97%; /* #F0FFF0 Very Light Green */
-    --foreground: 88 40% 18%; 
-    --card: 100 0% 100%; 
+    --foreground: 88 40% 18%;
+    --card: 100 0% 100%;
     --card-foreground: 88 40% 18%;
-    --popover: 100 0% 100%; 
+    --popover: 100 0% 100%;
     --popover-foreground: 88 40% 18%;
     --primary: 120 73% 75%; /* #90EE90 Fresh Green */
     --primary-foreground: 120 44% 21%; /* Dark Green for contrast on Fresh Green */
-    --secondary: 93 13% 55%; 
+    --secondary: 93 13% 55%;
     --secondary-foreground: 88 40% 20%;
-    --muted: 93 13% 88%; 
+    --muted: 93 13% 88%;
     --muted-foreground: 93 10% 40%;
     --accent: 34 44% 71%; /* #D2B48C Soft Brown */
     --accent-foreground: 33 46% 15%; /* Dark Brown for contrast on Soft Brown */
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 93 13% 78%; 
-    --input: 100 20% 94%; 
+    --border: 93 13% 78%;
+    --input: 100 20% 94%;
     --ring: 120 73% 75%; /* Match new primary */
 
     --chart-1: 120 73% 75%; /* New Primary */
@@ -34,7 +34,7 @@
     --chart-5: 95 29% 44%;
 
     /* Sidebar specific colors */
-    --sidebar-background: 100 20% 94%; 
+    --sidebar-background: 100 20% 94%;
     --sidebar-foreground: 88 40% 18%;
     --sidebar-primary: 120 73% 75%; /* Match new primary */
     --sidebar-primary-foreground: 120 44% 21%; /* Match new primary-foreground */
@@ -46,7 +46,7 @@
 
   .dark {
     --background: 120 30% 10%; /* Dark Green variant of #F0FFF0 */
-    --foreground: 100 25% 88%; 
+    --foreground: 100 25% 88%;
     --card: 88 25% 12%;
     --card-foreground: 100 25% 88%;
     --popover: 88 25% 12%;
@@ -64,7 +64,7 @@
     --border: 93 13% 25%;
     --input: 93 13% 22%;
     --ring: 120 60% 50%; /* Match new dark primary */
-    
+
     --chart-1: 120 60% 50%; /* New Dark Primary */
     --chart-2: 34 40% 60%; /* New Dark Accent */
     --chart-3: 93 13% 50%;
