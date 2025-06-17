@@ -137,61 +137,93 @@ export default function CultivosPage() {
 
 
   useEffect(() => {
-    const plantTypeQueryParam = searchParams.get('plantType');
-    const careQueryParam = searchParams.get('care');
-    const learningQueryParam = searchParams.get('learning');
     const regionQueryParam = searchParams.get('region');
+    const plantTypeQueryParam = searchParams.get('plantType');
+    const experienceQueryParam = searchParams.get('experience');
+    const learningQueryParam = searchParams.get('learning');
+    const careQueryParam = searchParams.get('care');
 
-    if (plantTypeQueryParam || careQueryParam || learningQueryParam || regionQueryParam) {
-      setIsTestFilterActive(true);
-      let alertMsgParts = [];
+    const hasAnyTestParam = plantTypeQueryParam || experienceQueryParam || learningQueryParam || careQueryParam;
 
-      if (regionQueryParam) {
-        setRegionFromTest(regionQueryParam);
-        // No seteamos manualRegionSlug aquí directamente para permitir que el usuario lo sobreescriba.
-        // La lógica de `activeRegionSlugForFiltering` manejará la prioridad.
-        alertMsgParts.push(`Región: ${capitalizeFirstLetter(regionQueryParam)}`);
-      } else {
-        setRegionFromTest(null);
-      }
-      
-      const plantTypeFromTest = plantTypeQueryParam ? testPlantTypeMap[plantTypeQueryParam] : undefined;
-      if (plantTypeQueryParam) {
-        alertMsgParts.push(`Tipo de planta: ${capitalizeFirstLetter(plantTypeQueryParam)}`);
-        setSelectedPlantType(plantTypeFromTest !== undefined ? plantTypeFromTest : null);
-      } else {
-        setSelectedPlantType(null);
-      }
+    if (hasAnyTestParam) {
+        setIsTestFilterActive(true);
+        let alertMsgParts = [];
 
-      if (careQueryParam) alertMsgParts.push(`Cuidado: ${capitalizeFirstLetter(careQueryParam)}`);
-      if (learningQueryParam) alertMsgParts.push(`Interés en aprender: ${capitalizeFirstLetter(learningQueryParam)}`);
-      
-      setTestFilterAlertMessage(`Preferencias del test aplicadas: ${alertMsgParts.join(', ')}. Puedes ajustar los filtros.`);
-      
-      // Resetear otros filtros si vienen del test
-      setSelectedPrice(null);
-      setSelectedDuration(null);
-      setSelectedSpace(null);
-      setSelectedDifficulty(null);
-      // No reseteamos manualRegionSlug o manualRegionFilterActive aquí,
-      // la prioridad se maneja en la determinación de activeRegionSlugForFiltering.
+        if (regionQueryParam) {
+            setRegionFromTest(regionQueryParam);
+            alertMsgParts.push(`Región: ${capitalizeFirstLetter(regionQueryParam)}`);
+        } else {
+            setRegionFromTest(null);
+        }
+        
+        if (plantTypeQueryParam) {
+            const plantTypeMapped = testPlantTypeMap[plantTypeQueryParam] ?? null;
+            setSelectedPlantType(plantTypeMapped);
+            alertMsgParts.push(`Tipo de planta: ${capitalizeFirstLetter(plantTypeQueryParam)}`);
+        } else {
+            setSelectedPlantType(null);
+        }
+
+        let difficultyValue: string | null = null;
+        if (experienceQueryParam) {
+            if (experienceQueryParam === 'principiante') {
+                difficultyValue = '1';
+                if (learningQueryParam === 'si' && (careQueryParam === 'diario' || careQueryParam === 'dos_tres_semana')) {
+                    difficultyValue = '2';
+                }
+            } else if (experienceQueryParam === 'intermedio') {
+                difficultyValue = '2';
+                if (learningQueryParam === 'si') {
+                    difficultyValue = '3';
+                    if (careQueryParam === 'diario' || careQueryParam === 'dos_tres_semana') {
+                        difficultyValue = '4';
+                    }
+                }
+            } else if (experienceQueryParam === 'avanzado') {
+                difficultyValue = '3';
+                if (learningQueryParam === 'si') {
+                    difficultyValue = '4';
+                    if (careQueryParam === 'diario' || careQueryParam === 'dos_tres_semana') {
+                        difficultyValue = '5';
+                    }
+                }
+            }
+        }
+        setSelectedDifficulty(difficultyValue);
+
+        if (difficultyValue) {
+            const diffLabel = difficultyOptions.find(opt => opt.value === difficultyValue)?.label || `Nivel ${difficultyValue}`;
+            alertMsgParts.push(`Dificultad sugerida: ${diffLabel.replace(/⭐/g, '').trim()}`);
+        }
+        if (experienceQueryParam) alertMsgParts.push(`Experiencia: ${capitalizeFirstLetter(experienceQueryParam)}`);
+        if (careQueryParam) alertMsgParts.push(`Cuidado: ${capitalizeFirstLetter(careQueryParam)}`);
+        if (learningQueryParam) alertMsgParts.push(`Interés en aprender: ${capitalizeFirstLetter(learningQueryParam)}`);
+        
+        setTestFilterAlertMessage(`Preferencias del test aplicadas: ${alertMsgParts.join(', ')}. Puedes ajustar los filtros.`);
+        
+        setSelectedPrice(null);
+        setSelectedDuration(null);
+        setSelectedSpace(null);
+        // manualRegionSlug and manualRegionFilterActive are not reset here, priority logic handles it.
     } else {
-      setIsTestFilterActive(false);
-      setTestFilterAlertMessage(null);
-      setRegionFromTest(null);
-      // No reseteamos los filtros si no hay parámetros de test, permitiendo persistencia.
+        setIsTestFilterActive(false);
+        setTestFilterAlertMessage(null);
+        setRegionFromTest(null); 
+        // If only 'region' is in URL and no other test params, it's not strictly a "test filter active" scenario
+        // The individual filter states (plantType, difficulty etc.) are not reset here, allowing them to persist from manual selection
+        // or be set by non-test URL params if that logic were added.
+        // Geolocation logic below will handle region if no manual/URL region.
     }
   }, [searchParams]);
 
 
   useEffect(() => {
-    const regionQueryParamFromUrl = searchParams.get('region'); // Esto puede ser del test o de un enlace directo.
-    
+    const generalRegionQueryParam = searchParams.get('region');
     // Geolocalización solo si:
     // 1. No hay filtro manual de región activo.
-    // 2. No hay `region` en la URL (ya sea del test o de otro origen).
-    // 3. Los filtros del test NO están activos (ya que si están activos y no traen region, no deberíamos geolocalizar).
-    if (!manualRegionFilterActive && !regionQueryParamFromUrl && !isTestFilterActive && navigator.geolocation) {
+    // 2. No hay `region` en la URL (o si hay, no es parte de un conjunto de test params activos).
+    // 3. Los filtros del test NO están activos (ya que si lo están y no traen region, no deberíamos geolocalizar).
+    if (!manualRegionFilterActive && !generalRegionQueryParam && !isTestFilterActive && navigator.geolocation) {
       setGeolocationStatus('pending');
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -212,9 +244,9 @@ export default function CultivosPage() {
           setGeolocationStatus('error');
         }
       );
-    } else if (manualRegionFilterActive || regionQueryParamFromUrl || isTestFilterActive) {
-      setGeolocationStatus('idle'); // Si alguna de estas condiciones es true, no necesitamos geolocalizar.
-      setDetectedRegionSlug(null); // Limpiamos la detección por geolocalización
+    } else if (manualRegionFilterActive || generalRegionQueryParam || isTestFilterActive) {
+      setGeolocationStatus('idle'); 
+      setDetectedRegionSlug(null); 
       setDetectedRegionName(null);
     }
   }, [searchParams, manualRegionFilterActive, isTestFilterActive]);
@@ -223,38 +255,34 @@ export default function CultivosPage() {
   let activeRegionSlugForFiltering: string | null = null;
   let activeRegionNameForDisplay: string | null = null;
   let filterSource: FilterSource = 'none';
-  const generalRegionQueryParam = searchParams.get('region'); // Puede ser del test o no
+  const generalRegionQueryParam = searchParams.get('region');
 
   if (isTestFilterActive) {
     filterSource = 'test_params';
-    // Prioridad para la región cuando el test está activo:
-    // 1. Filtro manual del usuario (si lo ha tocado DESPUÉS de llegar del test).
-    // 2. Región pasada por el test (`regionFromTest` que viene de `searchParams.get('region')`).
-    // 3. Si no, sin filtro de región (geolocalización se desactiva por `isTestFilterActive`).
-    if (manualRegionFilterActive) {
-        activeRegionSlugForFiltering = manualRegionSlug; // puede ser null si se eligió "Todas"
+    if (manualRegionFilterActive) { // User manually changed region *after* test params loaded
+        activeRegionSlugForFiltering = manualRegionSlug;
         activeRegionNameForDisplay = manualRegionSlug ? regionOptions.find(r => r.value === manualRegionSlug)?.label || null : "Todas las Regiones";
-    } else if (regionFromTest) {
+    } else if (regionFromTest) { // Test provided a region, and user hasn't touched manual region filter
         activeRegionSlugForFiltering = regionFromTest;
         activeRegionNameForDisplay = regionOptions.find(r => r.value === regionFromTest)?.label || capitalizeFirstLetter(regionFromTest);
-    } else {
+    } else { // Test active, but no region from test, and user hasn't touched manual region filter
         activeRegionSlugForFiltering = null; 
-        activeRegionNameForDisplay = "Todas las Regiones"; // Test activo pero no pasó región
+        activeRegionNameForDisplay = "Todas las Regiones";
     }
   } else if (manualRegionFilterActive) {
-    activeRegionSlugForFiltering = manualRegionSlug; // puede ser null si se eligió "Todas"
+    activeRegionSlugForFiltering = manualRegionSlug;
     activeRegionNameForDisplay = manualRegionSlug ? regionOptions.find(r => r.value === manualRegionSlug)?.label || null : "Todas las Regiones";
     filterSource = manualRegionSlug ? 'manual_specific' : 'manual_all';
-  } else if (generalRegionQueryParam) { // Un `region` en la URL, pero no del test (porque isTestFilterActive sería true)
+  } else if (generalRegionQueryParam) { // URL has region, but not from test and no manual filter
     activeRegionSlugForFiltering = generalRegionQueryParam;
     activeRegionNameForDisplay = regionOptions.find(r => r.value === generalRegionQueryParam)?.label || capitalizeFirstLetter(generalRegionQueryParam);
     filterSource = 'url_region_only';
-  } else if (detectedRegionSlug) { // Solo si no hay manual, no hay test, no hay URL con region
+  } else if (detectedRegionSlug) { // Geolocation is the source
     activeRegionSlugForFiltering = detectedRegionSlug;
     activeRegionNameForDisplay = detectedRegionName;
     filterSource = 'geo';
-  } else {
-    activeRegionSlugForFiltering = null; // Caso base, sin filtros de región
+  } else { // Default: no region filter
+    activeRegionSlugForFiltering = null;
     filterSource = 'none';
   }
 
@@ -273,7 +301,6 @@ export default function CultivosPage() {
     if (selectedSpace && selectedSpace !== 'all' && crop.spaceRequired !== selectedSpace) {
       matches = false;
     }
-    // `selectedPlantType` puede ser null (para 'all' o tipos genéricos del test), así que solo filtramos si tiene un valor específico.
     if (selectedPlantType && selectedPlantType !== 'all' && crop.plantType !== selectedPlantType) {
       matches = false;
     }
@@ -291,11 +318,12 @@ export default function CultivosPage() {
     pageTitle = "Cultivos Sugeridos por el Test";
     pageDescription = "Resultados basados en tus preferencias del test. Puedes refinar la búsqueda con los filtros.";
     let testRegionMessage = "";
-    if (activeRegionSlugForFiltering && activeRegionNameForDisplay !== "Todas las Regiones") {
+    if (activeRegionSlugForFiltering && activeRegionNameForDisplay && activeRegionNameForDisplay !== "Todas las Regiones") {
         testRegionMessage = ` Mostrando para la región: ${activeRegionNameForDisplay}.`;
-    } else if (!activeRegionSlugForFiltering && activeRegionNameForDisplay === "Todas las Regiones") {
-        testRegionMessage = " Mostrando para todas las regiones.";
+    } else if ((!activeRegionSlugForFiltering && activeRegionNameForDisplay === "Todas las Regiones") || (!activeRegionSlugForFiltering && !activeRegionNameForDisplay && !regionFromTest) ) {
+         testRegionMessage = " Mostrando para todas las regiones.";
     }
+
 
     alertMessageForPage = (
       <Alert variant="default" className="bg-purple-50 border-purple-300 text-purple-700">
@@ -369,15 +397,18 @@ export default function CultivosPage() {
   }
 
 
-  // Determinar el valor para el Select de Región
-  let regionSelectValue = 'all'; // Default
+  let regionSelectValue = 'all'; 
   if (manualRegionFilterActive) {
     regionSelectValue = manualRegionSlug || 'all';
   } else if (isTestFilterActive && regionFromTest) {
     regionSelectValue = regionFromTest;
-  } else if (!isTestFilterActive && generalRegionQueryParam) { // Solo si no es del test y no hay manual
+  } else if (!isTestFilterActive && generalRegionQueryParam) { 
     regionSelectValue = generalRegionQueryParam;
   }
+  // If still 'all' and detectedRegionSlug exists (and no manual/test/url region), could preselect by geo here if desired
+  // else if (!manualRegionFilterActive && !isTestFilterActive && !generalRegionQueryParam && detectedRegionSlug) {
+  //   regionSelectValue = detectedRegionSlug; // This would preselect based on GEO if nothing else is active
+  // }
 
 
   return (
@@ -418,9 +449,6 @@ export default function CultivosPage() {
               onValueChange={(value) => {
                 setManualRegionSlug(value === 'all' ? null : value);
                 setManualRegionFilterActive(true);
-                // Si el test estaba activo y el usuario cambia la región manualmente,
-                // el test ya no debería dictar la región.
-                // Sin embargo, `isTestFilterActive` se mantiene para otros params del test.
               }}
             >
               <SelectTrigger id="manualRegionSelect">
@@ -515,8 +543,10 @@ export default function CultivosPage() {
                   />
                   <CardHeader>
                     <CardTitle className="text-xl">{crop.name}</CardTitle>
-                    {/* Mostrar badge de región si no estamos filtrando por una región específica o si es 'manual_all' o test sin región específica */}
-                    {(!activeRegionSlugForFiltering || filterSource === 'manual_all' || (filterSource === 'test_params' && (!regionFromTest || manualRegionFilterActive && !manualRegionSlug) )) && (
+                    {(!activeRegionSlugForFiltering || 
+                      filterSource === 'manual_all' || 
+                      (filterSource === 'test_params' && (!regionFromTest || (manualRegionFilterActive && !manualRegionSlug)) )
+                     ) && (
                         <Badge variant="outline" className="mt-1 w-fit">{capitalizeFirstLetter(crop.regionSlug)}</Badge>
                     )}
                   </CardHeader>
