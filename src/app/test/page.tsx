@@ -2,7 +2,6 @@
 "use client";
 
 import { useState } from 'react';
-// import { useRouter } from 'next/navigation'; // No longer needed for redirection
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,7 +50,7 @@ const testPlantTypeMap: { [key: string]: string | null } = {
   'aromaticas': 'Plantas aromáticas',
   'coloridas': 'Hortalizas de flor', 
   'frutales': 'Frutales',
-  'cualquiera': null,
+  // 'cualquiera' maps to null, meaning no filter by plant type.
 };
 
 const testSpaceMap: { [key: string]: string | null } = {
@@ -80,35 +79,39 @@ export default function TestPage() {
     event.preventDefault();
 
     let plantTypeToFilter: string | null = null;
-    if (plantTypePreference && testPlantTypeMap[plantTypePreference] !== undefined) {
+    if (plantTypePreference && plantTypePreference !== 'cualquiera' && testPlantTypeMap[plantTypePreference] !== undefined) {
       plantTypeToFilter = testPlantTypeMap[plantTypePreference];
+    } else if (plantTypePreference === 'comestibles' || plantTypePreference === 'cualquiera') {
+        plantTypeToFilter = null; // No filter for these options
     }
 
+
     let spaceToFilter: string | null = null;
-    if (espacio && testSpaceMap[espacio] !== undefined) {
+    if (espacio && espacio !== 'all-spaces' && testSpaceMap[espacio] !== undefined) {
       spaceToFilter = testSpaceMap[espacio];
     }
 
     let difficultyToFilter: string | null = null;
-    if (experiencia) {
+    if (experiencia && experiencia !== 'all-experiences') {
         if (experiencia === 'principiante') {
             difficultyToFilter = '1';
-            if (learningInterest === 'si' && (careFrequency === 'diario' || careFrequency === 'dos_tres_semana')) {
+            if ((learningInterest === 'si' || learningInterest === 'any-interest') && 
+                (careFrequency === 'diario' || careFrequency === 'dos_tres_semana' || careFrequency === 'all-frequencies')) {
                 difficultyToFilter = '2';
             }
         } else if (experiencia === 'intermedio') {
             difficultyToFilter = '2';
-            if (learningInterest === 'si') {
+            if (learningInterest === 'si' || learningInterest === 'any-interest') {
                 difficultyToFilter = '3';
-                if (careFrequency === 'diario' || careFrequency === 'dos_tres_semana') {
+                if (careFrequency === 'diario' || careFrequency === 'dos_tres_semana' || careFrequency === 'all-frequencies') {
                     difficultyToFilter = '4';
                 }
             }
         } else if (experiencia === 'avanzado') {
             difficultyToFilter = '3';
-            if (learningInterest === 'si') {
+            if (learningInterest === 'si' || learningInterest === 'any-interest') {
                 difficultyToFilter = '4';
-                if (careFrequency === 'diario' || careFrequency === 'dos_tres_semana') {
+                if (careFrequency === 'diario' || careFrequency === 'dos_tres_semana' || careFrequency === 'all-frequencies') {
                     difficultyToFilter = '5';
                 }
             }
@@ -117,7 +120,7 @@ export default function TestPage() {
     
     const results = sampleCropsData.filter(crop => {
         let matches = true;
-        if (region && crop.regionSlug !== region) matches = false;
+        if (region && region !== 'all-regions' && crop.regionSlug !== region) matches = false;
         if (plantTypeToFilter && crop.plantType !== plantTypeToFilter) matches = false;
         if (spaceToFilter && crop.spaceRequired !== spaceToFilter) matches = false;
         if (difficultyToFilter && crop.difficulty.toString() !== difficultyToFilter) matches = false;
@@ -153,7 +156,7 @@ export default function TestPage() {
                   <SelectItem value="orinoquia">Orinoquía</SelectItem>
                   <SelectItem value="amazonia">Amazonía</SelectItem>
                   <SelectItem value="insular">Insular</SelectItem>
-                  <SelectItem value="">Cualquier Región</SelectItem> 
+                  <SelectItem value="all-regions">Cualquier Región</SelectItem> 
                 </SelectContent>
               </Select>
             </div>
@@ -167,7 +170,7 @@ export default function TestPage() {
                   <SelectItem value="pequeno">Pequeño (macetas, balcón)</SelectItem>
                   <SelectItem value="mediano">Mediano (patio pequeño)</SelectItem>
                   <SelectItem value="grande">Grande (huerta, terreno)</SelectItem>
-                  <SelectItem value="">Cualquier Espacio</SelectItem>
+                  <SelectItem value="all-spaces">Cualquier Espacio</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -181,7 +184,7 @@ export default function TestPage() {
                   <SelectItem value="principiante">Principiante</SelectItem>
                   <SelectItem value="intermedio">Intermedio</SelectItem>
                   <SelectItem value="avanzado">Avanzado</SelectItem>
-                  <SelectItem value="">Cualquier Experiencia</SelectItem>
+                  <SelectItem value="all-experiences">Cualquier Experiencia</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -210,7 +213,7 @@ export default function TestPage() {
                   <SelectItem value="diario">Diario</SelectItem>
                   <SelectItem value="dos_tres_semana">2–3 veces a la semana</SelectItem>
                   <SelectItem value="ocasionalmente">Ocasionalmente (1 vez por semana o menos)</SelectItem>
-                  <SelectItem value="">Cualquier Frecuencia</SelectItem>
+                  <SelectItem value="all-frequencies">Cualquier Frecuencia</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -223,7 +226,7 @@ export default function TestPage() {
                 <SelectContent>
                   <SelectItem value="si">Sí, me gustaría aprender</SelectItem>
                   <SelectItem value="no">No, prefiero algo muy sencillo</SelectItem>
-                  <SelectItem value="">Indiferente</SelectItem>
+                  <SelectItem value="any-interest">Indiferente</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -255,8 +258,7 @@ export default function TestPage() {
                     />
                     <CardHeader>
                       <CardTitle className="text-xl">{crop.name}</CardTitle>
-                       {/* Mostramos la región del cultivo solo si no se filtró por una región específica O si se seleccionó "Cualquier Región" */}
-                      {(!region || region === "") && (
+                      {(!region || region === "all-regions") && (
                         <Badge variant="outline" className="mt-1 w-fit">{capitalizeFirstLetter(crop.regionSlug)}</Badge>
                       )}
                     </CardHeader>
@@ -277,7 +279,6 @@ export default function TestPage() {
                           <Badge variant="secondary">Tipo: {crop.plantType}</Badge>
                       </div>
                     </CardContent>
-                    {/* CardFooter si se necesita para un botón de "Ver más" que podría llevar a /cultivos/id si se implementa esa página */}
                   </Card>
                 ))}
               </div>
@@ -290,5 +291,3 @@ export default function TestPage() {
     </div>
   );
 }
-
-    
