@@ -113,6 +113,12 @@ const testPlantTypeMap: { [key: string]: string | null } = {
   'cualquiera': null,
 };
 
+const testSpaceMap: { [key: string]: string | null } = {
+  'pequeno': 'Maceta pequeña (1–3 L)',
+  'mediano': 'Maceta mediana (4–10 L)',
+  'grande': 'Maceta grande o jardín (10+ L)',
+};
+
 
 export default function CultivosPage() {
   const searchParams = useSearchParams();
@@ -142,10 +148,11 @@ export default function CultivosPage() {
     const experienceQueryParam = searchParams.get('experience');
     const learningQueryParam = searchParams.get('learning');
     const careQueryParam = searchParams.get('care');
+    const spaceQueryParam = searchParams.get('space');
 
-    const hasAnyTestParam = plantTypeQueryParam || experienceQueryParam || learningQueryParam || careQueryParam;
+    const hasActiveTestParams = plantTypeQueryParam || experienceQueryParam || learningQueryParam || careQueryParam || spaceQueryParam;
 
-    if (hasAnyTestParam) {
+    if (hasActiveTestParams) {
         setIsTestFilterActive(true);
         let alertMsgParts = [];
 
@@ -159,32 +166,40 @@ export default function CultivosPage() {
         if (plantTypeQueryParam) {
             const plantTypeMapped = testPlantTypeMap[plantTypeQueryParam] ?? null;
             setSelectedPlantType(plantTypeMapped);
-            alertMsgParts.push(`Tipo de planta: ${capitalizeFirstLetter(plantTypeQueryParam)}`);
+            alertMsgParts.push(`Tipo de planta: ${capitalizeFirstLetter(plantTypeQueryParam)}${plantTypeMapped ? '' : ' (interpretado como todos los tipos)'}`);
         } else {
             setSelectedPlantType(null);
+        }
+
+        if (spaceQueryParam) {
+            const spaceMapped = testSpaceMap[spaceQueryParam] ?? null;
+            setSelectedSpace(spaceMapped);
+            alertMsgParts.push(`Espacio: ${capitalizeFirstLetter(spaceQueryParam)}${spaceMapped ? ` (${spaceMapped})` : ' (interpretado como todos los espacios)'}`);
+        } else {
+            setSelectedSpace(null);
         }
 
         let difficultyValue: string | null = null;
         if (experienceQueryParam) {
             if (experienceQueryParam === 'principiante') {
-                difficultyValue = '1';
+                difficultyValue = '1'; // Base para principiante
                 if (learningQueryParam === 'si' && (careQueryParam === 'diario' || careQueryParam === 'dos_tres_semana')) {
-                    difficultyValue = '2';
+                    difficultyValue = '2'; // Principiante con interés y cuidado puede manejar algo un poco más complejo
                 }
             } else if (experienceQueryParam === 'intermedio') {
-                difficultyValue = '2';
+                difficultyValue = '2'; // Base para intermedio
                 if (learningQueryParam === 'si') {
                     difficultyValue = '3';
                     if (careQueryParam === 'diario' || careQueryParam === 'dos_tres_semana') {
-                        difficultyValue = '4';
+                       difficultyValue = '4'; // Intermedio con interés y cuidado puede apuntar más alto
                     }
                 }
             } else if (experienceQueryParam === 'avanzado') {
-                difficultyValue = '3';
-                if (learningQueryParam === 'si') {
+                difficultyValue = '3'; // Base para avanzado
+                 if (learningQueryParam === 'si') {
                     difficultyValue = '4';
                     if (careQueryParam === 'diario' || careQueryParam === 'dos_tres_semana') {
-                        difficultyValue = '5';
+                        difficultyValue = '5'; // Avanzado con interés y cuidado puede con lo más difícil
                     }
                 }
             }
@@ -201,28 +216,22 @@ export default function CultivosPage() {
         
         setTestFilterAlertMessage(`Preferencias del test aplicadas: ${alertMsgParts.join(', ')}. Puedes ajustar los filtros.`);
         
+        // Reset only filters NOT set by test
         setSelectedPrice(null);
-        setSelectedDuration(null);
-        setSelectedSpace(null);
-        // manualRegionSlug and manualRegionFilterActive are not reset here, priority logic handles it.
+        setSelectedDuration(null); // Duration is not sent by test
+        
     } else {
         setIsTestFilterActive(false);
         setTestFilterAlertMessage(null);
         setRegionFromTest(null); 
-        // If only 'region' is in URL and no other test params, it's not strictly a "test filter active" scenario
-        // The individual filter states (plantType, difficulty etc.) are not reset here, allowing them to persist from manual selection
-        // or be set by non-test URL params if that logic were added.
-        // Geolocation logic below will handle region if no manual/URL region.
+        // When no test params are active, we don't reset manual filters.
+        // They persist or geolocation/URL region logic takes over.
     }
   }, [searchParams]);
 
 
   useEffect(() => {
     const generalRegionQueryParam = searchParams.get('region');
-    // Geolocalización solo si:
-    // 1. No hay filtro manual de región activo.
-    // 2. No hay `region` en la URL (o si hay, no es parte de un conjunto de test params activos).
-    // 3. Los filtros del test NO están activos (ya que si lo están y no traen region, no deberíamos geolocalizar).
     if (!manualRegionFilterActive && !generalRegionQueryParam && !isTestFilterActive && navigator.geolocation) {
       setGeolocationStatus('pending');
       navigator.geolocation.getCurrentPosition(
@@ -259,13 +268,13 @@ export default function CultivosPage() {
 
   if (isTestFilterActive) {
     filterSource = 'test_params';
-    if (manualRegionFilterActive) { // User manually changed region *after* test params loaded
+    if (manualRegionFilterActive) { 
         activeRegionSlugForFiltering = manualRegionSlug;
         activeRegionNameForDisplay = manualRegionSlug ? regionOptions.find(r => r.value === manualRegionSlug)?.label || null : "Todas las Regiones";
-    } else if (regionFromTest) { // Test provided a region, and user hasn't touched manual region filter
+    } else if (regionFromTest) { 
         activeRegionSlugForFiltering = regionFromTest;
         activeRegionNameForDisplay = regionOptions.find(r => r.value === regionFromTest)?.label || capitalizeFirstLetter(regionFromTest);
-    } else { // Test active, but no region from test, and user hasn't touched manual region filter
+    } else { 
         activeRegionSlugForFiltering = null; 
         activeRegionNameForDisplay = "Todas las Regiones";
     }
@@ -273,15 +282,15 @@ export default function CultivosPage() {
     activeRegionSlugForFiltering = manualRegionSlug;
     activeRegionNameForDisplay = manualRegionSlug ? regionOptions.find(r => r.value === manualRegionSlug)?.label || null : "Todas las Regiones";
     filterSource = manualRegionSlug ? 'manual_specific' : 'manual_all';
-  } else if (generalRegionQueryParam) { // URL has region, but not from test and no manual filter
+  } else if (generalRegionQueryParam) { 
     activeRegionSlugForFiltering = generalRegionQueryParam;
     activeRegionNameForDisplay = regionOptions.find(r => r.value === generalRegionQueryParam)?.label || capitalizeFirstLetter(generalRegionQueryParam);
     filterSource = 'url_region_only';
-  } else if (detectedRegionSlug) { // Geolocation is the source
+  } else if (detectedRegionSlug) { 
     activeRegionSlugForFiltering = detectedRegionSlug;
     activeRegionNameForDisplay = detectedRegionName;
     filterSource = 'geo';
-  } else { // Default: no region filter
+  } else { 
     activeRegionSlugForFiltering = null;
     filterSource = 'none';
   }
@@ -323,7 +332,6 @@ export default function CultivosPage() {
     } else if ((!activeRegionSlugForFiltering && activeRegionNameForDisplay === "Todas las Regiones") || (!activeRegionSlugForFiltering && !activeRegionNameForDisplay && !regionFromTest) ) {
          testRegionMessage = " Mostrando para todas las regiones.";
     }
-
 
     alertMessageForPage = (
       <Alert variant="default" className="bg-purple-50 border-purple-300 text-purple-700">
@@ -402,13 +410,9 @@ export default function CultivosPage() {
     regionSelectValue = manualRegionSlug || 'all';
   } else if (isTestFilterActive && regionFromTest) {
     regionSelectValue = regionFromTest;
-  } else if (!isTestFilterActive && generalRegionQueryParam) { 
+  } else if (!isTestFilterActive && !manualRegionFilterActive && generalRegionQueryParam) { 
     regionSelectValue = generalRegionQueryParam;
   }
-  // If still 'all' and detectedRegionSlug exists (and no manual/test/url region), could preselect by geo here if desired
-  // else if (!manualRegionFilterActive && !isTestFilterActive && !generalRegionQueryParam && detectedRegionSlug) {
-  //   regionSelectValue = detectedRegionSlug; // This would preselect based on GEO if nothing else is active
-  // }
 
 
   return (
