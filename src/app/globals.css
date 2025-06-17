@@ -7,80 +7,79 @@
 
 @layer base {
   :root {
-    --background: 100 27% 96%; /* Lighter #EDF2E8, e.g., #F2F5EF */
+    --background: 120 100% 97%; /* #F0FFF0 Very Light Green */
     --foreground: 88 40% 18%; 
-    --card: 100 0% 100%; /* White cards */
+    --card: 100 0% 100%; 
     --card-foreground: 88 40% 18%;
-    --popover: 100 0% 100%; /* White popovers */
+    --popover: 100 0% 100%; 
     --popover-foreground: 88 40% 18%;
-    --primary: 88 45% 30%; /* #4A6E29 */
-    --primary-foreground: 100 30% 90%;
-    --secondary: 93 13% 55%; /* Lighter version of #708266 */
+    --primary: 120 73% 75%; /* #90EE90 Fresh Green */
+    --primary-foreground: 120 44% 21%; /* Dark Green for contrast on Fresh Green */
+    --secondary: 93 13% 55%; 
     --secondary-foreground: 88 40% 20%;
-    --muted: 93 13% 88%; /* Lightened #DBE0D6 */
+    --muted: 93 13% 88%; 
     --muted-foreground: 93 10% 40%;
-    --accent: 94 30% 45%; /* #73964F */
-    --accent-foreground: 100 30% 95%;
+    --accent: 34 44% 71%; /* #D2B48C Soft Brown */
+    --accent-foreground: 33 46% 15%; /* Dark Brown for contrast on Soft Brown */
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
     --border: 93 13% 78%; 
-    --input: 100 20% 94%; /* Lightened input background */
-    --ring: 88 45% 30%; 
-    --radius: 0.5rem;
+    --input: 100 20% 94%; 
+    --ring: 120 73% 75%; /* Match new primary */
 
-    --chart-1: 88 45% 30%;
-    --chart-2: 94 30% 45%;
+    --chart-1: 120 73% 75%; /* New Primary */
+    --chart-2: 34 44% 71%; /* New Accent */
     --chart-3: 93 13% 45%;
     --chart-4: 98 18% 45%;
     --chart-5: 95 29% 44%;
 
     /* Sidebar specific colors */
-    --sidebar-background: 100 20% 94%; /* Lightened sidebar */
+    --sidebar-background: 100 20% 94%; 
     --sidebar-foreground: 88 40% 18%;
-    --sidebar-primary: 88 45% 30%;
-    --sidebar-primary-foreground: 100 30% 90%;
-    --sidebar-accent: 93 13% 85%; /* Lightened sidebar accent */
-    --sidebar-accent-foreground: 88 40% 18%;
+    --sidebar-primary: 120 73% 75%; /* Match new primary */
+    --sidebar-primary-foreground: 120 44% 21%; /* Match new primary-foreground */
+    --sidebar-accent: 34 44% 85%; /* Lighter brown for sidebar accent */
+    --sidebar-accent-foreground: 33 46% 15%; /* Darker brown for contrast */
     --sidebar-border: 93 13% 75%;
-    --sidebar-ring: 88 45% 30%;
+    --sidebar-ring: 120 73% 75%; /* Match new primary */
   }
 
   .dark {
-    --background: 88 25% 10%; 
+    --background: 120 30% 10%; /* Dark Green variant of #F0FFF0 */
     --foreground: 100 25% 88%; 
     --card: 88 25% 12%;
     --card-foreground: 100 25% 88%;
     --popover: 88 25% 12%;
     --popover-foreground: 100 25% 88%;
-    --primary: 94 30% 55%; 
-    --primary-foreground: 88 45% 15%; 
+    --primary: 120 60% 50%; /* Medium Green for dark mode primary */
+    --primary-foreground: 120 70% 90%; /* Light green for contrast */
     --secondary: 93 13% 30%;
     --secondary-foreground: 100 20% 80%;
     --muted: 93 13% 20%;
     --muted-foreground: 93 10% 60%;
-    --accent: 88 45% 40%; 
-    --accent-foreground: 100 25% 90%;
+    --accent: 34 40% 60%; /* Medium Brown for dark mode accent */
+    --accent-foreground: 34 60% 90%; /* Light brown for contrast */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 93 13% 25%;
     --input: 93 13% 22%;
-    --ring: 94 30% 55%; 
+    --ring: 120 60% 50%; /* Match new dark primary */
     
-    --chart-1: 94 30% 55%;
-    --chart-2: 88 45% 40%;
+    --chart-1: 120 60% 50%; /* New Dark Primary */
+    --chart-2: 34 40% 60%; /* New Dark Accent */
     --chart-3: 93 13% 50%;
     --chart-4: 98 18% 55%;
     --chart-5: 95 29% 54%;
 
     /* Sidebar specific colors for dark theme */
-    --sidebar-background: 88 25% 12%;
+    --sidebar-background: 120 25% 12%; /* Darker green */
     --sidebar-foreground: 100 25% 88%;
-    --sidebar-primary: 94 30% 55%;
-    --sidebar-primary-foreground: 88 45% 15%;
-    --sidebar-accent: 93 13% 25%;
-    --sidebar-accent-foreground: 100 25% 88%;
+    --sidebar-primary: 120 60% 50%; /* Match new dark primary */
+    --sidebar-primary-foreground: 120 70% 90%; /* Match new dark primary-foreground */
+    --sidebar-accent: 34 30% 25%; /* Darker brown */
+    --sidebar-accent-foreground: 34 60% 90%; /* Lighter brown for contrast */
     --sidebar-border: 93 13% 20%;
-    --sidebar-ring: 94 30% 55%;
+    --sidebar-ring: 120 60% 50%; /* Match new dark primary */
   }
 }
 

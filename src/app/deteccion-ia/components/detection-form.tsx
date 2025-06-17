@@ -83,7 +83,7 @@ export function DetectionForm() {
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">Analizar Cultivo</CardTitle>
+        <CardTitle className="text-2xl">Analizar Cultivo</CardTitle>
         <CardDescription>
           Suba una imagen de su cultivo para detectar posibles enfermedades y obtener sugerencias de tratamiento.
         </CardDescription>
@@ -151,7 +151,7 @@ export function DetectionForm() {
         {analysisResult && (
           <Card className="mt-6 bg-background/50">
             <CardHeader>
-              <CardTitle className="font-headline flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
                 {analysisResult.diseaseDetected ? <AlertCircle className="text-destructive h-6 w-6" /> : <CheckCircle2 className="text-green-600 h-6 w-6" />}
                 Resultado del Análisis
               </CardTitle>
