@@ -133,20 +133,20 @@ export default function TestPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+      <h1 className="text-3xl font-nunito font-bold tracking-tight text-foreground sm:text-4xl">
         Test Interactivo
       </h1>
       <Card>
         <CardHeader>
-          <CardTitle>Descubre tu Cultivo Ideal</CardTitle>
+          <CardTitle className="font-nunito font-bold">Descubre tu Cultivo Ideal</CardTitle>
           <CardDescription>Responde unas pocas preguntas para recibir recomendaciones personalizadas de cultivos.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="region">Tu región en Colombia:</Label>
+              <Label htmlFor="region" className="font-nunito font-semibold">Tu región en Colombia:</Label>
               <Select value={region} onValueChange={setRegion}>
-                <SelectTrigger id="region">
+                <SelectTrigger id="region" className="font-nunito">
                   <SelectValue placeholder="Selecciona tu región" />
                 </SelectTrigger>
                 <SelectContent>
@@ -161,9 +161,9 @@ export default function TestPage() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="espacio">Espacio disponible:</Label>
+              <Label htmlFor="espacio" className="font-nunito font-semibold">Espacio disponible:</Label>
               <Select value={espacio} onValueChange={setEspacio}>
-                <SelectTrigger id="espacio">
+                <SelectTrigger id="espacio" className="font-nunito">
                   <SelectValue placeholder="Selecciona el espacio" />
                 </SelectTrigger>
                 <SelectContent>
@@ -175,9 +175,9 @@ export default function TestPage() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="experiencia">Nivel de experiencia:</Label>
+              <Label htmlFor="experiencia" className="font-nunito font-semibold">Nivel de experiencia:</Label>
                <Select value={experiencia} onValueChange={setExperiencia}>
-                <SelectTrigger id="experiencia">
+                <SelectTrigger id="experiencia" className="font-nunito">
                   <SelectValue placeholder="Selecciona tu experiencia" />
                 </SelectTrigger>
                 <SelectContent>
@@ -189,9 +189,9 @@ export default function TestPage() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="plantTypePreference">¿Qué tipo de plantas te gustaría tener?</Label>
+              <Label htmlFor="plantTypePreference" className="font-nunito font-semibold">¿Qué tipo de plantas te gustaría tener?</Label>
               <Select value={plantTypePreference} onValueChange={setPlantTypePreference}>
-                <SelectTrigger id="plantTypePreference">
+                <SelectTrigger id="plantTypePreference" className="font-nunito">
                   <SelectValue placeholder="Selecciona tu preferencia" />
                 </SelectTrigger>
                 <SelectContent>
@@ -204,9 +204,9 @@ export default function TestPage() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="careFrequency">¿Cada cuánto puedes cuidarlas?</Label>
+              <Label htmlFor="careFrequency" className="font-nunito font-semibold">¿Cada cuánto puedes cuidarlas?</Label>
               <Select value={careFrequency} onValueChange={setCareFrequency}>
-                <SelectTrigger id="careFrequency">
+                <SelectTrigger id="careFrequency" className="font-nunito">
                   <SelectValue placeholder="Selecciona la frecuencia" />
                 </SelectTrigger>
                 <SelectContent>
@@ -218,9 +218,9 @@ export default function TestPage() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="learningInterest">¿Te interesa aprender mientras cultivas?</Label>
+              <Label htmlFor="learningInterest" className="font-nunito font-semibold">¿Te interesa aprender mientras cultivas?</Label>
               <Select value={learningInterest} onValueChange={setLearningInterest}>
-                <SelectTrigger id="learningInterest">
+                <SelectTrigger id="learningInterest" className="font-nunito">
                   <SelectValue placeholder="Selecciona tu interés" />
                 </SelectTrigger>
                 <SelectContent>
@@ -238,7 +238,7 @@ export default function TestPage() {
       {showResults && (
         <Card className="mt-8">
           <CardHeader>
-            <CardTitle>Cultivos Recomendados</CardTitle>
+            <CardTitle className="font-nunito font-bold">Cultivos Recomendados</CardTitle>
             <CardDescription>
               Basado en tus respuestas, estos son algunos cultivos que te podrían interesar:
             </CardDescription>
@@ -257,26 +257,26 @@ export default function TestPage() {
                       data-ai-hint={crop.dataAiHint}
                     />
                     <CardHeader>
-                      <CardTitle className="text-xl">{crop.name}</CardTitle>
+                      <CardTitle className="text-xl font-nunito font-bold">{crop.name}</CardTitle>
                       {(!region || region === "all-regions") && (
-                        <Badge variant="outline" className="mt-1 w-fit">{capitalizeFirstLetter(crop.regionSlug)}</Badge>
+                        <Badge variant="outline" className="mt-1 w-fit font-nunito">{capitalizeFirstLetter(crop.regionSlug)}</Badge>
                       )}
                     </CardHeader>
                     <CardContent className="flex-grow space-y-3">
                       <p className="text-sm text-muted-foreground mb-3">{crop.description}</p>
                       <div className="space-y-2 pt-2 border-t">
                           <div className="flex items-center">
-                              <span className="text-xs font-semibold mr-2 w-28">Dificultad:</span>
+                              <span className="text-xs font-nunito font-semibold mr-2 w-28">Dificultad:</span>
                               <div className="flex">
                                   {Array.from({ length: 5 }).map((_, i) => (
-                                  <Star key={i} className={`h-4 w-4 ${i < crop.difficulty ? 'fill-yellow-400 text-yellow-500' : 'text-gray-300'}`} />
+                                  <Star key={i} className={`h-4 w-4 ${i < crop.difficulty ? 'fill-yellow-400 text-yellow-500' : 'fill-muted text-muted-foreground'}`} />
                                   ))}
                               </div>
                           </div>
-                          <Badge variant="secondary">Precio: {crop.estimatedPrice}</Badge>
-                          <Badge variant="secondary">Duración: {crop.duration}</Badge>
-                          <Badge variant="secondary">Espacio: {crop.spaceRequired}</Badge>
-                          <Badge variant="secondary">Tipo: {crop.plantType}</Badge>
+                          <Badge variant="secondary" className="font-nunito">Precio: {crop.estimatedPrice}</Badge>
+                          <Badge variant="secondary" className="font-nunito">Duración: {crop.duration}</Badge>
+                          <Badge variant="secondary" className="font-nunito">Espacio: {crop.spaceRequired}</Badge>
+                          <Badge variant="secondary" className="font-nunito">Tipo: {crop.plantType}</Badge>
                       </div>
                     </CardContent>
                   </Card>

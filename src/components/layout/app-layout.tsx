@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Search, Bot } from 'lucide-react'; // Added Bot
+import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Search, Bot } from 'lucide-react'; 
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,14 +21,14 @@ const navItems = [
   { href: '/cultivos', label: 'Cultivos', icon: Leaf },
   { href: '/guias', label: 'Guías Educativas', icon: BookOpen },
   { href: '/test', label: 'Test Interactivo', icon: Lightbulb },
-  { href: '/deteccion-ia', label: 'Detección IA', icon: Bot }, // Added Detección IA
+  { href: '/deteccion-ia', label: 'Detección IA', icon: Bot },
 ];
 
 function AppName() {
   return (
     <Link href="/" className="flex items-center gap-2">
       <Leaf className="h-7 w-7 text-primary" />
-      <span className="text-xl font-semibold text-foreground">Cultiva Colombia</span>
+      <span className="text-xl font-nunito font-semibold text-foreground">Cultiva Colombia</span>
     </Link>
   );
 }
@@ -45,7 +45,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             {/* Mobile Menu Trigger */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+                <Button variant="ghost" size="icon" className="shrink-0 md:hidden text-foreground hover:bg-primary/20">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
@@ -57,7 +57,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 <div className="p-4">
                   <form className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input type="search" placeholder="Buscar..." className="w-full pl-10 h-10 rounded-md" />
+                    <Input type="search" placeholder="Buscar..." className="w-full pl-10 h-10 rounded-md font-nunito" />
                   </form>
                 </div>
                 <nav className="flex-grow grid gap-1 px-4">
@@ -66,9 +66,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                       key={item.label}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-all hover:bg-muted hover:text-primary",
+                        "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-nunito font-medium transition-all hover:bg-muted hover:text-primary",
                         (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href)))
-                          ? "bg-muted text-secondary" // Changed text-primary to text-secondary
+                          ? "bg-muted text-primary font-semibold" 
                           : "text-muted-foreground"
                       )}
                     >
@@ -99,9 +99,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 key={item.label}
                 href={item.href}
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-secondary", // Changed hover:text-primary to hover:text-secondary
+                  "text-sm font-nunito font-semibold transition-colors hover:text-primary", 
                   (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href)))
-                    ? "text-secondary border-b-2 border-secondary pb-0.5" // Changed text-primary and border-primary
+                    ? "text-primary border-b-2 border-primary pb-0.5" 
                     : "text-foreground/70"
                 )}
               >
@@ -116,7 +116,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <Input
               type="search"
               placeholder="Buscar..."
-              className="h-9 rounded-md pl-9 md:w-[150px] lg:w-[230px] xl:w-[280px]"
+              className="h-9 rounded-md pl-9 md:w-[150px] lg:w-[230px] xl:w-[280px] font-nunito"
             />
           </div>
         </div>

@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
-import { PT_Sans } from 'next/font/google';
+import { Nunito, Merriweather } from 'next/font/google';
 import './globals.css';
 import { AppLayout } from '@/components/layout/app-layout';
 
-const ptSans = PT_Sans({
+const nunito = Nunito({
   subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-pt-sans',
+  weight: ['400', '600', '700'],
+  variable: '--font-nunito',
+});
+
+const merriweather = Merriweather({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-merriweather',
 });
 
 export const metadata: Metadata = {
@@ -20,9 +26,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${ptSans.variable}`}>
+    <html lang="es" className={`${nunito.variable} ${merriweather.variable}`}>
       <head />
-      <body className={`antialiased font-sans`}>
+      <body className={`antialiased font-sans`}> {/* font-sans will default to Merriweather via tailwind.config.ts */}
         <AppLayout>{children}</AppLayout>
       </body>
     </html>

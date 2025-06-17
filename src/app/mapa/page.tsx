@@ -57,12 +57,12 @@ export default function MapaPage() {
   return (
     <div className="space-y-12">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="text-3xl font-nunito font-bold tracking-tight text-foreground sm:text-4xl">
           Mapa Interactivo de Cultivos
         </h1>
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Explora los Cultivos de Colombia</CardTitle>
+            <CardTitle className="font-nunito font-bold">Explora los Cultivos de Colombia</CardTitle>
             <CardDescription>
               Navegue por el mapa para descubrir diversos cultivos disponibles en Colombia.
               Los marcadores indican la ubicación aproximada y su color representa el nivel de dificultad de cultivo.
@@ -78,14 +78,14 @@ export default function MapaPage() {
       </div>
 
       <section>
-        <h2 className="text-3xl font-bold tracking-tight text-foreground mb-8 text-center sm:text-left">
+        <h2 className="text-3xl font-nunito font-bold tracking-tight text-foreground mb-8 text-center sm:text-left">
           Explora Cultivos por Región
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {regionsData.map((region) => (
             <Card key={region.slug} className="shadow-md hover:shadow-lg transition-shadow flex flex-col">
               <CardHeader className="p-4 flex-grow">
-                <CardTitle className="text-lg font-semibold">{region.name}</CardTitle>
+                <CardTitle className="text-lg font-nunito font-semibold">{region.name}</CardTitle>
                 <CardDescription className="text-xs pt-1 line-clamp-3">{region.description}</CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-2">

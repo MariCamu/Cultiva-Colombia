@@ -41,7 +41,7 @@ export default function GuiasPage() {
 
   const renderSubsections = (subsections: SubSection[], sectionTitle: string) => (
     <div className="mt-8">
-      <h2 className="text-2xl font-semibold tracking-tight text-foreground mb-6">{sectionTitle}</h2>
+      <h2 className="text-2xl font-nunito font-semibold tracking-tight text-foreground mb-6">{sectionTitle}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {subsections.map((item) => (
           <Card key={item.title} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow flex flex-col">
@@ -54,7 +54,7 @@ export default function GuiasPage() {
               data-ai-hint={item.aiHint}
             />
             <CardHeader className="flex-grow">
-              <CardTitle className="text-lg">{item.title}</CardTitle>
+              <CardTitle className="text-lg font-nunito font-bold">{item.title}</CardTitle>
             </CardHeader>
             <CardFooter>
               <Button variant="outline" size="sm" asChild>
@@ -69,7 +69,7 @@ export default function GuiasPage() {
 
   return (
     <div className="space-y-10">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl pb-4 border-b">
+      <h1 className="text-3xl font-nunito font-bold tracking-tight text-foreground sm:text-4xl pb-4 border-b">
         Centro de Guías
       </h1>
 
@@ -88,7 +88,7 @@ export default function GuiasPage() {
               <div className="bg-primary/10 p-3 rounded-full">
                 <Leaf className="h-8 w-8 text-primary" />
               </div>
-              <CardTitle className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              <CardTitle className="text-2xl font-nunito font-bold tracking-tight text-foreground sm:text-3xl">
                 Guías de Cultivo
               </CardTitle>
             </div>
@@ -99,14 +99,14 @@ export default function GuiasPage() {
             </p>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => toggleSection('cultivo')} size="lg" className="bg-primary hover:bg-primary/90 w-full">
+            <Button onClick={() => toggleSection('cultivo')} size="lg" className="w-full">
               {activeSection === 'cultivo' ? <ChevronUp className="mr-2 h-5 w-5" /> : <ChevronDown className="mr-2 h-5 w-5" />}
               {activeSection === 'cultivo' ? 'Ocultar Guías' : 'Explorar Guías'}
             </Button>
           </CardFooter>
         </Card>
 
-        <Card className="w-full shadow-lg hover:shadow-xl transition-shadow bg-purple-50/30 border-purple-200">
+        <Card className="w-full shadow-lg hover:shadow-xl transition-shadow bg-accent/10 border-accent/30">
            <Image
             src="https://placehold.co/600x300.png"
             alt="Actividades escolares"
@@ -117,10 +117,10 @@ export default function GuiasPage() {
           />
           <CardHeader className="items-start gap-4 space-y-0 pt-4">
             <div className="flex items-center gap-3">
-              <div className="bg-purple-600/10 p-3 rounded-full">
-                <School className="h-8 w-8 text-purple-600" />
+              <div className="bg-accent/10 p-3 rounded-full"> {/* Changed from purple-600/10 to accent/10 */}
+                <School className="h-8 w-8 text-accent" /> {/* Changed from text-purple-600 to text-accent */}
               </div>
-              <CardTitle className="text-2xl font-bold tracking-tight text-purple-700 sm:text-3xl">
+              <CardTitle className="text-2xl font-nunito font-bold tracking-tight text-accent sm:text-3xl"> {/* Changed from text-purple-700 to text-accent */}
                 Actividades Escolares
               </CardTitle>
             </div>
@@ -131,7 +131,7 @@ export default function GuiasPage() {
             </p>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => toggleSection('escolar')} size="lg" className="bg-purple-600 hover:bg-purple-600/90 text-white w-full">
+            <Button onClick={() => toggleSection('escolar')} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground w-full"> {/* Changed button colors */}
               {activeSection === 'escolar' ? <ChevronUp className="mr-2 h-5 w-5" /> : <ChevronDown className="mr-2 h-5 w-5" />}
               {activeSection === 'escolar' ? 'Ocultar Actividades' : 'Explorar Actividades'}
             </Button>
@@ -142,9 +142,9 @@ export default function GuiasPage() {
       {activeSection === 'cultivo' && renderSubsections(guiasCultivoSubsections, "Explora Nuestras Guías de Cultivo")}
       {activeSection === 'escolar' && renderSubsections(actividadesEscolaresSubsections, "Descubre Actividades Escolares")}
 
-      <Card className="mt-10 bg-accent/10">
+      <Card className="mt-10 bg-card"> {/* Changed from bg-accent/10 to bg-card */}
         <CardHeader>
-            <CardTitle>Más Contenido Próximamente</CardTitle>
+            <CardTitle className="font-nunito font-bold">Más Contenido Próximamente</CardTitle>
         </CardHeader>
         <CardContent>
             <p className="text-muted-foreground">

@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -9,7 +10,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      "rounded-lg border bg-card text-card-foreground shadow-sm", // Default rounded-lg as per spec (8px via --radius)
       className
     )}
     {...props}
@@ -30,27 +31,29 @@ const CardHeader = React.forwardRef<
 CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
+  HTMLDivElement, // Changed from HTMLParagraphElement to HTMLDivElement for flexibility with h tags
+  React.HTMLAttributes<HTMLHeadingElement> // Changed from HTMLParagraphElement
+>(({ className, children, ...props }, ref) => ( // Added children to allow passing h-tags
+  <div // Changed from h3 to div
     ref={ref}
     className={cn(
-      "text-2xl font-semibold leading-none tracking-tight",
+      "text-2xl font-nunito font-bold leading-none tracking-tight", // Applied Nunito Bold
       className
     )}
     {...props}
-  />
+  >
+    {children} 
+  </div>
 ))
 CardTitle.displayName = "CardTitle"
 
 const CardDescription = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  HTMLParagraphElement, // Kept as HTMLParagraphElement
+  React.HTMLAttributes<HTMLParagraphElement> // Kept as HTMLParagraphElement
 >(({ className, ...props }, ref) => (
-  <div
+  <p // Changed from div to p for semantic correctness
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-sm text-muted-foreground font-sans", className)} // Explicitly Merriweather (font-sans)
     {...props}
   />
 ))
@@ -60,7 +63,7 @@ const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+  <div ref={ref} className={cn("p-6 pt-0 font-sans", className)} {...props} /> // Explicitly Merriweather
 ))
 CardContent.displayName = "CardContent"
 

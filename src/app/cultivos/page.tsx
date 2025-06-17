@@ -168,6 +168,8 @@ export default function CultivosPage() {
         setSelectedPlantType(plantTypeMapped);
         if (plantTypeQueryParam) {
             alertMsgParts.push(`Tipo de planta: ${capitalizeFirstLetter(plantTypeQueryParam)}${plantTypeMapped ? ` (${plantTypeMapped})` : plantTypeMapped === null && plantTypeQueryParam !== 'cualquiera' && plantTypeQueryParam !== 'comestibles' ? ' (interpretado como tipo no especificado)' : ' (interpretado como todos los tipos)'}`);
+        } else {
+          setSelectedPlantType(null); // Reset if not from test
         }
 
 
@@ -175,6 +177,8 @@ export default function CultivosPage() {
         setSelectedSpace(spaceMapped);
         if (spaceQueryParam) {
              alertMsgParts.push(`Espacio: ${capitalizeFirstLetter(spaceQueryParam)}${spaceMapped ? ` (${spaceMapped})` : ' (interpretado como todos los espacios)'}`);
+        } else {
+          setSelectedSpace(null); // Reset if not from test
         }
 
 
@@ -217,8 +221,6 @@ export default function CultivosPage() {
         
         setSelectedPrice(null);
         setSelectedDuration(null);
-        if (!spaceQueryParam) setSelectedSpace(null); // Reset space if not from test
-        if (!plantTypeQueryParam) setSelectedPlantType(null); // Reset plant type if not from test
         
     } else {
         setIsTestFilterActive(false);
@@ -334,9 +336,9 @@ export default function CultivosPage() {
     }
 
     alertMessageForPage = (
-      <Alert variant="default" className="bg-purple-50 border-purple-300 text-purple-700">
-        <MessageSquareText className="h-4 w-4 text-purple-600" />
-        <AlertTitle>Preferencias del Test Aplicadas</AlertTitle>
+      <Alert variant="default" className="bg-purple-50 border-purple-300 text-purple-700"> {/* Consider using accent color here */}
+        <MessageSquareText className="h-4 w-4 text-purple-600" /> {/* Consider using accent color here */}
+        <AlertTitle className="font-nunito font-semibold">Preferencias del Test Aplicadas</AlertTitle>
         <AlertDescription>
           {testFilterAlertMessage}
           {testRegionMessage}
@@ -347,9 +349,9 @@ export default function CultivosPage() {
     pageTitle = `Cultivos Filtrados para la Región: ${activeRegionNameForDisplay}`;
     pageDescription = `Explora los cultivos característicos de la región ${activeRegionNameForDisplay} según los filtros aplicados.`;
     alertMessageForPage = (
-      <Alert variant="default" className="bg-accent/10 border-accent/30 text-accent-foreground">
-        <Filter className="h-4 w-4 text-accent" />
-        <AlertTitle>Filtro Manual Activo</AlertTitle>
+      <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary-foreground">
+        <Filter className="h-4 w-4 text-primary" />
+        <AlertTitle className="font-nunito font-semibold">Filtro Manual Activo</AlertTitle>
         <AlertDescription>
           Mostrando cultivos para la región: <strong>{activeRegionNameForDisplay}</strong>.
         </AlertDescription>
@@ -359,9 +361,9 @@ export default function CultivosPage() {
     pageTitle = "Cultivos Filtrados (Todas las Regiones)";
     pageDescription = "Mostrando cultivos de todas las regiones, según los filtros aplicados.";
      alertMessageForPage = (
-      <Alert variant="default" className="bg-accent/10 border-accent/30 text-accent-foreground">
-        <Filter className="h-4 w-4 text-accent" />
-        <AlertTitle>Filtro Manual Activo</AlertTitle>
+      <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary-foreground">
+        <Filter className="h-4 w-4 text-primary" />
+        <AlertTitle className="font-nunito font-semibold">Filtro Manual Activo</AlertTitle>
         <AlertDescription>
           Mostrando cultivos de <strong>Todas las Regiones</strong>.
         </AlertDescription>
@@ -371,9 +373,9 @@ export default function CultivosPage() {
     pageTitle = `Cultivos de la Región ${activeRegionNameForDisplay}`;
     pageDescription = `Explora los cultivos característicos de la región ${activeRegionNameForDisplay}.`;
     alertMessageForPage = (
-      <Alert variant="default" className="bg-accent/10 border-accent/30 text-accent-foreground">
-        <MapPin className="h-4 w-4 text-accent" />
-        <AlertTitle>Filtro Activo por URL</AlertTitle>
+      <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary-foreground">
+        <MapPin className="h-4 w-4 text-primary" />
+        <AlertTitle className="font-nunito font-semibold">Filtro Activo por URL</AlertTitle>
         <AlertDescription>
           Mostrando cultivos para la región: <strong>{activeRegionNameForDisplay}</strong>.
         </AlertDescription>
@@ -383,9 +385,9 @@ export default function CultivosPage() {
     pageTitle = `Cultivos Sugeridos para tu Región: ${activeRegionNameForDisplay}`;
     pageDescription = `Basado en tu ubicación (aproximada), te sugerimos estos cultivos de la región ${activeRegionNameForDisplay}.`;
     alertMessageForPage = (
-       <Alert variant="default" className="bg-green-50 border-green-300 text-green-700">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertTitle>Región Detectada: {activeRegionNameForDisplay}</AlertTitle>
+       <Alert variant="default" className="bg-green-50 border-green-300 text-green-700"> {/* Use a theme-consistent green */}
+          <CheckCircle className="h-4 w-4 text-green-600" /> {/* Use a theme-consistent green */}
+          <AlertTitle className="font-nunito font-semibold">Región Detectada: {activeRegionNameForDisplay}</AlertTitle>
           <AlertDescription>
             Mostrando cultivos sugeridos para tu región. La detección de región es aproximada.
           </AlertDescription>
@@ -396,7 +398,7 @@ export default function CultivosPage() {
      alertMessageForPage = (
         <Alert>
             <HelpCircle className="h-4 w-4" />
-            <AlertTitle>Ubicación Obtenida</AlertTitle>
+            <AlertTitle className="font-nunito font-semibold">Ubicación Obtenida</AlertTitle>
             <AlertDescription>
             No pudimos determinar una región específica para tu ubicación. Mostrando todos los cultivos.
             </AlertDescription>
@@ -417,29 +419,29 @@ export default function CultivosPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+      <h1 className="text-3xl font-nunito font-bold tracking-tight text-foreground sm:text-4xl">
         {pageTitle}
       </h1>
 
       {filterSource !== 'test_params' && filterSource !== 'manual_specific' && filterSource !== 'manual_all' && filterSource !== 'url_region_only' && geolocationStatus === 'pending' && (
         <Alert>
           <LocateFixed className="h-4 w-4 animate-ping" />
-          <AlertTitle>Obteniendo Ubicación</AlertTitle>
+          <AlertTitle className="font-nunito font-semibold">Obteniendo Ubicación</AlertTitle>
           <AlertDescription>Estamos intentando detectar tu región para mostrarte cultivos relevantes...</AlertDescription>
         </Alert>
       )}
       {filterSource !== 'test_params' && filterSource !== 'manual_specific' && filterSource !== 'manual_all' && filterSource !== 'url_region_only' && geolocationStatus === 'error' && geolocationErrorMsg && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error de Geolocalización</AlertTitle>
+          <AlertTitle className="font-nunito font-semibold">Error de Geolocalización</AlertTitle>
           <AlertDescription>{geolocationErrorMsg} Mostrando todos los cultivos.</AlertDescription>
         </Alert>
       )}
       {alertMessageForPage}
       
-      <Card className="bg-primary">
+      <Card className="bg-background"> {/* Changed to bg-background for filter card */}
         <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2">
+          <CardTitle className="text-xl flex items-center gap-2 font-nunito font-bold">
             <Filter className="h-5 w-5" />
             Filtrar Cultivos
           </CardTitle>
@@ -447,7 +449,7 @@ export default function CultivosPage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="manualRegionSelect" className="text-sm font-medium">Región</Label>
+            <Label htmlFor="manualRegionSelect" className="text-sm font-nunito font-semibold">Región</Label>
             <Select 
               value={regionSelectValue} 
               onValueChange={(value) => {
@@ -455,7 +457,7 @@ export default function CultivosPage() {
                 setManualRegionFilterActive(true);
               }}
             >
-              <SelectTrigger id="manualRegionSelect">
+              <SelectTrigger id="manualRegionSelect" className="font-nunito">
                 <SelectValue placeholder="Seleccionar Región" />
               </SelectTrigger>
               <SelectContent>
@@ -465,48 +467,48 @@ export default function CultivosPage() {
             </Select>
           </div>
           <div>
-            <Label htmlFor="priceSelect" className="text-sm font-medium">Precio Estimado</Label>
+            <Label htmlFor="priceSelect" className="text-sm font-nunito font-semibold">Precio Estimado</Label>
             <Select value={selectedPrice || 'all'} onValueChange={(value) => setSelectedPrice(value === 'all' ? null : value)}>
-              <SelectTrigger id="priceSelect"><SelectValue placeholder="Todos los Precios" /></SelectTrigger>
+              <SelectTrigger id="priceSelect" className="font-nunito"><SelectValue placeholder="Todos los Precios" /></SelectTrigger>
               <SelectContent>
                 {priceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label htmlFor="durationSelect" className="text-sm font-medium">Duración</Label>
+            <Label htmlFor="durationSelect" className="text-sm font-nunito font-semibold">Duración</Label>
             <Select value={selectedDuration || 'all'} onValueChange={(value) => setSelectedDuration(value === 'all' ? null : value)}>
-              <SelectTrigger id="durationSelect"><SelectValue placeholder="Todas las Duraciones" /></SelectTrigger>
+              <SelectTrigger id="durationSelect" className="font-nunito"><SelectValue placeholder="Todas las Duraciones" /></SelectTrigger>
               <SelectContent>
                 {durationOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label htmlFor="spaceSelect" className="text-sm font-medium">Espacio Requerido</Label>
+            <Label htmlFor="spaceSelect" className="text-sm font-nunito font-semibold">Espacio Requerido</Label>
             <Select value={selectedSpace || 'all'} onValueChange={(value) => setSelectedSpace(value === 'all' ? null : value)}>
-              <SelectTrigger id="spaceSelect"><SelectValue placeholder="Todos los Espacios" /></SelectTrigger>
+              <SelectTrigger id="spaceSelect" className="font-nunito"><SelectValue placeholder="Todos los Espacios" /></SelectTrigger>
               <SelectContent>
                 {spaceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label htmlFor="plantTypeSelect" className="text-sm font-medium">Tipo de Planta</Label>
+            <Label htmlFor="plantTypeSelect" className="text-sm font-nunito font-semibold">Tipo de Planta</Label>
             <Select 
               value={selectedPlantType || 'all'} 
               onValueChange={(value) => setSelectedPlantType(value === 'all' ? null : value)}
             >
-              <SelectTrigger id="plantTypeSelect"><SelectValue placeholder="Todos los Tipos" /></SelectTrigger>
+              <SelectTrigger id="plantTypeSelect" className="font-nunito"><SelectValue placeholder="Todos los Tipos" /></SelectTrigger>
               <SelectContent>
                 {plantTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label htmlFor="difficultySelect" className="text-sm font-medium">Dificultad</Label>
+            <Label htmlFor="difficultySelect" className="text-sm font-nunito font-semibold">Dificultad</Label>
             <Select value={selectedDifficulty || 'all'} onValueChange={(value) => setSelectedDifficulty(value === 'all' ? null : value)}>
-              <SelectTrigger id="difficultySelect"><SelectValue placeholder="Todas las Dificultades" /></SelectTrigger>
+              <SelectTrigger id="difficultySelect" className="font-nunito"><SelectValue placeholder="Todas las Dificultades" /></SelectTrigger>
               <SelectContent>
                 {difficultyOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
               </SelectContent>
@@ -517,7 +519,7 @@ export default function CultivosPage() {
       
       <Card>
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="font-nunito font-bold">
             Fichas Detalladas de Cultivos
           </CardTitle>
           <CardDescription>
@@ -546,29 +548,29 @@ export default function CultivosPage() {
                     data-ai-hint={crop.dataAiHint}
                   />
                   <CardHeader>
-                    <CardTitle className="text-xl">{crop.name}</CardTitle>
+                    <CardTitle className="text-xl font-nunito font-bold">{crop.name}</CardTitle>
                     {(!activeRegionSlugForFiltering || 
                       filterSource === 'manual_all' || 
                       (filterSource === 'test_params' && (!regionFromTest || (manualRegionFilterActive && !manualRegionSlug)) )
                      ) && (
-                        <Badge variant="outline" className="mt-1 w-fit">{capitalizeFirstLetter(crop.regionSlug)}</Badge>
+                        <Badge variant="outline" className="mt-1 w-fit font-nunito">{capitalizeFirstLetter(crop.regionSlug)}</Badge>
                     )}
                   </CardHeader>
                   <CardContent className="flex-grow space-y-3">
                     <p className="text-sm text-muted-foreground mb-3">{crop.description}</p>
                     <div className="space-y-2 pt-2 border-t">
                         <div className="flex items-center">
-                            <span className="text-xs font-semibold mr-2 w-28">Dificultad:</span>
+                            <span className="text-xs font-nunito font-semibold mr-2 w-28">Dificultad:</span>
                             <div className="flex">
                                 {Array.from({ length: 5 }).map((_, i) => (
                                 <Star key={i} className={`h-4 w-4 ${i < crop.difficulty ? 'fill-yellow-400 text-yellow-500' : 'text-gray-300'}`} />
                                 ))}
                             </div>
                         </div>
-                        <Badge variant="outline">Precio: {crop.estimatedPrice}</Badge>
-                        <Badge variant="outline">Duración: {crop.duration}</Badge>
-                        <Badge variant="outline">Espacio: {crop.spaceRequired}</Badge>
-                        <Badge variant="outline">Tipo: {crop.plantType}</Badge>
+                        <Badge variant="outline" className="font-nunito">Precio: {crop.estimatedPrice}</Badge>
+                        <Badge variant="outline" className="font-nunito">Duración: {crop.duration}</Badge>
+                        <Badge variant="outline" className="font-nunito">Espacio: {crop.spaceRequired}</Badge>
+                        <Badge variant="outline" className="font-nunito">Tipo: {crop.plantType}</Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -577,7 +579,7 @@ export default function CultivosPage() {
           ) : (
              <Alert variant="default" className="mt-4">
                 <HelpCircle className="h-4 w-4" />
-                <AlertTitle>No se encontraron cultivos</AlertTitle>
+                <AlertTitle className="font-nunito font-semibold">No se encontraron cultivos</AlertTitle>
                 <AlertDescription>
                 {activeRegionSlugForFiltering && activeRegionNameForDisplay && filterSource !== 'manual_all' && filterSource !== 'none'
                     ? `No se encontraron cultivos que coincidan con los filtros aplicados para la región ${activeRegionNameForDisplay}. Prueba con otros filtros o regiones.`

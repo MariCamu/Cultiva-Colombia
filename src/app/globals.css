@@ -6,97 +6,97 @@
 
 @layer base {
   :root {
-    --background: 80 50% 98%; /* #FAFCF7 */
-    --foreground: 23 29% 33%; /* #6B4C3B (Marrón tierra) */
+    --background: 100 33% 94%; /* #EDF2E8 */
+    --foreground: 95 17% 30%; /* #6B875E - Adjusted for better contrast on #EDF2E8 */
 
-    --card: 100 27% 90%; /* #E1E8DE (Darker shade of #EDF2E8) */
-    --card-foreground: 100 20% 20%; /* #2E3D2A (Dark green for contrast) */
+    --card: 80 60% 99%; /* #FAFCF7 */
+    --card-foreground: 95 17% 30%; /* #6B875E */
 
-    --popover: 100 27% 90%; /* #E1E8DE */
-    --popover-foreground: 100 20% 20%; /* #2E3D2A */
+    --popover: 80 60% 99%; /* #FAFCF7 */
+    --popover-foreground: 95 17% 30%; /* #6B875E */
 
-    --primary: 100 27% 94%; /* #EDF2E8 (Very light green for buttons) */
-    --primary-foreground: 100 20% 20%; /* #2E3D2A (Dark green for contrast) */
+    --primary: 101 30% 45%; /* #70964F */
+    --primary-foreground: 80 60% 99%; /* #FAFCF7 */
 
-    --secondary: 101 30% 45%; /* #70964F (Medium green) */
-    --secondary-foreground: 80 50% 98%; /* #FAFCF7 (Background for contrast) */
+    --secondary: 100 33% 94%; /* #EDF2E8 - For secondary button background */
+    --secondary-foreground: 101 30% 45%; /* #70964F - For secondary button text */
 
-    --muted: 210 17% 93%; /* #EAECEF (Lighter version of E5E8EB) */
-    --muted-foreground: 23 29% 45%; /* #7C6B61 (Lighter Marrón tierra) */
+    --muted: 210 17% 96%; /* Lighter version of E5E8EB for muted backgrounds */
+    --muted-foreground: 95 17% 55%; /* Lighter version of #6B875E */
 
-    --accent: 95 17% 45%; /* #6B875E (Another green for accent) */
-    --accent-foreground: 80 50% 98%; /* #FAFCF7 (Background for contrast) */
+    --accent: 28 90% 69%; /* #F6A967 - Orange */
+    --accent-foreground: 23 29% 20%; /* Darker brown for text on orange */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 210 17% 91%; /* #E5E8EB (Light gray) */
-    --input: 210 17% 91%; /* #E5E8EB */
-    --ring: 101 30% 45%; /* #70964F (Secondary color for ring) */
+    --border: 210 17% 91%; /* #E5E8EB */
+    --input: 80 60% 99%; /* #FAFCF7 - Using light background for inputs */
+    --ring: 101 30% 46%; /* #73964F - For focus border */
 
-    --radius: 0.5rem;
+    --radius: 0.5rem; /* 8px */
 
-    --chart-1: 100 27% 94%; /* #EDF2E8 (Primary) */
-    --chart-2: 95 17% 45%; /* #6B875E (Accent) */
+    --chart-1: 101 30% 45%; /* --primary */
+    --chart-2: 28 90% 69%; /* --accent */
     --chart-3: 198 60.1% 40%;
     --chart-4: 43 74% 66.3%;
     --chart-5: 27 82.2% 61.2%;
 
     /* Sidebar specific colors */
-    --sidebar-background: 80 50% 95%; /* Slightly darker than main background: #F0F5ED */
-    --sidebar-foreground: 23 29% 25%; /* Darker Marrón tierra for sidebar text */
-    --sidebar-primary: 100 27% 90%; /* Slightly darker primary for sidebar: #E1E8DE */
-    --sidebar-primary-foreground: 100 20% 15%; /* Darker green for contrast */
-    --sidebar-accent: 95 17% 40%; /* Slightly darker accent for sidebar: #5F7A54 */
-    --sidebar-accent-foreground: 80 50% 98%; /* Background for contrast */
-    --sidebar-border: 210 17% 88%; /* Slightly darker border for sidebar: #DDE1E6 */
-    --sidebar-ring: 101 30% 40%; /* Slightly darker ring for sidebar */
+    --sidebar-background: 100 33% 92%; /* Slightly darker #EDF2E8 */
+    --sidebar-foreground: 95 17% 25%; 
+    --sidebar-primary: 101 30% 40%; 
+    --sidebar-primary-foreground: 80 60% 98%;
+    --sidebar-accent: 28 90% 65%;
+    --sidebar-accent-foreground: 23 29% 15%;
+    --sidebar-border: 210 17% 88%;
+    --sidebar-ring: 101 30% 40%;
   }
 
   .dark {
-    --background: 100 10% 10%; /* #1A1C19 (Dark Greenish Gray) */
-    --foreground: 80 50% 90%; /* #DCEBDB (Light greenish tint for text) */
+    --background: 95 10% 10%; /* Dark base for contrast */
+    --foreground: 100 30% 85%; /* Light green tint for text */
 
-    --card: 100 10% 15%; /* #232622 (Darker green tint for cards) */
-    --card-foreground: 80 50% 90%; /* #DCEBDB */
+    --card: 95 10% 12%; /* Dark card */
+    --card-foreground: 100 30% 85%;
 
-    --popover: 100 10% 15%; /* #232622 */
-    --popover-foreground: 80 50% 90%; /* #DCEBDB */
+    --popover: 95 10% 12%;
+    --popover-foreground: 100 30% 85%;
 
-    --primary: 100 15% 30%; /* #424D3F (Darker, desaturated version of light primary) */
-    --primary-foreground: 100 25% 85%; /* #C9D6C6 (Light green for contrast) */
+    --primary: 101 30% 55%; /* Lighter primary green */
+    --primary-foreground: 95 10% 10%; /* Dark text for contrast */
 
-    --secondary: 101 25% 65%; /* #8CB97B (Lighter version of light secondary) */
-    --secondary-foreground: 100 10% 10%; /* Dark background for contrast */
+    --secondary: 95 10% 15%; /* Dark secondary button bg */
+    --secondary-foreground: 101 30% 55%; /* Lighter green text */
+    
+    --muted: 95 10% 20%;
+    --muted-foreground: 100 20% 70%;
 
-    --muted: 100 10% 15%; /* #232622 (Darker muted) */
-    --muted-foreground: 100 10% 60%; /* #90998C (Lighter muted foreground) */
-
-    --accent: 95 15% 60%; /* #85A07A (Lighter version of light accent) */
-    --accent-foreground: 100 10% 10%; /* Dark background for contrast */
+    --accent: 28 80% 60%; /* Slightly desaturated orange */
+    --accent-foreground: 28 30% 90%; /* Light text on orange */
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 100 10% 20%; /* #2E332D (Dark border) */
-    --input: 100 10% 20%;
-    --ring: 101 25% 65%; /* Lighter secondary for ring */
+    --border: 95 10% 25%; /* Darker border */
+    --input: 95 10% 15%; /* Dark input background */
+    --ring: 101 30% 50%; /* Lighter green for ring */
 
-    --chart-1: 100 15% 30%; /* Dark primary */
-    --chart-2: 95 15% 60%; /* Dark accent */
+    --chart-1: 101 30% 55%;
+    --chart-2: 28 80% 60%;
     --chart-3: 198 52% 50%;
     --chart-4: 43 66% 74%;
     --chart-5: 27 74% 70%;
 
     /* Sidebar specific colors for dark theme */
-    --sidebar-background: 100 10% 8%; /* #141713 (Even darker for sidebar) */
-    --sidebar-foreground: 80 50% 85%; /* #CFE3CA */
-    --sidebar-primary: 100 15% 25%; /* #384235 (Darker sidebar primary) */
-    --sidebar-primary-foreground: 100 25% 80%; /* #C0D1BB */
-    --sidebar-accent: 95 15% 55%; /* #7B9670 (Darker sidebar accent) */
-    --sidebar-accent-foreground: 100 10% 8%;
-    --sidebar-border: 100 10% 15%; /* #232622 */
-    --sidebar-ring: 101 25% 60%; /* Lighter ring for sidebar */
+    --sidebar-background: 95 10% 8%; 
+    --sidebar-foreground: 100 30% 80%;
+    --sidebar-primary: 101 30% 50%;
+    --sidebar-primary-foreground: 95 10% 5%;
+    --sidebar-accent: 28 80% 55%;
+    --sidebar-accent-foreground: 28 30% 85%;
+    --sidebar-border: 95 10% 20%;
+    --sidebar-ring: 101 30% 50%;
   }
 }
 
@@ -105,9 +105,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans; /* Merriweather will be font-sans */
   }
-  /* Leaflet map container */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-nunito font-bold; /* Nunito Bold for headers */
+  }
   /*
   .leaflet-container {
     @apply h-[500px] w-full rounded-lg shadow-md;

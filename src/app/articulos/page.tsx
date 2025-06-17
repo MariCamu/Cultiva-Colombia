@@ -3,12 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 export default function ArticulosPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+      <h1 className="text-3xl font-nunito font-bold tracking-tight text-foreground sm:text-4xl">
         Artículos
       </h1>
       <Card>
         <CardHeader>
-          <CardTitle>Centro de Conocimiento</CardTitle>
+          <CardTitle className="font-nunito font-bold">Centro de Conocimiento</CardTitle>
           <CardDescription>Artículos informativos y guías sobre agricultura.</CardDescription>
         </CardHeader>
         <CardContent>

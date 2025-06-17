@@ -10,7 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-pt-sans)', 'sans-serif'],
+        sans: ['var(--font-merriweather)', 'sans-serif'], // Merriweather for body
+        nunito: ['var(--font-nunito)', 'sans-serif'],    // Nunito for headers, UI
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -65,9 +66,9 @@ export default {
         },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        lg: 'var(--radius)', /* 8px */
+        md: 'calc(var(--radius) - 2px)', /* 6px */
+        sm: 'calc(var(--radius) - 4px)', /* 4px */
       },
       keyframes: {
         'accordion-down': {

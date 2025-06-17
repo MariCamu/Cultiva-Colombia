@@ -71,7 +71,7 @@ export default function HomePage() {
       >
         <div className="absolute inset-0 bg-black/40"></div>
         <div className="relative z-10 container mx-auto px-4 text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h1 className="text-4xl font-nunito font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
             Cultiva con conciencia. Conoce lo que crece en tu tierra
           </h1>
           <p className="mt-4 text-lg leading-7 text-neutral-200 max-w-2xl mx-auto font-sans">
@@ -86,20 +86,20 @@ export default function HomePage() {
                     type="search"
                     name="q"
                     placeholder="¿Qué planta estás buscando?"
-                    className="pl-10 h-12 text-base bg-white/90 text-gray-900 placeholder-gray-500 focus:bg-white" 
+                    className="pl-10 h-12 text-base bg-white/90 text-gray-900 placeholder-gray-500 focus:bg-white font-nunito" 
                   />
                 </div>
                 <Button 
                   type="submit" 
                   size="lg"
-                  className="bg-accent hover:bg-accent/90 text-accent-foreground h-12"
+                  variant="default" // Explicitly primary
                 >
                   Explorar Cultivos
                 </Button>
             </form>
           </div>
           <div className="text-center mt-6">
-            <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+            <Button asChild size="lg" variant="default">
               <Link href="/test">Haz el test y encuentra tu planta ideal</Link>
             </Button>
           </div>
@@ -107,7 +107,7 @@ export default function HomePage() {
       </section>
 
       <section className="py-12">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground text-center mb-8">Cultivos Populares en Colombia</h2>
+        <h2 className="text-3xl font-nunito font-bold tracking-tight text-foreground text-center mb-8">Cultivos Populares en Colombia</h2>
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8 px-4">
           {popularCrops.map((crop) => (
             <Card key={crop.name} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
@@ -120,17 +120,17 @@ export default function HomePage() {
                 data-ai-hint={crop.hint}
               />
               <CardHeader>
-                <CardTitle>{crop.name}</CardTitle>
+                <CardTitle className="font-nunito font-bold">{crop.name}</CardTitle>
               </CardHeader>
               <CardContent className="flex-grow space-y-2">
                 <div className="flex flex-wrap gap-2">
                   {crop.tags.map(tag => (
-                    <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                    <Badge key={tag} variant="outline" className="text-xs font-nunito">{tag}</Badge>
                   ))}
                 </div>
               </CardContent>
               <div className="p-6 pt-2">
-                <Button asChild variant="link" className="p-0 h-auto text-primary">
+                <Button asChild variant="link" className="p-0 h-auto text-primary font-nunito font-semibold">
                   <Link href={crop.href}>Ver detalles <ExternalLink className="ml-1 h-4 w-4" /></Link>
                 </Button>
               </div>
@@ -141,12 +141,12 @@ export default function HomePage() {
       
       <section className="grid md:grid-cols-2 gap-8 items-center py-12 px-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground">Descubra los Cultivos de Colombia</h2>
+          <h2 className="text-3xl font-nunito font-bold tracking-tight text-foreground">Descubra los Cultivos de Colombia</h2>
           <p className="mt-4 text-muted-foreground">
             Navegue por nuestro mapa interactivo para explorar los cultivos asociados a cada región de Colombia. Aprenda sobre su siembra, cuidado y cosecha de una manera fácil y divertida.
           </p>
            <div className="mt-8">
-            <Button asChild size="lg">
+            <Button asChild size="lg" variant="default">
               <Link href="/mapa">Explorar Mapa Interactivo</Link>
             </Button>
           </div>
@@ -164,7 +164,7 @@ export default function HomePage() {
       </section>
 
       <section className="py-12 bg-muted/30">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground text-center mb-10">Artículos Recientes</h2>
+        <h2 className="text-3xl font-nunito font-bold tracking-tight text-foreground text-center mb-10">Artículos Recientes</h2>
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8 px-4">
           {recentArticles.map((article) => (
             <Card key={article.title} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
@@ -177,7 +177,7 @@ export default function HomePage() {
                 data-ai-hint={article.hint}
               />
               <CardHeader>
-                <CardTitle className="text-xl">{article.title}</CardTitle>
+                <CardTitle className="text-xl font-nunito font-bold">{article.title}</CardTitle>
               </CardHeader>
               <CardContent className="flex-grow">
                 <p className="text-muted-foreground text-sm">{article.description}</p>
@@ -193,7 +193,7 @@ export default function HomePage() {
       </section>
 
        <section className="text-center py-12 px-4">
-         <h2 className="text-3xl font-bold tracking-tight text-foreground">Guías para Todos</h2>
+         <h2 className="text-3xl font-nunito font-bold tracking-tight text-foreground">Guías para Todos</h2>
          <p className="mt-4 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto">
             Recursos educativos diseñados para niños, jóvenes y familias. Aprende de forma práctica y fomenta el amor por la tierra.
          </p>
@@ -205,12 +205,12 @@ export default function HomePage() {
        </section>
 
        <section className="text-center py-16 px-4 bg-primary/5">
-         <h2 className="text-3xl font-bold tracking-tight text-foreground">Únete a Nuestra Comunidad</h2>
+         <h2 className="text-3xl font-nunito font-bold tracking-tight text-foreground">Únete a Nuestra Comunidad</h2>
          <p className="mt-4 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto">
             ¿Eres agricultor, investigador o apasionado por el campo? ¡Tu conocimiento y experiencia son valiosos! Ayúdanos a enriquecer esta plataforma.
          </p>
          <div className="mt-8">
-            <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+            <Button size="lg" variant="default">
                 Haz Parte de la Comunidad
             </Button>
          </div>
