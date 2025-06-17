@@ -1,7 +1,7 @@
 
 import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Leaf, BookOpenText } from "lucide-react";
+import { Leaf, ToyBrick } from "lucide-react";
 
 const cultivoGuides = [
   {
@@ -9,7 +9,7 @@ const cultivoGuides = [
     description: "Aprende a cultivar tus plantas favoritas en espacios reducidos utilizando macetas.",
     imgSrc: "https://placehold.co/400x300.png",
     dataAiHint: "potted plants",
-    href: "#", // En el futuro podría ser /guias/cultivo/maceta
+    href: "#", 
   },
   {
     title: "Cultivo en Jardín",
@@ -47,7 +47,7 @@ const actividadesEscolares = [
     description: "Actividades lúdicas para enseñar sobre germinación, crecimiento y cosecha.",
     imgSrc: "https://placehold.co/400x300.png",
     dataAiHint: "kids gardening",
-    href: "#", // En el futuro podría ser /guias/escolar/juegos
+    href: "#", 
   },
   {
     title: "Montaje de Huerta Escolar",
@@ -116,14 +116,17 @@ export default function GuiasPage() {
 
       <section className="space-y-6">
         <div className="flex items-center gap-3">
-          <BookOpenText className="h-8 w-8 text-primary" />
-          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Actividades Escolares
+          <ToyBrick className="h-8 w-8 text-purple-600" />
+          <h2 className="text-2xl font-bold tracking-tight text-purple-700 sm:text-3xl">
+            Actividades Escolares Divertidas
           </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {actividadesEscolares.map((activity) => (
-            <Card key={activity.title} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+            <Card 
+              key={activity.title} 
+              className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col bg-purple-50 border-purple-200 hover:border-purple-300"
+            >
               <div className="relative w-full h-56">
                 <Image
                   src={activity.imgSrc}
@@ -134,13 +137,13 @@ export default function GuiasPage() {
                 />
               </div>
               <CardHeader>
-                <CardTitle className="text-xl font-headline">{activity.title}</CardTitle>
+                <CardTitle className="text-xl font-headline text-purple-800">{activity.title}</CardTitle>
               </CardHeader>
               <CardContent className="flex-grow">
-                <p className="text-sm text-muted-foreground">{activity.description}</p>
+                <p className="text-sm text-purple-700/90">{activity.description}</p>
               </CardContent>
               {/* <CardFooter>
-                <Button asChild variant="outline" className="w-full">
+                <Button asChild variant="outline" className="w-full border-purple-300 text-purple-700 hover:bg-purple-100">
                   <Link href={activity.href}>Ver Actividad</Link>
                 </Button>
               </CardFooter> */}
