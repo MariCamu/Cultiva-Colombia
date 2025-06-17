@@ -6,97 +6,97 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 137 36% 74%; /* Verde claro #A4D4AE */
+    --foreground: 23 29% 33%; /* Marrón tierra #6B4C3B */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 40 100% 95%; /* Beige claro #FFF6E5 */
+    --card-foreground: 23 29% 33%; /* Marrón tierra #6B4C3B */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 40 100% 95%; /* Beige claro #FFF6E5 */
+    --popover-foreground: 23 29% 33%; /* Marrón tierra #6B4C3B */
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 141 35% 45%; /* Verde intenso #4C9A67 */
+    --primary-foreground: 137 36% 95%; /* Un verde muy pálido para contraste */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 141 35% 65%; /* Verde intenso más claro */
+    --secondary-foreground: 23 29% 33%; /* Marrón tierra */
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 0 0% 93%; /* Gris claro un poco más oscuro que el borde para fondos sutiles */
+    --muted-foreground: 23 29% 45%; /* Marrón tierra más claro */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 28 90% 69%; /* Naranja cálido #F6A967 */
+    --accent-foreground: 25 60% 25%; /* Marrón oscuro/naranja para contraste */
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 0 0% 91%; /* Gris claro #E8E8E8 */
+    --input: 0 0% 93%; /* Gris claro, ligeramente diferente al borde */
+    --ring: 141 35% 45%; /* Verde intenso #4C9A67 */
 
     --radius: 0.5rem;
 
-    --chart-1: 222.2 47.4% 11.2%;
-    --chart-2: 173 58.8% 39.4%;
+    --chart-1: 141 35% 45%; /* Verde intenso */
+    --chart-2: 28 90% 69%; /* Naranja cálido */
     --chart-3: 198 60.1% 40%;
     --chart-4: 43 74% 66.3%;
     --chart-5: 27 82.2% 61.2%;
 
     /* Sidebar specific colors */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222.2 84% 4.9%;
-    --sidebar-primary: 222.2 47.4% 11.2%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 210 40% 96.1%;
-    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 222.2 84% 4.9%;
+    --sidebar-background: 137 36% 70%; /* Ligeramente más oscuro que el fondo general */
+    --sidebar-foreground: 23 29% 25%; /* Marrón tierra más oscuro para sidebar */
+    --sidebar-primary: 141 35% 45%; /* Verde intenso */
+    --sidebar-primary-foreground: 137 36% 95%; /* Verde muy pálido */
+    --sidebar-accent: 28 90% 65%; /* Naranja cálido ligeramente más oscuro */
+    --sidebar-accent-foreground: 25 60% 20%; /* Marrón oscuro/naranja más oscuro */
+    --sidebar-border: 0 0% 88%; /* Gris claro un poco más oscuro para bordes sidebar */
+    --sidebar-ring: 141 35% 45%; /* Verde intenso */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 120 10% 10%; /* Verde/marrón oscuro desaturado */
+    --foreground: 40 100% 95%; /* Beige claro #FFF6E5 */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 120 10% 15%; /* Ligeramente más claro que el fondo oscuro */
+    --card-foreground: 40 100% 95%; /* Beige claro */
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 120 10% 15%;
+    --popover-foreground: 40 100% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 137 36% 74%; /* Verde claro #A4D4AE */
+    --primary-foreground: 141 35% 15%; /* Verde oscuro intenso para contraste */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 137 36% 54%; /* Verde claro más oscuro */
+    --secondary-foreground: 40 100% 95%; /* Beige claro */
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 0% 20%; /* Gris oscuro */
+    --muted-foreground: 0 0% 60%; /* Gris medio */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 28 55% 58%; /* Naranja #D48C57 (desaturado/oscuro para dark mode) */
+    --accent-foreground: 40 100% 90%; /* Beige/amarillo muy claro */
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 210 40% 98%;
+    --border: 0 0% 25%; /* Gris oscuro para bordes */
+    --input: 0 0% 22%; /* Gris oscuro para inputs */
+    --ring: 137 36% 74%; /* Verde claro #A4D4AE */
 
-    --chart-1: 210 40% 98%;
-    --chart-2: 173 50% 48%;
+    --chart-1: 137 36% 74%; /* Verde claro */
+    --chart-2: 28 55% 58%; /* Naranja oscuro/desaturado */
     --chart-3: 198 52% 50%;
     --chart-4: 43 66% 74%;
     --chart-5: 27 74% 70%;
 
     /* Sidebar specific colors for dark theme */
-    --sidebar-background: 222.2 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 40% 98%;
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 210 40% 98%;
+    --sidebar-background: 120 10% 8%; /* Aún más oscuro que el fondo general */
+    --sidebar-foreground: 40 100% 90%; /* Beige/amarillo muy claro */
+    --sidebar-primary: 137 36% 74%; /* Verde claro */
+    --sidebar-primary-foreground: 141 35% 10%; /* Verde muy oscuro */
+    --sidebar-accent: 28 55% 55%; /* Naranja oscuro/desaturado */
+    --sidebar-accent-foreground: 40 100% 85%; /* Beige/amarillo */
+    --sidebar-border: 0 0% 18%; /* Gris muy oscuro para bordes sidebar */
+    --sidebar-ring: 137 36% 74%; /* Verde claro */
   }
 }
 
