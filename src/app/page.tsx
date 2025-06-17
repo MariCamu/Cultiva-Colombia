@@ -13,24 +13,24 @@ const popularCrops = [
     imgSrc: "https://placehold.co/300x200.png", 
     imgAlt: "Planta de café", 
     hint: "coffee beans", 
-    href: "/cultivos/cafe",
-    tags: ["Región: Andina", "Dificultad: Media", "Arbusto"] 
+    href: "/cultivos/cafe_andino", // Adjusted href to match sample data if desired, or keep generic
+    tags: ["Región: Andina", "Dificultad: Difícil", "Tipo: Frutal"] 
   },
   { 
     name: "Papa", 
     imgSrc: "https://placehold.co/300x200.png", 
     imgAlt: "Cultivo de papa", 
     hint: "potato harvest", 
-    href: "/cultivos/papa",
-    tags: ["Región: Andina", "Dificultad: Fácil", "Tubérculo"]
+    href: "/cultivos/papa_andina", // Adjusted href
+    tags: ["Región: Andina", "Dificultad: Fácil", "Tipo: Tubérculo"]
   },
   { 
     name: "Maíz", 
     imgSrc: "https://placehold.co/300x200.png", 
     imgAlt: "Planta de maíz", 
     hint: "corn field", 
-    href: "/cultivos/maiz",
-    tags: ["Región: Varias", "Dificultad: Fácil", "Cereal"]
+    href: "/cultivos/maiz", // Generic href
+    tags: ["Región: Varias", "Dificultad: Fácil", "Tipo: Cereal"]
   },
 ];
 
