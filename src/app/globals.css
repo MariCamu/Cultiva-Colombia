@@ -9,11 +9,11 @@
     --background: 80 50% 98%; /* #FAFCF7 */
     --foreground: 23 29% 33%; /* #6B4C3B (Marrón tierra) */
 
-    --card: 40 100% 95%; /* #FFF6E5 (Beige claro) */
-    --card-foreground: 23 29% 33%; /* #6B4C3B */
+    --card: 100 27% 90%; /* #E1E8DE (Darker shade of #EDF2E8) */
+    --card-foreground: 100 20% 20%; /* #2E3D2A (Dark green for contrast) */
 
-    --popover: 40 100% 95%; /* #FFF6E5 */
-    --popover-foreground: 23 29% 33%; /* #6B4C3B */
+    --popover: 100 27% 90%; /* #E1E8DE */
+    --popover-foreground: 100 20% 20%; /* #2E3D2A */
 
     --primary: 100 27% 94%; /* #EDF2E8 (Very light green for buttons) */
     --primary-foreground: 100 20% 20%; /* #2E3D2A (Dark green for contrast) */
@@ -57,11 +57,11 @@
     --background: 100 10% 10%; /* #1A1C19 (Dark Greenish Gray) */
     --foreground: 80 50% 90%; /* #DCEBDB (Light greenish tint for text) */
 
-    --card: 100 10% 12%; /* #1E211D (Slightly lighter than dark background) */
+    --card: 100 10% 15%; /* #232622 (Darker green tint for cards) */
     --card-foreground: 80 50% 90%; /* #DCEBDB */
 
-    --popover: 100 10% 12%;
-    --popover-foreground: 80 50% 90%;
+    --popover: 100 10% 15%; /* #232622 */
+    --popover-foreground: 80 50% 90%; /* #DCEBDB */
 
     --primary: 100 15% 30%; /* #424D3F (Darker, desaturated version of light primary) */
     --primary-foreground: 100 25% 85%; /* #C9D6C6 (Light green for contrast) */
