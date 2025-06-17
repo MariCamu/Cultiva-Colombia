@@ -3,7 +3,7 @@
 
 import { useState, type FormEvent, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { analyzePlantImage, type AnalyzePlantImageOutput } from '@/ai/flows/detect-crop-disease'; // Updated import
+import { analyzePlantImage, type AnalyzePlantImageOutput } from '@/ai/flows/detect-crop-disease';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,7 +51,7 @@ export function DetectionForm() {
 
     try {
       const photoDataUri = await fileToDataUri(file);
-      const result = await analyzePlantImage({ photoDataUri }); // Updated function call
+      const result = await analyzePlantImage({ photoDataUri });
       setAnalysisResult(result);
     } catch (e) {
       console.error(e);
@@ -64,7 +64,6 @@ export function DetectionForm() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
-      // Validate file type and size (optional)
       const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
       if (!allowedTypes.includes(selectedFile.type)) {
         setError('Tipo de archivo no permitido. Sube PNG, JPG o WEBP.');
@@ -95,9 +94,9 @@ export function DetectionForm() {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-xl">
+    <Card className="w-full max-w-2xl mx-auto shadow-xl bg-card">
       <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2 font-nunito font-bold">
+        <CardTitle className="text-2xl flex items-center gap-2">
             <Microscope className="h-7 w-7 text-primary" />
             Análisis IA de Plantas
         </CardTitle>
@@ -117,7 +116,7 @@ export function DetectionForm() {
               type="file"
               accept="image/png, image/jpeg, image/webp"
               onChange={handleFileChange}
-              className="file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 file:border-0 file:rounded-md file:px-3 file:py-1.5 font-nunito"
+              className="file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 file:border-0 file:rounded-md file:px-3 file:py-1.5"
               disabled={isLoading}
             />
           </div>
@@ -160,7 +159,7 @@ export function DetectionForm() {
         {error && (
           <Alert variant="destructive" className="mt-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle className="font-nunito font-semibold">Error</AlertTitle>
+            <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -168,17 +167,17 @@ export function DetectionForm() {
         {analysisResult && (
           <Card className="mt-6 bg-background/50">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-nunito font-bold">
+              <CardTitle className="flex items-center gap-2">
                 <FlaskConical className="h-6 w-6 text-primary" />
                 Resultados del Análisis IA
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {!analysisResult.identification.isPlant ? (
-                 <Alert variant="default" className="border-orange-300 bg-orange-50 text-orange-700">
-                    <FileQuestion className="h-5 w-5 text-orange-600" />
-                    <AlertTitle className="font-nunito font-semibold">No se detectó una planta</AlertTitle>
-                    <AlertDescription>
+                 <Alert variant="default" className="border-accent/30 bg-accent/10 text-accent-foreground">
+                    <FileQuestion className="h-5 w-5 text-accent" />
+                    <AlertTitle>No se detectó una planta</AlertTitle>
+                    <AlertDescription className="font-sans">
                         La IA no pudo identificar claramente una planta en la imagen. Intenta con otra foto donde la planta sea el sujeto principal y esté bien iluminada.
                     </AlertDescription>
                 </Alert>
@@ -189,11 +188,11 @@ export function DetectionForm() {
                         <Sprout className="h-5 w-5 text-green-600" />
                         Identificación de la Planta
                     </CardTitle>
-                    <div className="space-y-1 text-sm">
-                        <p><strong className="font-nunito font-semibold">¿Es una planta?</strong> <Badge variant={analysisResult.identification.isPlant ? "default" : "destructive"} className="font-nunito">{analysisResult.identification.isPlant ? 'Sí' : 'No'}</Badge></p>
+                    <div className="space-y-1 text-sm font-sans">
+                        <p><strong className="font-nunito font-semibold">¿Es una planta?</strong> <Badge variant={analysisResult.identification.isPlant ? "default" : "destructive"}>{analysisResult.identification.isPlant ? 'Sí' : 'No'}</Badge></p>
                         {analysisResult.identification.commonName && <p><strong className="font-nunito font-semibold">Nombre Común:</strong> {analysisResult.identification.commonName}</p>}
-                        {analysisResult.identification.scientificName && <p><strong className="font-nunito font-semibold">Nombre Científico:</strong> <em>{analysisResult.identification.scientificName}</em></p>}
-                        {!(analysisResult.identification.commonName || analysisResult.identification.scientificName) && <p className="text-muted-foreground">La IA confirmó que es una planta, pero no pudo determinar la especie específica con esta imagen.</p>}
+                        {analysisResult.identification.scientificName && <p><strong className="font-nunito font-semibold">Nombre Científico:</strong> <em className="font-sans italic">{analysisResult.identification.scientificName}</em></p>}
+                        {!(analysisResult.identification.commonName || analysisResult.identification.scientificName) && <p className="text-muted-foreground font-sans">La IA confirmó que es una planta, pero no pudo determinar la especie específica con esta imagen.</p>}
                     </div>
                   </Card>
 
@@ -208,18 +207,18 @@ export function DetectionForm() {
                         </p>
 
                         {analysisResult.health.problems && analysisResult.health.problems.length > 0 && (
-                        <div className="mt-3">
+                        <div className="mt-3 font-sans">
                             <h4 className="font-nunito font-semibold text-md mb-1">Problemas Detectados:</h4>
                             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground pl-2">
                             {analysisResult.health.problems.map((problem, index) => (
-                                <li key={index}><strong className="font-nunito font-semibold">{problem.name}:</strong> {problem.description}</li>
+                                <li key={index}><strong className="font-nunito font-semibold text-card-foreground">{problem.name}:</strong> {problem.description}</li>
                             ))}
                             </ul>
                         </div>
                         )}
 
                         {analysisResult.health.suggestions && analysisResult.health.suggestions.length > 0 && (
-                        <div className="mt-4">
+                        <div className="mt-4 font-sans">
                             <h4 className="font-nunito font-semibold text-md mb-1 flex items-center gap-2">
                                 <List className="h-5 w-5 text-primary" />
                                 Sugerencias:
@@ -232,7 +231,7 @@ export function DetectionForm() {
                         </div>
                         )}
                          {(!analysisResult.health.problems || analysisResult.health.problems.length === 0) && !analysisResult.health.isHealthy && (
-                             <p className="text-sm text-muted-foreground mt-2">La IA indica que la planta podría no estar completamente saludable, pero no se especificaron problemas concretos. Considera revisar el entorno y cuidados generales.</p>
+                             <p className="text-sm text-muted-foreground mt-2 font-sans">La IA indica que la planta podría no estar completamente saludable, pero no se especificaron problemas concretos. Considera revisar el entorno y cuidados generales.</p>
                          )}
                     </Card>
                   )}
