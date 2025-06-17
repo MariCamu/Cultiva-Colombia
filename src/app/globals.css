@@ -6,97 +6,97 @@
 
 @layer base {
   :root {
-    --background: 100 27% 94%; /* #EDF2E8 */
-    --foreground: 23 29% 33%; /* Marrón tierra #6B4C3B */
+    --background: 80 50% 98%; /* #FAFCF7 */
+    --foreground: 23 29% 33%; /* #6B4C3B (Marrón tierra) */
 
-    --card: 40 100% 95%; /* Beige claro #FFF6E5 */
-    --card-foreground: 23 29% 33%; /* Marrón tierra #6B4C3B */
+    --card: 40 100% 95%; /* #FFF6E5 (Beige claro) */
+    --card-foreground: 23 29% 33%; /* #6B4C3B */
 
-    --popover: 40 100% 95%; /* Beige claro #FFF6E5 */
-    --popover-foreground: 23 29% 33%; /* Marrón tierra #6B4C3B */
+    --popover: 40 100% 95%; /* #FFF6E5 */
+    --popover-foreground: 23 29% 33%; /* #6B4C3B */
 
-    --primary: 95 26% 44%; /* #6B914F */
-    --primary-foreground: 0 0% 100%; /* White for contrast on new primary */
+    --primary: 100 27% 94%; /* #EDF2E8 (Very light green for buttons) */
+    --primary-foreground: 100 20% 20%; /* #2E3D2A (Dark green for contrast) */
 
-    --secondary: 141 35% 65%; /* Verde intenso más claro (kept from previous user-defined theme) */
-    --secondary-foreground: 23 29% 33%; /* Marrón tierra (kept from previous user-defined theme) */
+    --secondary: 101 30% 45%; /* #70964F (Medium green) */
+    --secondary-foreground: 80 50% 98%; /* #FAFCF7 (Background for contrast) */
 
-    --muted: 0 0% 93%; /* Gris claro un poco más oscuro que el borde para fondos sutiles (kept from previous user-defined theme) */
-    --muted-foreground: 23 29% 45%; /* Marrón tierra más claro (kept from previous user-defined theme) */
+    --muted: 210 17% 93%; /* #EAECEF (Lighter version of E5E8EB) */
+    --muted-foreground: 23 29% 45%; /* #7C6B61 (Lighter Marrón tierra) */
 
-    --accent: 28 90% 69%; /* Naranja cálido #F6A967 (kept from previous user-defined theme) */
-    --accent-foreground: 25 60% 25%; /* Marrón oscuro/naranja para contraste (kept from previous user-defined theme) */
+    --accent: 95 17% 45%; /* #6B875E (Another green for accent) */
+    --accent-foreground: 80 50% 98%; /* #FAFCF7 (Background for contrast) */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 91%; /* Gris claro #E8E8E8 (kept from previous user-defined theme) */
-    --input: 0 0% 93%; /* Gris claro, ligeramente diferente al borde (kept from previous user-defined theme) */
-    --ring: 95 26% 44%; /* #6B914F (new primary) */
+    --border: 210 17% 91%; /* #E5E8EB (Light gray) */
+    --input: 210 17% 91%; /* #E5E8EB */
+    --ring: 101 30% 45%; /* #70964F (Secondary color for ring) */
 
     --radius: 0.5rem;
 
-    --chart-1: 95 26% 44%; /* #6B914F (new primary) */
-    --chart-2: 28 90% 69%; /* Naranja cálido #F6A967 (accent) */
+    --chart-1: 100 27% 94%; /* #EDF2E8 (Primary) */
+    --chart-2: 95 17% 45%; /* #6B875E (Accent) */
     --chart-3: 198 60.1% 40%;
     --chart-4: 43 74% 66.3%;
     --chart-5: 27 82.2% 61.2%;
 
     /* Sidebar specific colors */
-    --sidebar-background: 100 27% 90%; /* Ligeramente más oscuro que el nuevo fondo general #E1E8DE */
-    --sidebar-foreground: 23 29% 25%; /* Marrón tierra más oscuro para sidebar (kept from previous user-defined theme) */
-    --sidebar-primary: 95 26% 44%; /* #6B914F (new primary) */
-    --sidebar-primary-foreground: 0 0% 100%; /* White for contrast */
-    --sidebar-accent: 28 90% 65%; /* Naranja cálido ligeramente más oscuro (kept from previous user-defined theme) */
-    --sidebar-accent-foreground: 25 60% 20%; /* Marrón oscuro/naranja más oscuro (kept from previous user-defined theme) */
-    --sidebar-border: 0 0% 88%; /* Gris claro un poco más oscuro para bordes sidebar (kept from previous user-defined theme) */
-    --sidebar-ring: 95 26% 44%; /* #6B914F (new primary) */
+    --sidebar-background: 80 50% 95%; /* Slightly darker than main background: #F0F5ED */
+    --sidebar-foreground: 23 29% 25%; /* Darker Marrón tierra for sidebar text */
+    --sidebar-primary: 100 27% 90%; /* Slightly darker primary for sidebar: #E1E8DE */
+    --sidebar-primary-foreground: 100 20% 15%; /* Darker green for contrast */
+    --sidebar-accent: 95 17% 40%; /* Slightly darker accent for sidebar: #5F7A54 */
+    --sidebar-accent-foreground: 80 50% 98%; /* Background for contrast */
+    --sidebar-border: 210 17% 88%; /* Slightly darker border for sidebar: #DDE1E6 */
+    --sidebar-ring: 101 30% 40%; /* Slightly darker ring for sidebar */
   }
 
   .dark {
-    --background: 100 10% 10%; /* Dark version of #EDF2E8, e.g., #1A1C19 */
-    --foreground: 40 100% 95%; /* Beige claro #FFF6E5 (kept from previous user-defined theme) */
+    --background: 100 10% 10%; /* #1A1C19 (Dark Greenish Gray) */
+    --foreground: 80 50% 90%; /* #DCEBDB (Light greenish tint for text) */
 
-    --card: 120 10% 15%; /* Ligeramente más claro que el fondo oscuro (kept from previous user-defined theme) */
-    --card-foreground: 40 100% 95%; /* Beige claro (kept from previous user-defined theme) */
+    --card: 100 10% 12%; /* #1E211D (Slightly lighter than dark background) */
+    --card-foreground: 80 50% 90%; /* #DCEBDB */
 
-    --popover: 120 10% 15%;
-    --popover-foreground: 40 100% 95%;
+    --popover: 100 10% 12%;
+    --popover-foreground: 80 50% 90%;
 
-    --primary: 95 30% 65%; /* Light version of #6B914F for dark mode, e.g., #8CB97B */
-    --primary-foreground: 95 25% 15%; /* Dark green for contrast on new dark primary, e.g., #212B1E */
+    --primary: 100 15% 30%; /* #424D3F (Darker, desaturated version of light primary) */
+    --primary-foreground: 100 25% 85%; /* #C9D6C6 (Light green for contrast) */
 
-    --secondary: 137 36% 54%; /* Verde claro más oscuro (kept from previous user-defined theme) */
-    --secondary-foreground: 40 100% 95%; /* Beige claro (kept from previous user-defined theme) */
+    --secondary: 101 25% 65%; /* #8CB97B (Lighter version of light secondary) */
+    --secondary-foreground: 100 10% 10%; /* Dark background for contrast */
 
-    --muted: 0 0% 20%; /* Gris oscuro (kept from previous user-defined theme) */
-    --muted-foreground: 0 0% 60%; /* Gris medio (kept from previous user-defined theme) */
+    --muted: 100 10% 15%; /* #232622 (Darker muted) */
+    --muted-foreground: 100 10% 60%; /* #90998C (Lighter muted foreground) */
 
-    --accent: 28 55% 58%; /* Naranja #D48C57 (desaturado/oscuro para dark mode, kept from previous user-defined theme) */
-    --accent-foreground: 40 100% 90%; /* Beige/amarillo muy claro (kept from previous user-defined theme) */
+    --accent: 95 15% 60%; /* #85A07A (Lighter version of light accent) */
+    --accent-foreground: 100 10% 10%; /* Dark background for contrast */
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 25%; /* Gris oscuro para bordes (kept from previous user-defined theme) */
-    --input: 0 0% 22%; /* Gris oscuro para inputs (kept from previous user-defined theme) */
-    --ring: 95 30% 65%; /* Light version of #6B914F for dark mode */
+    --border: 100 10% 20%; /* #2E332D (Dark border) */
+    --input: 100 10% 20%;
+    --ring: 101 25% 65%; /* Lighter secondary for ring */
 
-    --chart-1: 95 30% 65%; /* Light version of #6B914F for dark mode */
-    --chart-2: 28 55% 58%; /* Naranja oscuro/desaturado (accent dark, kept from previous user-defined theme) */
+    --chart-1: 100 15% 30%; /* Dark primary */
+    --chart-2: 95 15% 60%; /* Dark accent */
     --chart-3: 198 52% 50%;
     --chart-4: 43 66% 74%;
     --chart-5: 27 74% 70%;
 
     /* Sidebar specific colors for dark theme */
-    --sidebar-background: 100 10% 8%; /* Aún más oscuro que el nuevo fondo general oscuro, e.g., #141713 */
-    --sidebar-foreground: 40 100% 90%; /* Beige/amarillo muy claro (kept from previous user-defined theme) */
-    --sidebar-primary: 95 30% 65%; /* Light version of #6B914F for dark mode */
-    --sidebar-primary-foreground: 95 25% 10%; /* Very dark green for contrast, e.g., #161C14 */
-    --sidebar-accent: 28 55% 55%; /* Naranja oscuro/desaturado (kept from previous user-defined theme) */
-    --sidebar-accent-foreground: 40 100% 85%; /* Beige/amarillo (kept from previous user-defined theme) */
-    --sidebar-border: 0 0% 18%; /* Gris muy oscuro para bordes sidebar (kept from previous user-defined theme) */
-    --sidebar-ring: 95 30% 65%; /* Light version of #6B914F for dark mode */
+    --sidebar-background: 100 10% 8%; /* #141713 (Even darker for sidebar) */
+    --sidebar-foreground: 80 50% 85%; /* #CFE3CA */
+    --sidebar-primary: 100 15% 25%; /* #384235 (Darker sidebar primary) */
+    --sidebar-primary-foreground: 100 25% 80%; /* #C0D1BB */
+    --sidebar-accent: 95 15% 55%; /* #7B9670 (Darker sidebar accent) */
+    --sidebar-accent-foreground: 100 10% 8%;
+    --sidebar-border: 100 10% 15%; /* #232622 */
+    --sidebar-ring: 101 25% 60%; /* Lighter ring for sidebar */
   }
 }
 
