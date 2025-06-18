@@ -10,7 +10,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-merriweather)', 'sans-serif'], // Merriweather for body
+        sans: ['var(--font-baloo)', 'sans-serif'], // Baloo 2 for body (bubbly font)
         nunito: ['var(--font-nunito)', 'sans-serif'],    // Nunito for headers, UI
       },
       colors: {

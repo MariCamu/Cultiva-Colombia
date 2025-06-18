@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Nunito, Merriweather } from 'next/font/google';
+import { Nunito, Baloo_2 } from 'next/font/google';
 import './globals.css';
 import { AppLayout } from '@/components/layout/app-layout';
 
@@ -9,10 +9,10 @@ const nunito = Nunito({
   variable: '--font-nunito',
 });
 
-const merriweather = Merriweather({
+const baloo = Baloo_2({
   subsets: ['latin'],
-  weight: ['400'],
-  variable: '--font-merriweather',
+  weight: ['400'], // Baloo 2 has various weights, 400 is regular
+  variable: '--font-baloo',
 });
 
 export const metadata: Metadata = {
@@ -26,9 +26,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${nunito.variable} ${merriweather.variable}`}>
+    <html lang="es" className={`${nunito.variable} ${baloo.variable}`}>
       <head />
-      <body className={`antialiased font-sans`}> {/* font-sans will default to Merriweather via tailwind.config.ts */}
+      <body className={`antialiased font-sans`}> {/* font-sans will default to Baloo 2 via tailwind.config.ts */}
         <AppLayout>{children}</AppLayout>
       </body>
     </html>
