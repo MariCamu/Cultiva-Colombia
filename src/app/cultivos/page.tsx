@@ -349,7 +349,7 @@ export default function CultivosPage() {
     pageTitle = `Cultivos Filtrados para la Región: ${activeRegionNameForDisplay}`;
     pageDescription = `Explora los cultivos característicos de la región ${activeRegionNameForDisplay} según los filtros aplicados.`;
     alertMessageForPage = (
-      <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary-foreground">
+      <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
         <Filter className="h-4 w-4 text-primary" />
         <AlertTitle className="font-nunito font-semibold">Filtro Manual Activo</AlertTitle>
         <AlertDescription>
@@ -361,7 +361,7 @@ export default function CultivosPage() {
     pageTitle = "Cultivos Filtrados (Todas las Regiones)";
     pageDescription = "Mostrando cultivos de todas las regiones, según los filtros aplicados.";
      alertMessageForPage = (
-      <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary-foreground">
+      <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
         <Filter className="h-4 w-4 text-primary" />
         <AlertTitle className="font-nunito font-semibold">Filtro Manual Activo</AlertTitle>
         <AlertDescription>
@@ -373,7 +373,7 @@ export default function CultivosPage() {
     pageTitle = `Cultivos de la Región ${activeRegionNameForDisplay}`;
     pageDescription = `Explora los cultivos característicos de la región ${activeRegionNameForDisplay}.`;
     alertMessageForPage = (
-      <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary-foreground">
+      <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
         <MapPin className="h-4 w-4 text-primary" />
         <AlertTitle className="font-nunito font-semibold">Filtro Activo por URL</AlertTitle>
         <AlertDescription>
@@ -439,7 +439,7 @@ export default function CultivosPage() {
       )}
       {alertMessageForPage}
       
-      <Card className="bg-background"> {/* Changed to bg-background for filter card */}
+      <Card className="bg-primary"> {/* Changed to bg-background for filter card */}
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2 font-nunito font-bold">
             <Filter className="h-5 w-5" />
@@ -595,4 +595,6 @@ export default function CultivosPage() {
     </div>
   );
 }
+    
+
     
