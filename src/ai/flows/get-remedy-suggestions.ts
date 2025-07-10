@@ -14,7 +14,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const CropDiseaseRemedySuggestionsInputSchema = z.object({
-  diseaseName: z.string().describe('The name of the crop disease.'),
+  diseaseName: z.string().describe('The description of the problem or disease observed in the crop.'),
   cropName: z.string().describe('The name of the crop affected by the disease.'),
 });
 export type CropDiseaseRemedySuggestionsInput = z.infer<
@@ -24,7 +24,7 @@ export type CropDiseaseRemedySuggestionsInput = z.infer<
 const CropDiseaseRemedySuggestionsOutputSchema = z.object({
   remedySuggestions: z
     .array(z.string())
-    .describe('A list of suggested remedies for the crop disease.'),
+    .describe('A list of at least two suggested remedies or treatments for the crop problem, explained in simple terms.'),
 });
 export type CropDiseaseRemedySuggestionsOutput = z.infer<
   typeof CropDiseaseRemedySuggestionsOutputSchema
@@ -40,16 +40,15 @@ const prompt = ai.definePrompt({
   name: 'cropDiseaseRemedySuggestionsPrompt',
   input: {schema: CropDiseaseRemedySuggestionsInputSchema},
   output: {schema: CropDiseaseRemedySuggestionsOutputSchema},
-  prompt: `You are an expert in plant pathology and agriculture. A farmer is dealing with
-  the following crop disease:
+  prompt: `Eres un agrónomo experto y amigable. Un agricultor necesita ayuda con un problema en su cultivo.
+Responde siempre en español.
 
-  Disease: {{{diseaseName}}}
-  Crop: {{{cropName}}}
+Cultivo: {{{cropName}}}
+Problema observado: {{{diseaseName}}}
 
-  Suggest at least three possible remedies or treatments for this disease. Provide detailed
-  instructions for each remedy.
-
-  Format your response as a JSON array of strings.`,
+Basado en el problema descrito para este cultivo específico, sugiere al menos dos remedios o tratamientos posibles. Explica cada remedio de forma clara y sencilla, idealmente mencionando opciones orgánicas o caseras si es posible.
+Concéntrate en dar soluciones prácticas.
+`,
 });
 
 const getCropDiseaseRemedySuggestionsFlow = ai.defineFlow(
