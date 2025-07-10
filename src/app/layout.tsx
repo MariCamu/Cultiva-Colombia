@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Nunito, Baloo_2 } from 'next/font/google';
 import './globals.css';
 import { AppLayout } from '@/components/layout/app-layout';
+import { AuthProvider } from '@/context/auth-context';
 
 const nunito = Nunito({
   subsets: ['latin'],
@@ -28,8 +29,10 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${nunito.variable} ${baloo.variable}`}>
       <head />
-      <body className={`antialiased font-sans`}> {/* font-sans will default to Baloo 2 via tailwind.config.ts */}
-        <AppLayout>{children}</AppLayout>
+      <body className={`antialiased font-sans`}>
+        <AuthProvider>
+          <AppLayout>{children}</AppLayout>
+        </AuthProvider>
       </body>
     </html>
   );
