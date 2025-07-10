@@ -4,8 +4,8 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+// import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+// import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,28 +24,36 @@ export default function LoginPage() {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/dashboard');
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setIsLoading(false);
-    }
+    
+    // --- SIMULATION ---
+    // Instead of calling Firebase, we'll just redirect to the dashboard.
+    console.log("Simulating login...");
+    router.push('/dashboard');
+    // try {
+    //   await signInWithEmailAndPassword(auth, email, password);
+    //   router.push('/dashboard');
+    // } catch (e: any) {
+    //   setError(e.message);
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setError(null);
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setIsLoading(false);
-    }
+    // --- SIMULATION ---
+    console.log("Simulating Google sign-in...");
+    router.push('/dashboard');
+    // const provider = new GoogleAuthProvider();
+    // try {
+    //   await signInWithPopup(auth, provider);
+    //   router.push('/dashboard');
+    // } catch (e: any) {
+    //   setError(e.message);
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   return (

@@ -10,10 +10,13 @@ import Link from 'next/link';
 function DashboardContent() {
   const { user } = useAuth();
 
+  // For simulation, we can create a mock user object
+  const displayUser = user || { displayName: 'Agricultor(a)', email: 'tu@correo.com' };
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-nunito font-bold tracking-tight text-foreground sm:text-4xl">
-        Bienvenido a tu Dashboard, {user?.displayName || user?.email}
+        Bienvenido a tu Dashboard, {displayUser?.displayName || displayUser?.email}
       </h1>
       
       <Card>

@@ -4,8 +4,8 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+// import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile } from 'firebase/auth';
+// import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,29 +25,37 @@ export default function SignupPage() {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName });
-      router.push('/dashboard');
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setIsLoading(false);
-    }
+    
+    // --- SIMULATION ---
+    console.log("Simulating signup...");
+    router.push('/dashboard');
+    // try {
+    //   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    //   await updateProfile(userCredential.user, { displayName });
+    //   router.push('/dashboard');
+    // } catch (e: any) {
+    //   setError(e.message);
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
   
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setError(null);
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setIsLoading(false);
-    }
+    
+    // --- SIMULATION ---
+    console.log("Simulating Google sign-in...");
+    router.push('/dashboard');
+    // const provider = new GoogleAuthProvider();
+    // try {
+    //   await signInWithPopup(auth, provider);
+    //   router.push('/dashboard');
+    // } catch (e: any) {
+    //   setError(e.message);
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   return (
