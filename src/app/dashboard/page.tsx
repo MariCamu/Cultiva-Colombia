@@ -4,7 +4,7 @@
 import { ProtectedRoute, useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Leaf, CalendarDays, Droplets, Sun, Wind, BookOpen, AlertTriangle, Sparkles, MessageSquarePlus, AlertCircle } from 'lucide-react';
+import { PlusCircle, Leaf, CalendarDays, Droplets, Sun, Wind, BookOpen, AlertTriangle, Sparkles, MessageSquarePlus, AlertCircle, CheckSquare, Bomb } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -17,19 +17,20 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { CropDetailDialog } from './components/crop-detail-dialog';
-
+import { addDays, format, isToday, isTomorrow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 // --- SIMULATED DATA ---
 const userCrops = [
   {
     id: 'user_crop_1',
     name: 'Tomates Cherry',
-    plantId: 'tomate_cherry_ejemplo', // To link back to a main crop database
+    plantId: 'tomate_cherry_ejemplo',
     imageUrl: 'https://placehold.co/400x300.png',
     dataAiHint: 'cherry tomatoes',
     datePlanted: '2024-05-15',
     daysToHarvest: 60,
-    progress: 45, // percentage
+    progress: 45,
     nextTask: { name: 'Abonar', dueInDays: 3, icon: Droplets },
     lastNote: 'Aparecieron las primeras flores amarillas hoy.',
   },
@@ -52,7 +53,7 @@ const userCrops = [
     imageUrl: 'https://placehold.co/400x300.png',
     dataAiHint: 'mint plant',
     datePlanted: '2024-04-20',
-    daysToHarvest: 70, // Continuous harvest
+    daysToHarvest: 70, 
     progress: 85,
     nextTask: { name: 'Cosechar', dueInDays: 0, icon: Leaf },
     lastNote: 'Lista para la primera cosecha grande.',
@@ -100,10 +101,39 @@ function DashboardContent() {
     }
   };
 
+  const today = new Date();
+  const simulatedTasks = userCrops.map(crop => ({
+    date: addDays(today, crop.nextTask.dueInDays),
+    description: `${crop.nextTask.name} ${crop.name}`,
+    type: crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : crop.nextTask.name.toLowerCase().includes('abonar') ? 'abono' : 'cosecha'
+  })).sort((a,b) => a.date.getTime() - b.date.getTime());
+
+  const plantingDates = userCrops.map(c => new Date(c.datePlanted));
+  const taskDates = simulatedTasks.map(t => t.date);
+
+  const calendarModifiers = {
+    siembra: plantingDates,
+    riego: simulatedTasks.filter(t => t.type === 'riego').map(t => t.date),
+    abono: simulatedTasks.filter(t => t.type === 'abono').map(t => t.date),
+    cosecha: simulatedTasks.filter(t => t.type === 'cosecha').map(t => t.date)
+  };
+
+  const calendarModifierStyles = {
+    siembra: { backgroundColor: 'var(--green-300, #86efac)', color: 'var(--green-800, #166534)' },
+    riego: { backgroundColor: 'var(--blue-300, #93c5fd)', color: 'var(--blue-800, #1e40af)' },
+    abono: { backgroundColor: 'var(--yellow-300, #fde047)', color: 'var(--yellow-800, #854d0e)' },
+    cosecha: { backgroundColor: 'var(--red-300, #fca5a5)', color: 'var(--red-800, #991b1b)' },
+    today: { border: '2px solid hsl(var(--primary))' }
+  };
+
+  const formatRelativeDate = (date: Date) => {
+    if (isToday(date)) return 'Hoy';
+    if (isTomorrow(date)) return 'Mañana';
+    return format(date, 'EEEE d MMM', { locale: es });
+  }
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-nunito font-bold tracking-tight text-foreground sm:text-4xl">
           Dashboard de {displayUser?.displayName || displayUser?.email}
@@ -113,13 +143,10 @@ function DashboardContent() {
         </p>
       </div>
 
-      {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left Column (Main Content) */}
         <div className="lg:col-span-2 space-y-8">
           
-          {/* My Crops Section */}
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-2xl">
@@ -180,7 +207,6 @@ function DashboardContent() {
             </CardContent>
           </Card>
 
-          {/* AI Journal Section */}
           <Card className="shadow-lg">
               <CardHeader>
                   <CardTitle className="flex items-center gap-3 text-2xl">
@@ -229,7 +255,6 @@ function DashboardContent() {
 
         </div>
 
-        {/* Right Column (Widgets) */}
         <div className="space-y-8">
             <Card>
                 <CardHeader>
@@ -246,23 +271,35 @@ function DashboardContent() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
                 <CalendarDays className="h-6 w-6" />
-                Calendario de Actividades
+                Calendario y Tareas
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Calendar
                 mode="single"
-                selected={new Date()}
+                selected={today}
+                modifiers={calendarModifiers}
+                modifiersStyles={calendarModifierStyles}
                 className="p-0"
-                disabled={(date) => date < new Date("1900-01-01")}
-                initialFocus
-                // In a real app, you would pass events to highlight days
               />
-              <div className="mt-4 space-y-2 text-sm">
-                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500"></div><span>Siembra</span></div>
-                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500"></div><span>Riego</span></div>
-                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-yellow-500"></div><span>Abono</span></div>
-                <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500"></div><span>Cosecha</span></div>
+              <div className="mt-4 space-y-2">
+                <h4 className="font-nunito font-semibold text-sm">Próximas Tareas:</h4>
+                <div className="space-y-3">
+                  {simulatedTasks.slice(0, 5).map((task, i) => (
+                    <div key={i} className="flex items-center gap-3 text-sm">
+                      <div className={`w-3 h-3 rounded-full ${
+                        task.type === 'riego' ? 'bg-blue-400' :
+                        task.type === 'abono' ? 'bg-yellow-400' :
+                        task.type === 'cosecha' ? 'bg-red-400' : 'bg-gray-400'
+                      }`}></div>
+                      <div className="flex-1">
+                        <p className="font-nunito font-semibold">{task.description}</p>
+                        <p className="text-xs text-muted-foreground">{formatRelativeDate(task.date)}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {simulatedTasks.length === 0 && <p className="text-sm text-muted-foreground">¡Sin tareas próximas!</p>}
+                </div>
               </div>
             </CardContent>
           </Card>

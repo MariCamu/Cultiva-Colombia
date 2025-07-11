@@ -10,8 +10,8 @@ import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2 } from 'lucid
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-// Simulating a more detailed user crop type
 interface UserCrop {
   id: string;
   name: string;
@@ -25,7 +25,6 @@ interface UserCrop {
   lastNote: string;
 }
 
-// Simulating a detailed log for a crop
 const sampleLogEntries = [
   { id: 1, type: 'note', date: '2024-06-10', content: 'Aparecieron las primeras flores amarillas hoy.', icon: NotebookText },
   { id: 2, type: 'water', date: '2024-06-08', content: 'Riego profundo realizado.', icon: Droplet },
@@ -103,7 +102,6 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
           </DialogDescription>
         </DialogHeader>
         <div className="grid md:grid-cols-2 gap-6 mt-4 h-full">
-            {/* Left Column */}
             <div className="flex flex-col gap-4">
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden">
                     <Image
@@ -120,7 +118,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
                         <p><strong>Fecha de Siembra:</strong> {new Date(crop.datePlanted).toLocaleDateString()}</p>
-                        <p><strong>Cosecha Estimada en:</strong> {crop.daysToHarvest - (crop.progress / 100 * crop.daysToHarvest)} días</p>
+                        <p><strong>Cosecha Estimada en:</strong> {crop.daysToHarvest - Math.round(crop.progress / 100 * crop.daysToHarvest)} días</p>
                         <p><strong>Progreso General:</strong></p>
                         <div className="w-full bg-secondary rounded-full h-2.5">
                             <div className="bg-primary h-2.5 rounded-full" style={{ width: `${crop.progress}%` }}></div>
@@ -129,7 +127,6 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                 </Card>
             </div>
 
-            {/* Right Column */}
             <div className="flex flex-col h-full">
                  <Tabs defaultValue="journal" className="flex flex-col h-full">
                     <TabsList className="w-full">
@@ -158,9 +155,25 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                                     <p className="text-gray-700">{entry.content}</p>
                                                     {entry.imageUrl && <Image src={entry.imageUrl} alt="Foto del diario" width={80} height={80} className="mt-2 rounded-md" data-ai-hint={entry.dataAiHint || ''} />}
                                                 </div>
-                                                 <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-gray-500 hover:text-destructive hover:bg-destructive/10" onClick={() => removeLogEntry(entry.id)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                                 <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-gray-500 hover:text-destructive hover:bg-destructive/10">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>¿Estás seguro que deseas eliminar esto?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                Esta acción no se puede deshacer. Esto eliminará permanentemente la entrada del diario.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => removeLogEntry(entry.id)}>Eliminar</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
                                             </div>
                                         ))}
                                     </div>
