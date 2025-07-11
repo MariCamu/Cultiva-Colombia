@@ -274,18 +274,16 @@ function DashboardContent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    <div>
-                        <Calendar
-                            mode="single"
-                            selected={today}
-                            modifiers={calendarModifiers}
-                            modifiersStyles={calendarModifierStyles}
-                            className="p-0"
-                        />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-x-6 gap-y-4 items-start">
+                    <Calendar
+                        mode="single"
+                        selected={today}
+                        modifiers={calendarModifiers}
+                        modifiersStyles={calendarModifierStyles}
+                        className="p-0"
+                    />
                     
-                    <div>
+                    <div className="md:pt-1">
                         <h4 className="font-nunito font-semibold text-sm mb-2">Leyenda:</h4>
                         <div className="space-y-1 text-xs">
                             <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.siembra}></div><span>Siembra</span></div>
