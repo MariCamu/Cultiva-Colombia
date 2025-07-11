@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, PlusCircle } from 'lucide-react';
+import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -49,15 +49,47 @@ const getLogEntryColor = (type: string) => {
 export function CropDetailDialog({ crop, children }: { crop: UserCrop; children: React.ReactNode }) {
   const [logEntries, setLogEntries] = useState(sampleLogEntries);
 
-  const addLogEntry = (type: 'note' | 'water' | 'fertilize') => {
+  const addLogEntry = (type: 'note' | 'water' | 'fertilize' | 'photo') => {
+    let content = `Nuevo registro de ${type}.`;
+    let icon = NotebookText;
+    let imageUrl = '';
+    let dataAiHint = '';
+
+    switch(type) {
+        case 'note':
+            icon = NotebookText;
+            content = "Nueva nota añadida.";
+            break;
+        case 'water':
+            icon = Droplet;
+            content = "Riego registrado.";
+            break;
+        case 'fertilize':
+            icon = Zap;
+            content = "Abonado registrado.";
+            break;
+        case 'photo':
+            icon = Camera;
+            content = "Nueva foto subida.";
+            imageUrl = 'https://placehold.co/100x100.png';
+            dataAiHint = 'new plant photo';
+            break;
+    }
+    
     const newEntry = {
         id: Date.now(),
-        type: type,
+        type,
         date: new Date().toISOString().split('T')[0],
-        content: `Nuevo registro de ${type}.`,
-        icon: type === 'note' ? NotebookText : type === 'water' ? Droplet : Zap,
+        content,
+        icon,
+        imageUrl,
+        dataAiHint
     };
     setLogEntries([newEntry, ...logEntries]);
+  };
+
+  const removeLogEntry = (id: number) => {
+    setLogEntries(logEntries.filter(entry => entry.id !== id));
   };
   
   return (
@@ -108,23 +140,27 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                         <Card className="flex-grow flex flex-col">
                             <CardHeader>
                                 <CardTitle className="text-xl">Diario de Cultivo</CardTitle>
-                                <div className="flex gap-2 pt-2">
-                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('note')}><NotebookText className="mr-2 h-4 w-4" />Añadir Nota</Button>
-                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('water')}><Droplet className="mr-2 h-4 w-4" />Registrar Riego</Button>
+                                <div className="flex flex-wrap gap-2 pt-2">
+                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('note')}><NotebookText className="mr-2 h-4 w-4" />Nota</Button>
+                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('water')}><Droplet className="mr-2 h-4 w-4" />Riego</Button>
                                     <Button size="sm" variant="outline" onClick={() => addLogEntry('fertilize')}><Zap className="mr-2 h-4 w-4" />Abonado</Button>
+                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('photo')}><Camera className="mr-2 h-4 w-4" />Foto</Button>
                                 </div>
                             </CardHeader>
                             <CardContent className="flex-grow overflow-hidden">
                                 <ScrollArea className="h-full pr-4">
                                     <div className="space-y-4">
                                         {logEntries.map(entry => (
-                                            <div key={entry.id} className={`p-3 rounded-lg border flex items-start gap-3 text-sm ${getLogEntryColor(entry.type)}`}>
+                                            <div key={entry.id} className={`relative p-3 rounded-lg border flex items-start gap-3 text-sm ${getLogEntryColor(entry.type)}`}>
                                                 <div className="p-2 bg-white/50 rounded-full"><entry.icon className="h-5 w-5 text-gray-700" /></div>
-                                                <div>
+                                                <div className="flex-grow">
                                                     <p className="font-nunito font-semibold">{new Date(entry.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                                     <p className="text-gray-700">{entry.content}</p>
                                                     {entry.imageUrl && <Image src={entry.imageUrl} alt="Foto del diario" width={80} height={80} className="mt-2 rounded-md" data-ai-hint={entry.dataAiHint || ''} />}
                                                 </div>
+                                                 <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-gray-500 hover:text-destructive hover:bg-destructive/10" onClick={() => removeLogEntry(entry.id)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
                                             </div>
                                         ))}
                                     </div>
