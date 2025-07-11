@@ -143,7 +143,7 @@ function DashboardContent() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         
         <div className="lg:col-span-2 space-y-8">
           
@@ -274,14 +274,14 @@ function DashboardContent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              <Calendar
-                mode="single"
-                selected={today}
-                modifiers={calendarModifiers}
-                modifiersStyles={calendarModifierStyles}
-                className="p-0"
-              />
               <div className="space-y-4">
+                  <Calendar
+                    mode="single"
+                    selected={today}
+                    modifiers={calendarModifiers}
+                    modifiersStyles={calendarModifierStyles}
+                    className="p-0"
+                  />
                   <div>
                     <h4 className="font-nunito font-semibold text-sm mb-2">Leyenda:</h4>
                     <div className="space-y-1 text-xs">
@@ -291,25 +291,26 @@ function DashboardContent() {
                         <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.cosecha}></div><span>Cosecha</span></div>
                     </div>
                   </div>
-                  <div>
-                    <h4 className="font-nunito font-semibold text-sm">Próximas Tareas:</h4>
-                    <div className="space-y-3 mt-2">
-                      {simulatedTasks.slice(0, 5).map((task, i) => (
-                        <div key={i} className="flex items-start gap-3 text-sm">
-                          <div className={`mt-1 w-3 h-3 rounded-full flex-shrink-0 ${
-                            task.type === 'riego' ? 'bg-blue-400' :
-                            task.type === 'abono' ? 'bg-yellow-400' :
-                            task.type === 'cosecha' ? 'bg-red-400' : 'bg-gray-400'
-                          }`}></div>
-                          <div className="flex-1">
-                            <p className="font-nunito font-semibold">{task.description}</p>
-                            <p className="text-xs text-muted-foreground">{formatRelativeDate(task.date)}</p>
-                          </div>
-                        </div>
-                      ))}
-                      {simulatedTasks.length === 0 && <p className="text-sm text-muted-foreground">¡Sin tareas próximas!</p>}
+              </div>
+              
+              <div>
+                <h4 className="font-nunito font-semibold text-sm mb-2">Próximas Tareas:</h4>
+                <div className="space-y-3 mt-2">
+                  {simulatedTasks.slice(0, 5).map((task, i) => (
+                    <div key={i} className="flex items-start gap-3 text-sm">
+                      <div className={`mt-1 w-3 h-3 rounded-full flex-shrink-0 ${
+                        task.type === 'riego' ? 'bg-blue-400' :
+                        task.type === 'abono' ? 'bg-yellow-400' :
+                        task.type === 'cosecha' ? 'bg-red-400' : 'bg-gray-400'
+                      }`}></div>
+                      <div className="flex-1">
+                        <p className="font-nunito font-semibold">{task.description}</p>
+                        <p className="text-xs text-muted-foreground">{formatRelativeDate(task.date)}</p>
+                      </div>
                     </div>
-                  </div>
+                  ))}
+                  {simulatedTasks.length === 0 && <p className="text-sm text-muted-foreground">¡Sin tareas próximas!</p>}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -370,5 +371,3 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
-
-    

@@ -101,7 +101,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
             Detalles y seguimiento de tu cultivo de {crop.name}.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid md:grid-cols-2 gap-6 mt-4 h-full">
+        <div className="grid md:grid-cols-2 gap-6 mt-4 h-full overflow-hidden">
             <div className="flex flex-col gap-4">
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden">
                     <Image
@@ -127,14 +127,14 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                 </Card>
             </div>
 
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full overflow-hidden">
                  <Tabs defaultValue="journal" className="flex flex-col h-full">
                     <TabsList className="w-full">
                         <TabsTrigger value="journal" className="flex-1">Diario de Cultivo</TabsTrigger>
                         <TabsTrigger value="datasheet" className="flex-1">Ficha Técnica</TabsTrigger>
                     </TabsList>
                     <TabsContent value="journal" className="flex-grow flex flex-col mt-2 h-0">
-                        <Card className="flex-grow flex flex-col">
+                        <Card className="flex-grow flex flex-col overflow-hidden">
                             <CardHeader>
                                 <CardTitle className="text-xl">Diario de Cultivo</CardTitle>
                                 <div className="flex flex-wrap gap-2 pt-2">
@@ -144,8 +144,8 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                     <Button size="sm" variant="outline" onClick={() => addLogEntry('photo')}><Camera className="mr-2 h-4 w-4" />Foto</Button>
                                 </div>
                             </CardHeader>
-                            <CardContent className="flex-grow overflow-hidden">
-                                <ScrollArea className="h-full pr-4">
+                            <CardContent className="flex-grow overflow-auto p-0">
+                                <ScrollArea className="h-full pr-4 p-6">
                                     <div className="space-y-4">
                                         {logEntries.map(entry => (
                                             <div key={entry.id} className={`relative p-3 rounded-lg border flex items-start gap-3 text-sm ${getLogEntryColor(entry.type)}`}>
@@ -181,7 +181,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                             </CardContent>
                         </Card>
                     </TabsContent>
-                    <TabsContent value="datasheet" className="flex-grow">
+                    <TabsContent value="datasheet" className="flex-grow overflow-auto">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-xl">Ficha Técnica (Ejemplo)</CardTitle>
