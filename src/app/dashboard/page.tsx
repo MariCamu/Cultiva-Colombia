@@ -220,7 +220,6 @@ function DashboardContent() {
               <CardContent className="space-y-4">
                   <div>
                       <Label htmlFor="journal-crop-select" className="font-nunito font-semibold">Selecciona el cultivo:</Label>
-                      {/* This would be a Select component in a real app */}
                       <div className="p-2 border rounded-md bg-background mt-1 text-sm">{journalCrop || 'Ningún cultivo seleccionado'}</div>
                   </div>
                   <div>
@@ -274,7 +273,7 @@ function DashboardContent() {
                 Calendario y Tareas
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               <Calendar
                 mode="single"
                 selected={today}
@@ -282,24 +281,35 @@ function DashboardContent() {
                 modifiersStyles={calendarModifierStyles}
                 className="p-0"
               />
-              <div className="mt-4 space-y-2">
-                <h4 className="font-nunito font-semibold text-sm">Próximas Tareas:</h4>
-                <div className="space-y-3">
-                  {simulatedTasks.slice(0, 5).map((task, i) => (
-                    <div key={i} className="flex items-center gap-3 text-sm">
-                      <div className={`w-3 h-3 rounded-full ${
-                        task.type === 'riego' ? 'bg-blue-400' :
-                        task.type === 'abono' ? 'bg-yellow-400' :
-                        task.type === 'cosecha' ? 'bg-red-400' : 'bg-gray-400'
-                      }`}></div>
-                      <div className="flex-1">
-                        <p className="font-nunito font-semibold">{task.description}</p>
-                        <p className="text-xs text-muted-foreground">{formatRelativeDate(task.date)}</p>
-                      </div>
+              <div className="space-y-4">
+                  <div>
+                    <h4 className="font-nunito font-semibold text-sm mb-2">Leyenda:</h4>
+                    <div className="space-y-1 text-xs">
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.siembra}></div><span>Siembra</span></div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.riego}></div><span>Riego</span></div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.abono}></div><span>Abono</span></div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.cosecha}></div><span>Cosecha</span></div>
                     </div>
-                  ))}
-                  {simulatedTasks.length === 0 && <p className="text-sm text-muted-foreground">¡Sin tareas próximas!</p>}
-                </div>
+                  </div>
+                  <div>
+                    <h4 className="font-nunito font-semibold text-sm">Próximas Tareas:</h4>
+                    <div className="space-y-3 mt-2">
+                      {simulatedTasks.slice(0, 5).map((task, i) => (
+                        <div key={i} className="flex items-start gap-3 text-sm">
+                          <div className={`mt-1 w-3 h-3 rounded-full flex-shrink-0 ${
+                            task.type === 'riego' ? 'bg-blue-400' :
+                            task.type === 'abono' ? 'bg-yellow-400' :
+                            task.type === 'cosecha' ? 'bg-red-400' : 'bg-gray-400'
+                          }`}></div>
+                          <div className="flex-1">
+                            <p className="font-nunito font-semibold">{task.description}</p>
+                            <p className="text-xs text-muted-foreground">{formatRelativeDate(task.date)}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {simulatedTasks.length === 0 && <p className="text-sm text-muted-foreground">¡Sin tareas próximas!</p>}
+                    </div>
+                  </div>
               </div>
             </CardContent>
           </Card>
@@ -360,3 +370,5 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
+
+    
