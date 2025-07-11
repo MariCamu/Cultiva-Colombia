@@ -16,6 +16,7 @@ import { getCropDiseaseRemedySuggestions, type CropDiseaseRemedySuggestionsOutpu
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
+import { CropDetailDialog } from './components/crop-detail-dialog';
 
 
 // --- SIMULATED DATA ---
@@ -163,7 +164,9 @@ function DashboardContent() {
                           <crop.nextTask.icon className="h-4 w-4 text-primary" />
                           <span>Próxima tarea: {crop.nextTask.name}</span>
                         </div>
-                        <Button variant="outline" size="sm">Ver Diario</Button>
+                        <CropDetailDialog crop={crop}>
+                          <Button variant="outline" size="sm">Ver Diario</Button>
+                        </CropDetailDialog>
                       </div>
                     </div>
                   </Card>
