@@ -273,27 +273,30 @@ function DashboardContent() {
                 Calendario y Tareas
               </CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              <div className="space-y-4">
-                  <Calendar
-                    mode="single"
-                    selected={today}
-                    modifiers={calendarModifiers}
-                    modifiersStyles={calendarModifierStyles}
-                    className="p-0"
-                  />
-                  <div>
-                    <h4 className="font-nunito font-semibold text-sm mb-2">Leyenda:</h4>
-                    <div className="space-y-1 text-xs">
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.siembra}></div><span>Siembra</span></div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.riego}></div><span>Riego</span></div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.abono}></div><span>Abono</span></div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.cosecha}></div><span>Cosecha</span></div>
+            <CardContent className="flex flex-col gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <div>
+                        <Calendar
+                            mode="single"
+                            selected={today}
+                            modifiers={calendarModifiers}
+                            modifiersStyles={calendarModifierStyles}
+                            className="p-0"
+                        />
                     </div>
-                  </div>
-              </div>
+                    
+                    <div>
+                        <h4 className="font-nunito font-semibold text-sm mb-2">Leyenda:</h4>
+                        <div className="space-y-1 text-xs">
+                            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.siembra}></div><span>Siembra</span></div>
+                            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.riego}></div><span>Riego</span></div>
+                            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.abono}></div><span>Abono</span></div>
+                            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.cosecha}></div><span>Cosecha</span></div>
+                        </div>
+                    </div>
+                </div>
               
-              <div>
+              <div className="border-t pt-4">
                 <h4 className="font-nunito font-semibold text-sm mb-2">Próximas Tareas:</h4>
                 <div className="space-y-3 mt-2">
                   {simulatedTasks.slice(0, 5).map((task, i) => (
