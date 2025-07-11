@@ -13,7 +13,7 @@ const popularCrops = [
     imgSrc: "https://placehold.co/300x200.png", 
     imgAlt: "Planta de café", 
     hint: "coffee beans", 
-    href: "/cultivos/cafe_andino", // Adjusted href to match sample data if desired, or keep generic
+    href: "/cultivos",
     tags: ["Región: Andina", "Dificultad: Difícil", "Tipo: Frutal"] 
   },
   { 
@@ -21,7 +21,7 @@ const popularCrops = [
     imgSrc: "https://placehold.co/300x200.png", 
     imgAlt: "Cultivo de papa", 
     hint: "potato harvest", 
-    href: "/cultivos/papa_andina", // Adjusted href
+    href: "/cultivos",
     tags: ["Región: Andina", "Dificultad: Fácil", "Tipo: Tubérculo"]
   },
   { 
@@ -29,7 +29,7 @@ const popularCrops = [
     imgSrc: "https://placehold.co/300x200.png", 
     imgAlt: "Planta de maíz", 
     hint: "corn field", 
-    href: "/cultivos/maiz", // Generic href
+    href: "/cultivos",
     tags: ["Región: Varias", "Dificultad: Fácil", "Tipo: Cereal"]
   },
 ];
@@ -41,7 +41,7 @@ const recentArticles = [
     imgSrc: "https://placehold.co/400x250.png",
     imgAlt: "Control de plagas orgánico",
     hint: "garden pests",
-    href: "/articulos/control-plagas" 
+    href: "/articulos" 
   },
   { 
     title: "El Arte del Compostaje: Nutriendo tu Tierra", 
@@ -49,7 +49,7 @@ const recentArticles = [
     imgSrc: "https://placehold.co/400x250.png",
     imgAlt: "Compostaje casero",
     hint: "compost bin",
-    href: "/articulos/compostaje"
+    href: "/articulos"
   },
   { 
     title: "Guía Práctica para la Siembra en Macetas", 
@@ -57,7 +57,7 @@ const recentArticles = [
     imgSrc: "https://placehold.co/400x250.png",
     imgAlt: "Siembra en macetas",
     hint: "potted plants",
-    href: "/articulos/siembra-macetas"
+    href: "/articulos"
   },
 ];
 

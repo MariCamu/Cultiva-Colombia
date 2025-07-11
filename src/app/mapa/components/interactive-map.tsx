@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -169,7 +170,7 @@ export function InteractiveMap() {
                     {crop.difficulty}
                   </span>
                 </p>
-                <Link href={`/cultivos/${crop.id.replace('_sample', '')}`} className="text-sm text-primary hover:underline">
+                <Link href="/cultivos" className="text-sm text-primary hover:underline">
                   Ver detalles
                 </Link>
               </div>

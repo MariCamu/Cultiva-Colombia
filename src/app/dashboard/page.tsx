@@ -61,9 +61,9 @@ const userCrops = [
 ];
 
 const recommendedArticles = [
-  { id: 1, title: 'Cómo prevenir el tizón en tomates', href: '/articulos/prevenir-tizon' },
-  { id: 2, title: '5 abonos orgánicos que puedes hacer en casa', href: '/articulos/abonos-organicos' },
-  { id: 3, title: 'El riego correcto para hortalizas de hoja', href: '/articulos/riego-hortalizas' },
+  { id: 1, title: 'Cómo prevenir el tizón en tomates', href: '/articulos' },
+  { id: 2, title: '5 abonos orgánicos que puedes hacer en casa', href: '/articulos' },
+  { id: 3, title: 'El riego correcto para hortalizas de hoja', href: '/articulos' },
 ];
 
 function getTaskBadgeVariant(days: number) {
@@ -274,7 +274,7 @@ function DashboardContent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
-                <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-x-6 gap-y-4 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-x-6 gap-y-4 items-start p-2">
                     <Calendar
                         mode="single"
                         selected={today}
@@ -283,7 +283,7 @@ function DashboardContent() {
                         className="p-0"
                     />
                     
-                    <div className="md:pt-1">
+                    <div className="md:pt-1 pl-4">
                         <h4 className="font-nunito font-semibold text-sm mb-2">Leyenda:</h4>
                         <div className="space-y-1 text-xs">
                             <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full" style={calendarModifierStyles.siembra}></div><span>Siembra</span></div>
