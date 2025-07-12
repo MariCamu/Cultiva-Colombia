@@ -184,7 +184,7 @@ export default function CultivosPage() {
       console.error("Error adding crop to dashboard: ", error);
       toast({
         title: "Error",
-        description: "No se pudo añadir el cultivo. Revisa tu conexión o permisos de base de datos.",
+        description: "No se pudo añadir el cultivo. Revisa tu conexión o los permisos de la base de datos.",
         variant: "destructive",
       });
     } finally {
@@ -656,7 +656,3 @@ export default function CultivosPage() {
     </div>
   );
 }
-
-    
-
-    
