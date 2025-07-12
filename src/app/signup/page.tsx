@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function SignupPage() {
   const [displayName, setDisplayName] = useState('');
@@ -22,15 +25,38 @@ export default function SignupPage() {
     event.preventDefault();
     setIsLoading(true);
     
-    // Simulate a successful signup
-    setTimeout(() => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Update Firebase Auth profile
+      await updateProfile(user, { displayName: displayName });
+
+      // Create user document in Firestore
+      const userRef = doc(db, 'usuarios', user.uid);
+      await setDoc(userRef, {
+        nombre: displayName,
+        email: user.email,
+        fecha_registro: serverTimestamp(),
+        preferencia_tema: 'cultiva_verde_default',
+      });
+      
+      toast({
+          title: "Registro Exitoso",
+          description: "¡Bienvenido! Redirigiendo al dashboard...",
+      });
+      router.push('/dashboard');
+
+    } catch (error: any) {
+        console.error("Error de registro:", error);
         toast({
-            title: "Registro Simulado Exitoso",
-            description: "¡Bienvenido! Redirigiendo al dashboard...",
+            variant: 'destructive',
+            title: 'Error de Registro',
+            description: error.message || 'Ocurrió un error. Por favor, intenta de nuevo.',
         });
-        router.push('/dashboard');
+    } finally {
         setIsLoading(false);
-    }, 1000);
+    }
   };
   
   return (
@@ -79,7 +105,7 @@ export default function SignupPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creando cuenta...' : 'Crear Cuenta (Simulado)'}
+              {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
             </Button>
           </form>
         </CardContent>

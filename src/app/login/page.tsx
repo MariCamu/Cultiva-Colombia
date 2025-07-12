@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -17,32 +20,60 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleLogin = (event: FormEvent) => {
+  const handleLogin = async (event: FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
     
-    // Simulate a successful login
-    setTimeout(() => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       toast({
-        title: "Inicio de Sesión Simulado",
+        title: "Inicio de Sesión Exitoso",
         description: "Redirigiendo al dashboard...",
       });
       router.push('/dashboard');
+    } catch (error: any) {
+      console.error("Error de inicio de sesión: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error de inicio de sesión',
+        description: error.message || 'Ocurrió un error. Por favor, intenta de nuevo.',
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    // Simulate a successful Google sign-in
-    setTimeout(() => {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Create user document in Firestore if it's a new user
+      const userRef = doc(db, 'usuarios', user.uid);
+      await setDoc(userRef, {
+        nombre: user.displayName || '',
+        email: user.email,
+        fecha_registro: serverTimestamp(),
+        preferencia_tema: 'cultiva_verde_default',
+      }, { merge: true }); // Use merge to not overwrite existing data if user logs in again
+
+      toast({
+          title: "Inicio de Sesión con Google Exitoso",
+          description: "Redirigiendo al dashboard...",
+      });
+      router.push('/dashboard');
+    } catch (error: any) {
+        console.error("Error de inicio de sesión con Google: ", error);
         toast({
-            title: "Inicio de Sesión Simulado con Google",
-            description: "Redirigiendo al dashboard...",
+            variant: 'destructive',
+            title: 'Error de inicio de sesión con Google',
+            description: error.message || 'Ocurrió un error. Por favor, intenta de nuevo.',
         });
-        router.push('/dashboard');
-        setIsLoading(false);
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -78,7 +109,7 @@ export default function LoginPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión (Simulado)'}
+              {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>
           </form>
           <div className="relative">
@@ -91,7 +122,7 @@ export default function LoginPage() {
           </div>
           <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
             <svg role="img" viewBox="0 0 24 24" className="mr-2 h-4 w-4"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.02-2.6 1.98-4.66 1.98-3.55 0-6.43-2.91-6.43-6.48s2.88-6.48 6.43-6.48c2.03 0 3.36.85 4.17 1.62l2.55-2.55C17.43 3.92 15.25 3 12.48 3c-5.22 0-9.45 4.22-9.45 9.45s4.23 9.45 9.45 9.45c5.05 0 9.12-3.45 9.12-9.22 0-.6-.08-1.18-.2-1.72h-8.92z"></path></svg>
-            Google (Simulado)
+            Google
           </Button>
         </CardContent>
         <CardFooter className="flex justify-center">

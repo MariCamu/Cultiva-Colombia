@@ -2,29 +2,10 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import type { User } from 'firebase/auth'; // We can keep the type for structure
+import { onAuthStateChanged, type User } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useRouter } from 'next/navigation';
-
-// Create a mock user for simulation purposes
-const mockUser: User = {
-    uid: 'mock-user-id-123',
-    email: 'simulado@ejemplo.com',
-    displayName: 'Agricultor Simulado',
-    photoURL: null,
-    emailVerified: true,
-    isAnonymous: false,
-    metadata: {},
-    providerData: [],
-    providerId: 'password',
-    tenantId: null,
-    delete: async () => {},
-    getIdToken: async () => 'mock-token',
-    getIdTokenResult: async () => ({ token: 'mock-token', claims: {}, authTime: '', expirationTime: '', issuedAtTime: '', signInProvider: null, signInSecondFactor: null }),
-    reload: async () => {},
-    toJSON: () => ({}),
-};
-
+import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -37,17 +18,16 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(mockUser); // Start with the mock user
-  const [loading, setLoading] = useState(false); // Set loading to false initially
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // No need for onAuthStateChanged listener in simulation
-  // useEffect(() => {
-  //   const unsubscribe = onAuthStateChanged(auth, (user) => {
-  //     setUser(user);
-  //     setLoading(false);
-  //   });
-  //   return () => unsubscribe();
-  // }, []);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   if (loading) {
     return (
@@ -70,20 +50,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => useContext(AuthContext);
 
-// Component to protect routes
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     const { user, loading } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
 
-    // In simulation mode, we can assume the user is always logged in
-    // so we don't need to redirect.
-    // useEffect(() => {
-    //   if (!loading && !user) {
-    //     router.push('/login');
-    //   }
-    // }, [user, loading, router]);
+    useEffect(() => {
+      if (!loading && !user) {
+        // Redirect to login page if not authenticated and not already on a public page
+        if (pathname !== '/login' && pathname !== '/signup') {
+            router.push('/login');
+        }
+      }
+    }, [user, loading, router, pathname]);
   
-    if (loading) { // Keep loading screen for consistency
+    if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
                 <div className="space-y-4 w-full max-w-md p-8">
@@ -93,6 +74,10 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
                 </div>
             </div>
         );
+    }
+    
+    if (!user) {
+        return null;
     }
   
     return <>{children}</>;
