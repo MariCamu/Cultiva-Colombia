@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -29,12 +30,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  // For simulation, we can bypass the loading screen if we want to work on UI faster.
-  // Set initial loading to false if you don't want to see the skeleton screen.
-  // const [loading, setLoading] = useState(false); 
-
-
-  // Show a simple loading UI while checking auth state
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -59,19 +54,15 @@ export const useAuth = () => useContext(AuthContext);
 // Component to protect routes
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     const { user, loading } = useAuth();
-    const router = require('next/navigation').useRouter();
-  
-    // For simulation, we will temporarily disable the redirection logic.
-    // This allows direct access to the dashboard for UI development.
-    const isSimulation = true; 
+    const router = useRouter();
 
     useEffect(() => {
-      if (!isSimulation && !loading && !user) {
+      if (!loading && !user) {
         router.push('/login');
       }
-    }, [user, loading, router, isSimulation]);
+    }, [user, loading, router]);
   
-    if (!isSimulation && (loading || !user)) {
+    if (loading || !user) {
         return (
             <div className="flex items-center justify-center h-screen">
                 <div className="space-y-4 w-full max-w-md p-8">

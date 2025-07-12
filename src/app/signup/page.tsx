@@ -4,8 +4,9 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-// import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile } from 'firebase/auth';
-// import { auth } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,37 +27,31 @@ export default function SignupPage() {
     setIsLoading(true);
     setError(null);
     
-    // --- SIMULATION ---
-    console.log("Simulating signup...");
-    router.push('/dashboard');
-    // try {
-    //   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    //   await updateProfile(userCredential.user, { displayName });
-    //   router.push('/dashboard');
-    // } catch (e: any) {
-    //   setError(e.message);
-    // } finally {
-    //   setIsLoading(false);
-    // }
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Update the user's profile in Firebase Auth
+      await updateProfile(user, { displayName });
+
+      // Create a new document in the 'usuarios' collection in Firestore
+      await setDoc(doc(db, 'usuarios', user.uid), {
+        email: user.email,
+        nombre: displayName,
+        fecha_registro: serverTimestamp(),
+        preferencia_tema: 'cultiva_verde_default'
+      });
+      
+      router.push('/dashboard');
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
   
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    // --- SIMULATION ---
-    console.log("Simulating Google sign-in...");
-    router.push('/dashboard');
-    // const provider = new GoogleAuthProvider();
-    // try {
-    //   await signInWithPopup(auth, provider);
-    //   router.push('/dashboard');
-    // } catch (e: any) {
-    //   setError(e.message);
-    // } finally {
-    //   setIsLoading(false);
-    // }
-  };
+  // Google Sign-in on signup page is omitted for simplicity, 
+  // but could be added similar to the login page.
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
@@ -114,18 +109,6 @@ export default function SignupPage() {
               {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
             </Button>
           </form>
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">O regístrate con</span>
-            </div>
-          </div>
-          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
-            <svg role="img" viewBox="0 0 24 24" className="mr-2 h-4 w-4"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.02-2.6 1.98-4.66 1.98-3.55 0-6.43-2.91-6.43-6.48s2.88-6.48 6.43-6.48c2.03 0 3.36.85 4.17 1.62l2.55-2.55C17.43 3.92 15.25 3 12.48 3c-5.22 0-9.45 4.22-9.45 9.45s4.23 9.45 9.45 9.45c5.05 0 9.12-3.45 9.12-9.22 0-.6-.08-1.18-.2-1.72h-8.92z"></path></svg>
-            Google
-          </Button>
         </CardContent>
         <CardFooter className="flex justify-center">
             <p className="text-sm text-muted-foreground">
