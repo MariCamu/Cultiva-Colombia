@@ -8,14 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog';
 import type { UserCrop } from '../page';
-import { db, storage } from '@/lib/firebase';
-import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { useAuth } from '@/context/auth-context';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -24,7 +20,7 @@ import { Progress } from '@/components/ui/progress';
 interface LogEntry {
   id: string;
   type: 'note' | 'water' | 'fertilize' | 'photo' | 'planted';
-  date: { seconds: number; nanoseconds: number; };
+  date: { seconds: number; };
   content: string;
   imageUrl?: string;
   dataAiHint?: string;
@@ -55,7 +51,6 @@ const getLogEntryIcon = (type: string) => {
 
 
 export function CropDetailDialog({ crop, children }: { crop: UserCrop; children: React.ReactNode }) {
-  const { user } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,23 +65,18 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-    
-    const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'notas_progreso');
-    const q = query(logCollectionRef, orderBy('fecha_nota', 'desc'));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const entries = snapshot.docs.map(doc => ({
-        id: doc.id,
-        icon: getLogEntryIcon(doc.data().type),
-        ...doc.data(),
-      } as LogEntry));
-      setLogEntries(entries);
-      setIsLogLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [crop.id, user]);
+    // Simulate fetching log entries
+    setIsLogLoading(true);
+    const sampleLogs: Omit<LogEntry, 'icon'>[] = [
+        { id: '1', type: 'planted', date: crop.fecha_plantacion, content: '¡La aventura comienza! Cultivo plantado.' },
+        { id: '2', type: 'water', date: { seconds: crop.fecha_plantacion.seconds + (86400 * 3) }, content: 'Primer riego registrado.' },
+        { id: '3', type: 'note', date: { seconds: crop.fecha_plantacion.seconds + (86400 * 7) }, content: 'Han aparecido los primeros brotes.' },
+    ];
+    setTimeout(() => {
+        setLogEntries(sampleLogs.map(log => ({ ...log, icon: getLogEntryIcon(log.type) })));
+        setIsLogLoading(false);
+    }, 1000);
+  }, [crop.id, crop.fecha_plantacion]);
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -97,70 +87,52 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
   };
 
   const addLogEntry = async (type: 'note' | 'water' | 'fertilize' | 'photo') => {
-    if (!user) return;
-    
     let content = "";
-    let data: { type: string; fecha_nota: any; texto_nota: string; url_foto?: string } = {
-        type: type,
-        fecha_nota: serverTimestamp(),
-        texto_nota: "",
-    };
-
+    
     switch(type) {
         case 'note':
             if (!newNote) return;
             setIsAddingNote(true);
-            data.texto_nota = newNote;
+            content = newNote;
             break;
         case 'water':
-            data.texto_nota = "Riego registrado.";
+            content = "Riego registrado.";
             break;
         case 'fertilize':
-            data.texto_nota = "Abonado registrado.";
+            content = "Abonado registrado.";
             break;
         case 'photo':
             if (!imageFile) return;
             setIsUploading(true);
-            try {
-                const storageRef = ref(storage, `cultivos_fotos/${user.uid}/${crop.id}/${Date.now()}_${imageFile.name}`);
-                const snapshot = await uploadBytes(storageRef, imageFile);
-                const downloadURL = await getDownloadURL(snapshot.ref);
-                data.url_foto = downloadURL;
-                data.texto_nota = newNote || "Foto de progreso añadida.";
-            } catch (error) {
-                console.error("Error uploading image:", error);
-                toast({ variant: 'destructive', title: "Error al subir imagen" });
-                setIsUploading(false);
-                return;
-            }
+            content = newNote || "Foto de progreso añadida.";
             break;
     }
     
-    try {
-        const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'notas_progreso');
-        await addDoc(logCollectionRef, data);
+    // Simulate adding log entry
+    const newEntry: LogEntry = {
+        id: new Date().getTime().toString(),
+        type,
+        date: { seconds: new Date().getTime() / 1000 },
+        content,
+        icon: getLogEntryIcon(type),
+        imageUrl: type === 'photo' ? imagePreview || undefined : undefined,
+    };
+
+    setTimeout(() => {
+        setLogEntries(prev => [newEntry, ...prev]);
         setNewNote("");
         setImageFile(null);
         setImagePreview(null);
-        toast({ title: "Diario actualizado", description: "Se ha añadido una nueva entrada."});
-    } catch (error) {
-        console.error("Error adding log entry:", error);
-        toast({ variant: 'destructive', title: "Error al guardar" });
-    } finally {
+        toast({ title: "Diario actualizado", description: "Se ha añadido una nueva entrada (simulado)."});
         setIsAddingNote(false);
         setIsUploading(false);
-    }
+    }, 1000);
   };
 
   const removeLogEntry = async (id: string) => {
-    if (!user) return;
-    try {
-        await deleteDoc(doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'notas_progreso', id));
-        toast({ title: "Entrada eliminada" });
-    } catch (error) {
-        console.error("Error removing log entry:", error);
-        toast({ variant: 'destructive', title: "Error al eliminar" });
-    }
+    // Simulate removing log entry
+    setLogEntries(prev => prev.filter(entry => entry.id !== id));
+    toast({ title: "Entrada eliminada (simulado)" });
   };
   
   return (
@@ -242,6 +214,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                                 </AlertDialog>
                                             </div>
                                         ))}
+                                        {!isLogLoading && logEntries.length === 0 && <p className="text-muted-foreground text-center">No hay entradas en el diario.</p>}
                                     </div>
                                 </ScrollArea>
                             </CardContent>

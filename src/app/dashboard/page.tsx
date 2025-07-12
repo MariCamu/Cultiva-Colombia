@@ -19,17 +19,14 @@ import { Label } from '@/components/ui/label';
 import { CropDetailDialog } from './components/crop-detail-dialog';
 import { addDays, format, isToday, isTomorrow, differenceInDays, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
 
+// --- SIMULATED DATA ---
 export interface UserCrop {
   id: string; // Document ID from 'cultivos_del_usuario'
   ficha_cultivo_id: string;
   nombre_cultivo_personal: string;
-  fecha_plantacion: Timestamp;
-  // These fields can be extended from a fetched 'ficha_tecnica'
+  fecha_plantacion: { seconds: number };
   imageUrl: string;
   dataAiHint: string;
   daysToHarvest: number;
@@ -38,11 +35,34 @@ export interface UserCrop {
   lastNote: string;
 }
 
-const recommendedArticles = [
-  { id: 1, title: 'Cómo prevenir el tizón en tomates', href: '/articulos' },
-  { id: 2, title: '5 abonos orgánicos que puedes hacer en casa', href: '/articulos' },
-  { id: 3, title: 'El riego correcto para hortalizas de hoja', href: '/articulos' },
+const sampleUserCrops: UserCrop[] = [
+  {
+    id: 'user_crop_1',
+    ficha_cultivo_id: 'tomate_cherry_id',
+    nombre_cultivo_personal: 'Tomates del balcón',
+    fecha_plantacion: { seconds: new Date('2024-05-15T12:00:00Z').getTime() / 1000 },
+    imageUrl: 'https://placehold.co/400x300.png',
+    dataAiHint: 'cherry tomatoes',
+    daysToHarvest: 90,
+    progress: 45,
+    nextTask: { name: 'Abonar', dueInDays: 1, icon: Droplets },
+    lastNote: "Las hojas inferiores empiezan a amarillear un poco.",
+  },
+  {
+    id: 'user_crop_2',
+    ficha_cultivo_id: 'menta_maceta_id',
+    nombre_cultivo_personal: 'Menta para el té',
+    fecha_plantacion: { seconds: new Date('2024-06-20T12:00:00Z').getTime() / 1000 },
+    imageUrl: 'https://placehold.co/400x300.png',
+    dataAiHint: 'mint plant',
+    daysToHarvest: 60,
+    progress: 15,
+    nextTask: { name: 'Regar', dueInDays: 2, icon: Droplets },
+    lastNote: 'Creciendo vigorosamente.',
+  },
 ];
+// --- END SIMULATED DATA ---
+
 
 function getTaskBadgeVariant(days: number) {
   if (days <= 1) return 'destructive';
@@ -53,7 +73,6 @@ function getTaskBadgeVariant(days: number) {
 function DashboardContent() {
   const { user } = useAuth();
   const displayUser = user || { displayName: 'Agricultor(a)', email: 'tu@correo.com' };
-  const { toast } = useToast();
 
   const [userCrops, setUserCrops] = useState<UserCrop[]>([]);
   const [isCropsLoading, setIsCropsLoading] = useState(true);
@@ -65,51 +84,23 @@ function DashboardContent() {
   const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
-      setIsCropsLoading(false);
-      return;
-    };
-
-    const q = query(collection(db, 'usuarios', user.uid, 'cultivos_del_usuario'));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const cropsData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        const plantedDate = data.fecha_plantacion.toDate();
+    // Simulate fetching user crops
+    setIsCropsLoading(true);
+    setTimeout(() => {
+      const cropsWithCalculatedProgress = sampleUserCrops.map(crop => {
+        const plantedDate = new Date(crop.fecha_plantacion.seconds * 1000);
         const daysSincePlanted = differenceInDays(new Date(), plantedDate);
-        const daysToHarvest = 90; // Placeholder
-        const progress = Math.min(Math.round((daysSincePlanted / daysToHarvest) * 100), 100);
-
-        return {
-          id: doc.id,
-          ficha_cultivo_id: data.ficha_cultivo_id,
-          nombre_cultivo_personal: data.nombre_cultivo_personal,
-          fecha_plantacion: data.fecha_plantacion,
-          imageUrl: data.imageUrl || 'https://placehold.co/400x300.png',
-          dataAiHint: data.dataAiHint || 'plant',
-          daysToHarvest: daysToHarvest,
-          progress: progress,
-          nextTask: { name: 'Regar', dueInDays: 2, icon: Droplets }, // Placeholder
-          lastNote: 'Sin notas recientes.', // Placeholder
-        } as UserCrop;
+        const progress = Math.min(Math.round((daysSincePlanted / crop.daysToHarvest) * 100), 100);
+        return { ...crop, progress };
       });
-      setUserCrops(cropsData);
-      if (cropsData.length > 0 && !journalCropId) {
-        setJournalCropId(cropsData[0].id);
+
+      setUserCrops(cropsWithCalculatedProgress);
+      if (cropsWithCalculatedProgress.length > 0) {
+        setJournalCropId(cropsWithCalculatedProgress[0].id);
       }
       setIsCropsLoading(false);
-    }, (error) => {
-      console.error("Error fetching user crops:", error);
-      toast({
-        variant: 'destructive',
-        title: 'Error al cargar cultivos',
-        description: 'No se pudieron cargar tus cultivos. Inténtalo de nuevo más tarde.'
-      });
-      setIsCropsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, toast, journalCropId]);
+    }, 1500);
+  }, []);
 
 
   const handleAiHelp = async () => {
@@ -122,12 +113,22 @@ function DashboardContent() {
     setAiSuggestion(null);
     setAiError(null);
     try {
-      const result = await getCropDiseaseRemedySuggestions({ cropName: selectedCrop.nombre_cultivo_personal, diseaseName: journalProblem });
-      setAiSuggestion(result);
+      // In a real scenario, this would call the Genkit flow
+      // For simulation, we'll return a mock response.
+      setTimeout(() => {
+          const result: CropDiseaseRemedySuggestionsOutput = {
+            remedySuggestions: [
+                'Opción 1: Revisa la frecuencia de riego. El amarillamiento puede ser por exceso o falta de agua. Asegúrate de que la tierra esté húmeda pero no encharcada.',
+                'Opción 2: Puede ser una deficiencia de nitrógeno. Considera aplicar un abono orgánico rico en nitrógeno, como el humus de lombriz.',
+                'Opción 3: Asegúrate de que la planta recibe suficiente luz solar directa (al menos 6 horas al día).'
+            ]
+          };
+          setAiSuggestion(result);
+          setIsAiLoading(false);
+      }, 2000);
     } catch (e) {
       console.error(e);
       setAiError('Hubo un error al consultar la IA. Inténtalo de nuevo.');
-    } finally {
       setIsAiLoading(false);
     }
   };
@@ -139,7 +140,7 @@ function DashboardContent() {
     type: crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : crop.nextTask.name.toLowerCase().includes('abonar') ? 'abono' : 'cosecha'
   })).sort((a,b) => a.date.getTime() - b.date.getTime());
 
-  const plantingDates = userCrops.map(c => c.fecha_plantacion.toDate());
+  const plantingDates = userCrops.map(c => new Date(c.fecha_plantacion.seconds * 1000));
 
   const calendarModifiers = {
     siembra: plantingDates,
@@ -210,7 +211,7 @@ function DashboardContent() {
                       <div className="flex justify-between items-start">
                           <div>
                             <h3 className="font-nunito font-bold text-xl">{crop.nombre_cultivo_personal}</h3>
-                            <p className="text-sm text-muted-foreground font-sans">Plantado el: {format(crop.fecha_plantacion.toDate(), 'PPP', { locale: es })}</p>
+                            <p className="text-sm text-muted-foreground font-sans">Plantado el: {format(new Date(crop.fecha_plantacion.seconds * 1000), 'PPP', { locale: es })}</p>
                           </div>
                           <Badge variant={getTaskBadgeVariant(crop.nextTask.dueInDays)}>
                             {crop.nextTask.dueInDays === 0 ? 'Hoy' : `En ${crop.nextTask.dueInDays} días`}

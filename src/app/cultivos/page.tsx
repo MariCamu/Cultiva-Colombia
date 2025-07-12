@@ -12,8 +12,6 @@ import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 interface SampleCrop {
@@ -147,6 +145,7 @@ export default function CultivosPage() {
   const [isAddingCrop, setIsAddingCrop] = useState<string | null>(null);
 
   const handleAddCropToDashboard = async (crop: SampleCrop) => {
+    setIsAddingCrop(crop.id);
     if (!user) {
       toast({
         title: "Inicia Sesión",
@@ -154,40 +153,19 @@ export default function CultivosPage() {
         variant: "destructive",
       });
       router.push('/login');
+      setIsAddingCrop(null);
       return;
     }
-
-    setIsAddingCrop(crop.id);
-    try {
-      const userCropsCollection = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario');
-      await addDoc(userCropsCollection, {
-        ficha_cultivo_id: crop.id,
-        nombre_cultivo_personal: crop.name,
-        imageUrl: crop.imageUrl,
-        dataAiHint: crop.dataAiHint,
-        fecha_plantacion: serverTimestamp(),
-        // Placeholder data, to be calculated based on ficha_tecnica
-        proxima_tarea_tipo: 'Riego', 
-        fecha_proxima_tarea: new Date(new Date().setDate(new Date().getDate() + 3)),
-        estado_actual: 'Semilla',
-      });
-
-      toast({
-        title: "¡Cultivo Añadido!",
-        description: `${crop.name} ha sido añadido a tu dashboard.`,
-      });
-      router.push('/dashboard');
-
-    } catch (error) {
-      console.error("Error adding crop to dashboard: ", error);
-      toast({
-        title: "Error",
-        description: "No se pudo añadir el cultivo. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAddingCrop(null);
-    }
+    
+    // Simulate adding crop
+    setTimeout(() => {
+        toast({
+            title: "¡Cultivo Añadido! (Simulado)",
+            description: `${crop.name} ha sido añadido a tu dashboard.`,
+        });
+        router.push('/dashboard');
+        setIsAddingCrop(null);
+    }, 1000);
   };
 
 

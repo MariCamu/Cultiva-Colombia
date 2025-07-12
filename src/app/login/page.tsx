@@ -4,49 +4,45 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
-  const handleLogin = async (event: FormEvent) => {
+  const handleLogin = (event: FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
-    setError(null);
     
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
+    // Simulate a successful login
+    setTimeout(() => {
+      toast({
+        title: "Inicio de Sesión Simulado",
+        description: "Redirigiendo al dashboard...",
+      });
       router.push('/dashboard');
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
       setIsLoading(false);
-    }
+    }, 1000);
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
     setIsLoading(true);
-    setError(null);
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setIsLoading(false);
-    }
+    // Simulate a successful Google sign-in
+    setTimeout(() => {
+        toast({
+            title: "Inicio de Sesión Simulado con Google",
+            description: "Redirigiendo al dashboard...",
+        });
+        router.push('/dashboard');
+        setIsLoading(false);
+    }, 1000);
   };
 
   return (
@@ -57,13 +53,6 @@ export default function LoginPage() {
           <CardDescription>Ingresa a tu cuenta para acceder a tu dashboard.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error de inicio de sesión</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Correo Electrónico</Label>
@@ -89,7 +78,7 @@ export default function LoginPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión (Simulado)'}
             </Button>
           </form>
           <div className="relative">
@@ -102,7 +91,7 @@ export default function LoginPage() {
           </div>
           <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
             <svg role="img" viewBox="0 0 24 24" className="mr-2 h-4 w-4"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.02-2.6 1.98-4.66 1.98-3.55 0-6.43-2.91-6.43-6.48s2.88-6.48 6.43-6.48c2.03 0 3.36.85 4.17 1.62l2.55-2.55C17.43 3.92 15.25 3 12.48 3c-5.22 0-9.45 4.22-9.45 9.45s4.23 9.45 9.45 9.45c5.05 0 9.12-3.45 9.12-9.22 0-.6-.08-1.18-.2-1.72h-8.92z"></path></svg>
-            Google
+            Google (Simulado)
           </Button>
         </CardContent>
         <CardFooter className="flex justify-center">

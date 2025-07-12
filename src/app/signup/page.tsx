@@ -4,55 +4,35 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SignupPage() {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleSignup = async (event: FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
-    setError(null);
     
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Update the user's profile in Firebase Auth
-      await updateProfile(user, { displayName });
-
-      // Create a new document in the 'usuarios' collection in Firestore
-      await setDoc(doc(db, 'usuarios', user.uid), {
-        email: user.email,
-        nombre: displayName,
-        fecha_registro: serverTimestamp(),
-        preferencia_tema: 'cultiva_verde_default'
-      });
-      
-      router.push('/dashboard');
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setIsLoading(false);
-    }
+    // Simulate a successful signup
+    setTimeout(() => {
+        toast({
+            title: "Registro Simulado Exitoso",
+            description: "¡Bienvenido! Redirigiendo al dashboard...",
+        });
+        router.push('/dashboard');
+        setIsLoading(false);
+    }, 1000);
   };
   
-  // Google Sign-in on signup page is omitted for simplicity, 
-  // but could be added similar to the login page.
-
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
       <Card className="w-full max-w-md">
@@ -61,13 +41,6 @@ export default function SignupPage() {
           <CardDescription>Únete a nuestra comunidad para empezar a cultivar.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error de registro</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="displayName">Nombre</Label>
@@ -106,7 +79,7 @@ export default function SignupPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
+              {isLoading ? 'Creando cuenta...' : 'Crear Cuenta (Simulado)'}
             </Button>
           </form>
         </CardContent>
