@@ -63,6 +63,12 @@ const sampleUserCrops: UserCrop[] = [
 ];
 // --- END SIMULATED DATA ---
 
+const recommendedArticles = [
+    { id: '1', title: 'Guía de compostaje para principiantes', href: '/articulos' },
+    { id: '2', title: 'Cómo regar tus tomates correctamente', href: '/articulos' },
+    { id: '3', title: 'Control orgánico de pulgones', href: '/articulos' },
+];
+
 
 function getTaskBadgeVariant(days: number) {
   if (days <= 1) return 'destructive';
