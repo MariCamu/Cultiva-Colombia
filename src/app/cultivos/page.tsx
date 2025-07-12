@@ -150,7 +150,6 @@ export default function CultivosPage() {
   const [isAddingCrop, setIsAddingCrop] = useState<string | null>(null);
 
   const handleAddCropToDashboard = async (crop: SampleCrop) => {
-    setIsAddingCrop(crop.id);
     if (!user) {
       toast({
         title: "Inicia Sesión",
@@ -158,10 +157,10 @@ export default function CultivosPage() {
         variant: "destructive",
       });
       router.push('/login');
-      setIsAddingCrop(null);
       return;
     }
-    
+
+    setIsAddingCrop(crop.id);
     try {
       const userCropsCollection = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario');
       await addDoc(userCropsCollection, {
@@ -184,7 +183,7 @@ export default function CultivosPage() {
       console.error("Error adding crop to dashboard: ", error);
       toast({
         title: "Error",
-        description: "No se pudo añadir el cultivo. Inténtalo de nuevo.",
+        description: "No se pudo añadir el cultivo. Revisa tu conexión o permisos de base de datos.",
         variant: "destructive",
       });
     } finally {
