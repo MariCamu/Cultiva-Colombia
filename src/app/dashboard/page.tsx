@@ -4,7 +4,7 @@
 import { ProtectedRoute, useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Leaf, CalendarDays, Droplets, Sun, Wind, BookOpen, Sparkles, MessageSquarePlus, AlertCircle } from 'lucide-react';
+import { PlusCircle, Leaf, CalendarDays, Droplets, Sun, Wind, BookOpen, Sparkles, MessageSquarePlus, AlertCircle, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -20,10 +20,13 @@ import { CropDetailDialog } from './components/crop-detail-dialog';
 import { addDays, format, isToday, isTomorrow, differenceInDays, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
-// --- SIMULATED DATA ---
 export interface UserCrop {
-  id: string; // Document ID from 'cultivos_del_usuario'
+  id: string; 
   ficha_cultivo_id: string;
   nombre_cultivo_personal: string;
   fecha_plantacion: { seconds: number };
@@ -31,37 +34,15 @@ export interface UserCrop {
   dataAiHint: string;
   daysToHarvest: number;
   progress: number;
-  nextTask: { name: string; dueInDays: number; icon: React.ElementType };
+  nextTask: { name: string; dueInDays: number; iconName: 'Droplets' | 'Sun' | 'Wind' };
   lastNote: string;
 }
 
-const sampleUserCrops: UserCrop[] = [
-  {
-    id: 'user_crop_1',
-    ficha_cultivo_id: 'tomate_cherry_id',
-    nombre_cultivo_personal: 'Tomates del balcón',
-    fecha_plantacion: { seconds: new Date('2024-05-15T12:00:00Z').getTime() / 1000 },
-    imageUrl: 'https://placehold.co/400x300.png',
-    dataAiHint: 'cherry tomatoes',
-    daysToHarvest: 90,
-    progress: 45,
-    nextTask: { name: 'Abonar', dueInDays: 1, icon: Droplets },
-    lastNote: "Las hojas inferiores empiezan a amarillear un poco.",
-  },
-  {
-    id: 'user_crop_2',
-    ficha_cultivo_id: 'menta_maceta_id',
-    nombre_cultivo_personal: 'Menta para el té',
-    fecha_plantacion: { seconds: new Date('2024-06-20T12:00:00Z').getTime() / 1000 },
-    imageUrl: 'https://placehold.co/400x300.png',
-    dataAiHint: 'mint plant',
-    daysToHarvest: 60,
-    progress: 15,
-    nextTask: { name: 'Regar', dueInDays: 2, icon: Droplets },
-    lastNote: 'Creciendo vigorosamente.',
-  },
-];
-// --- END SIMULATED DATA ---
+const ICONS: { [key: string]: React.ElementType } = {
+  Droplets: Droplets,
+  Sun: Sun,
+  Wind: Wind,
+};
 
 const recommendedArticles = [
     { id: '1', title: 'Guía de compostaje para principiantes', href: '/articulos' },
@@ -78,6 +59,7 @@ function getTaskBadgeVariant(days: number) {
 
 function DashboardContent() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const displayUser = user || { displayName: 'Agricultor(a)', email: 'tu@correo.com' };
 
   const [userCrops, setUserCrops] = useState<UserCrop[]>([]);
@@ -90,23 +72,65 @@ function DashboardContent() {
   const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate fetching user crops
+    if (!user) {
+      setIsCropsLoading(false);
+      return;
+    };
+
     setIsCropsLoading(true);
-    setTimeout(() => {
-      const cropsWithCalculatedProgress = sampleUserCrops.map(crop => {
-        const plantedDate = new Date(crop.fecha_plantacion.seconds * 1000);
+    const userCropsQuery = query(collection(db, 'usuarios', user.uid, 'cultivos_del_usuario'));
+
+    const unsubscribe = onSnapshot(userCropsQuery, (snapshot) => {
+      const cropsData = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
+        const data = doc.data();
+        const plantedDate = data.fecha_plantacion ? new Date(data.fecha_plantacion.seconds * 1000) : new Date();
         const daysSincePlanted = differenceInDays(new Date(), plantedDate);
-        const progress = Math.min(Math.round((daysSincePlanted / crop.daysToHarvest) * 100), 100);
-        return { ...crop, progress };
+        const progress = Math.min(Math.round((daysSincePlanted / data.daysToHarvest) * 100), 100);
+
+        return {
+          id: doc.id,
+          ficha_cultivo_id: data.ficha_cultivo_id,
+          nombre_cultivo_personal: data.nombre_cultivo_personal,
+          fecha_plantacion: data.fecha_plantacion,
+          imageUrl: data.imageUrl,
+          dataAiHint: data.dataAiHint,
+          daysToHarvest: data.daysToHarvest,
+          progress,
+          nextTask: data.nextTask || { name: 'Revisar', dueInDays: 1, iconName: 'Sun' },
+          lastNote: data.lastNote,
+        } as UserCrop;
       });
 
-      setUserCrops(cropsWithCalculatedProgress);
-      if (cropsWithCalculatedProgress.length > 0) {
-        setJournalCropId(cropsWithCalculatedProgress[0].id);
+      setUserCrops(cropsData);
+      if (cropsData.length > 0 && !journalCropId) {
+        setJournalCropId(cropsData[0].id);
       }
       setIsCropsLoading(false);
-    }, 1500);
-  }, []);
+    }, (error) => {
+      console.error("Error fetching user crops:", error);
+      setIsCropsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user, journalCropId]);
+
+  const handleDeleteCrop = async (cropId: string) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', cropId));
+      toast({
+        title: "Cultivo Eliminado",
+        description: "El cultivo ha sido eliminado de tu dashboard.",
+      });
+    } catch (error) {
+      console.error("Error deleting crop: ", error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el cultivo.",
+        variant: "destructive",
+      });
+    }
+  };
 
 
   const handleAiHelp = async () => {
@@ -119,22 +143,15 @@ function DashboardContent() {
     setAiSuggestion(null);
     setAiError(null);
     try {
-      // In a real scenario, this would call the Genkit flow
-      // For simulation, we'll return a mock response.
-      setTimeout(() => {
-          const result: CropDiseaseRemedySuggestionsOutput = {
-            remedySuggestions: [
-                'Opción 1: Revisa la frecuencia de riego. El amarillamiento puede ser por exceso o falta de agua. Asegúrate de que la tierra esté húmeda pero no encharcada.',
-                'Opción 2: Puede ser una deficiencia de nitrógeno. Considera aplicar un abono orgánico rico en nitrógeno, como el humus de lombriz.',
-                'Opción 3: Asegúrate de que la planta recibe suficiente luz solar directa (al menos 6 horas al día).'
-            ]
-          };
-          setAiSuggestion(result);
-          setIsAiLoading(false);
-      }, 2000);
+       const result = await getCropDiseaseRemedySuggestions({
+        cropName: selectedCrop.nombre_cultivo_personal,
+        diseaseName: journalProblem,
+      });
+      setAiSuggestion(result);
     } catch (e) {
       console.error(e);
       setAiError('Hubo un error al consultar la IA. Inténtalo de nuevo.');
+    } finally {
       setIsAiLoading(false);
     }
   };
@@ -197,49 +214,73 @@ function DashboardContent() {
             <CardContent className="space-y-6">
               {isCropsLoading ? (
                 <div className="space-y-4">
-                  <Skeleton className="h-32 w-full rounded-lg" />
-                  <Skeleton className="h-32 w-full rounded-lg" />
+                  <Skeleton className="h-40 w-full rounded-lg" />
+                  <Skeleton className="h-40 w-full rounded-lg" />
                 </div>
               ) : userCrops.length > 0 ? (
-                userCrops.map(crop => (
-                  <Card key={crop.id} className="grid md:grid-cols-3 gap-4 p-4 items-center bg-card/50">
-                    <div className="md:col-span-1">
-                      <Image
-                        src={crop.imageUrl}
-                        alt={crop.nombre_cultivo_personal}
-                        width={400}
-                        height={300}
-                        className="rounded-lg object-cover aspect-[4/3]"
-                        data-ai-hint={crop.dataAiHint}
-                      />
-                    </div>
-                    <div className="md:col-span-2 space-y-3">
-                      <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-nunito font-bold text-xl">{crop.nombre_cultivo_personal}</h3>
-                            <p className="text-sm text-muted-foreground font-sans">Plantado el: {format(new Date(crop.fecha_plantacion.seconds * 1000), 'PPP', { locale: es })}</p>
-                          </div>
-                          <Badge variant={getTaskBadgeVariant(crop.nextTask.dueInDays)}>
-                            {crop.nextTask.dueInDays === 0 ? 'Hoy' : `En ${crop.nextTask.dueInDays} días`}
-                          </Badge>
+                userCrops.map(crop => {
+                  const NextTaskIcon = ICONS[crop.nextTask.iconName] || Leaf;
+                  return (
+                    <Card key={crop.id} className="grid md:grid-cols-3 gap-4 p-4 items-center bg-card/50">
+                      <div className="md:col-span-1">
+                        <Image
+                          src={crop.imageUrl}
+                          alt={crop.nombre_cultivo_personal}
+                          width={400}
+                          height={300}
+                          className="rounded-lg object-cover aspect-[4/3]"
+                          data-ai-hint={crop.dataAiHint}
+                        />
                       </div>
-                      <div>
-                        <Label className="text-xs font-nunito font-semibold">Progreso a cosecha ({crop.daysToHarvest} días est.)</Label>
-                        <Progress value={crop.progress} className="h-3 mt-1" />
-                      </div>
-                      <p className="text-sm font-sans italic text-muted-foreground">Última nota: "{crop.lastNote}"</p>
-                      <div className="flex justify-between items-center pt-2 border-t">
-                        <div className="flex items-center gap-2 text-sm font-nunito font-semibold">
-                          <crop.nextTask.icon className="h-4 w-4 text-primary" />
-                          <span>Próxima tarea: {crop.nextTask.name}</span>
+                      <div className="md:col-span-2 space-y-3">
+                        <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-nunito font-bold text-xl">{crop.nombre_cultivo_personal}</h3>
+                              <p className="text-sm text-muted-foreground font-sans">Plantado el: {format(new Date(crop.fecha_plantacion.seconds * 1000), 'PPP', { locale: es })}</p>
+                            </div>
+                            <Badge variant={getTaskBadgeVariant(crop.nextTask.dueInDays)}>
+                              {crop.nextTask.dueInDays === 0 ? 'Hoy' : `En ${crop.nextTask.dueInDays} días`}
+                            </Badge>
                         </div>
-                        <CropDetailDialog crop={crop}>
-                          <Button variant="outline" size="sm">Ver Diario</Button>
-                        </CropDetailDialog>
+                        <div>
+                          <Label className="text-xs font-nunito font-semibold">Progreso a cosecha ({crop.daysToHarvest} días est.)</Label>
+                          <Progress value={crop.progress} className="h-3 mt-1" />
+                        </div>
+                        <p className="text-sm font-sans italic text-muted-foreground">Última nota: "{crop.lastNote}"</p>
+                        <div className="flex justify-between items-center pt-2 border-t">
+                          <div className="flex items-center gap-2 text-sm font-nunito font-semibold">
+                            <NextTaskIcon className="h-4 w-4 text-primary" />
+                            <span>Próxima tarea: {crop.nextTask.name}</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <CropDetailDialog crop={crop}>
+                              <Button variant="outline" size="sm">Ver Diario</Button>
+                            </CropDetailDialog>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="icon_sm">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Estás seguro de eliminar este cultivo?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta acción no se puede deshacer. Se eliminará permanentemente "{crop.nombre_cultivo_personal}" y todos sus datos del diario.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteCrop(crop.id)}>Sí, eliminar</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
-                ))
+                    </Card>
+                  )
+                })
               ) : (
                 <div className="text-center py-10 border-2 border-dashed rounded-lg">
                   <p className="text-muted-foreground mb-4">Aún no has añadido ningún cultivo.</p>
