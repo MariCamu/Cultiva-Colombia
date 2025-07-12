@@ -83,7 +83,9 @@ function DashboardContent() {
     const unsubscribe = onSnapshot(userCropsQuery, (snapshot) => {
       const cropsData = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
         const data = doc.data();
-        const plantedDate = data.fecha_plantacion ? new Date(data.fecha_plantacion.seconds * 1000) : new Date();
+        if (!data.fecha_plantacion) return null; // Skip crops without a planting date
+
+        const plantedDate = new Date(data.fecha_plantacion.seconds * 1000);
         const daysSincePlanted = differenceInDays(new Date(), plantedDate);
         const progress = Math.min(Math.round((daysSincePlanted / data.daysToHarvest) * 100), 100);
 
@@ -99,7 +101,7 @@ function DashboardContent() {
           nextTask: data.nextTask || { name: 'Revisar', dueInDays: 1, iconName: 'Sun' },
           lastNote: data.lastNote,
         } as UserCrop;
-      });
+      }).filter((crop): crop is UserCrop => crop !== null); // Filter out the null values
 
       setUserCrops(cropsData);
       if (cropsData.length > 0 && !journalCropId) {
@@ -157,13 +159,13 @@ function DashboardContent() {
   };
 
   const today = new Date();
-  const simulatedTasks = userCrops.map(crop => ({
+  const simulatedTasks = userCrops.filter(crop => crop.fecha_plantacion).map(crop => ({
     date: addDays(today, crop.nextTask.dueInDays),
     description: `${crop.nextTask.name} ${crop.nombre_cultivo_personal}`,
     type: crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : crop.nextTask.name.toLowerCase().includes('abonar') ? 'abono' : 'cosecha'
   })).sort((a,b) => a.date.getTime() - b.date.getTime());
 
-  const plantingDates = userCrops.map(c => new Date(c.fecha_plantacion.seconds * 1000));
+  const plantingDates = userCrops.filter(c => c.fecha_plantacion).map(c => new Date(c.fecha_plantacion.seconds * 1000));
 
   const calendarModifiers = {
     siembra: plantingDates,
@@ -236,7 +238,9 @@ function DashboardContent() {
                         <div className="flex justify-between items-start">
                             <div>
                               <h3 className="font-nunito font-bold text-xl">{crop.nombre_cultivo_personal}</h3>
-                              <p className="text-sm text-muted-foreground font-sans">Plantado el: {format(new Date(crop.fecha_plantacion.seconds * 1000), 'PPP', { locale: es })}</p>
+                              {crop.fecha_plantacion && (
+                                <p className="text-sm text-muted-foreground font-sans">Plantado el: {format(new Date(crop.fecha_plantacion.seconds * 1000), 'PPP', { locale: es })}</p>
+                              )}
                             </div>
                             <Badge variant={getTaskBadgeVariant(crop.nextTask.dueInDays)}>
                               {crop.nextTask.dueInDays === 0 ? 'Hoy' : `En ${crop.nextTask.dueInDays} días`}
@@ -258,7 +262,7 @@ function DashboardContent() {
                             </CropDetailDialog>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="icon_sm">
+                                <Button variant="destructive" size="sm">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </AlertDialogTrigger>
