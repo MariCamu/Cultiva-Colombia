@@ -1,37 +1,35 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2 } from 'lucide-react';
+import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2, Upload } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import type { UserCrop } from '../page';
+import { db, storage } from '@/lib/firebase';
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useAuth } from '@/context/auth-context';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
 
-interface UserCrop {
+interface LogEntry {
   id: string;
-  name: string;
-  plantId: string;
-  imageUrl: string;
-  dataAiHint: string;
-  datePlanted: string;
-  daysToHarvest: number;
-  progress: number;
-  nextTask: { name: string; dueInDays: number; icon: React.ElementType };
-  lastNote: string;
+  type: 'note' | 'water' | 'fertilize' | 'photo' | 'planted';
+  date: { seconds: number; nanoseconds: number; };
+  content: string;
+  imageUrl?: string;
+  dataAiHint?: string;
+  icon: React.ElementType;
 }
-
-const sampleLogEntries = [
-  { id: 1, type: 'note', date: '2024-06-10', content: 'Aparecieron las primeras flores amarillas hoy.', icon: NotebookText },
-  { id: 2, type: 'water', date: '2024-06-08', content: 'Riego profundo realizado.', icon: Droplet },
-  { id: 3, type: 'photo', date: '2024-06-05', content: 'Foto de progreso subida.', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'tomato plant', icon: Camera },
-  { id: 4, type: 'fertilize', date: '2024-06-01', content: 'Abono orgánico añadido.', icon: Zap },
-  { id: 5, type: 'planted', date: '2024-05-15', content: 'Cultivo plantado.', icon: Sun },
-];
 
 const getLogEntryColor = (type: string) => {
     switch(type) {
@@ -44,51 +42,125 @@ const getLogEntryColor = (type: string) => {
     }
 }
 
+const getLogEntryIcon = (type: string) => {
+    switch(type) {
+        case 'note': return NotebookText;
+        case 'water': return Droplet;
+        case 'photo': return Camera;
+        case 'fertilize': return Zap;
+        case 'planted': return Sun;
+        default: return NotebookText;
+    }
+}
+
 
 export function CropDetailDialog({ crop, children }: { crop: UserCrop; children: React.ReactNode }) {
-  const [logEntries, setLogEntries] = useState(sampleLogEntries);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const addLogEntry = (type: 'note' | 'water' | 'fertilize' | 'photo') => {
-    let content = `Nuevo registro de ${type}.`;
-    let icon = NotebookText;
-    let imageUrl = '';
-    let dataAiHint = '';
+  const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
+  const [isLogLoading, setIsLogLoading] = useState(true);
+  
+  const [newNote, setNewNote] = useState("");
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'notas_progreso');
+    const q = query(logCollectionRef, orderBy('fecha_nota', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const entries = snapshot.docs.map(doc => ({
+        id: doc.id,
+        icon: getLogEntryIcon(doc.data().type),
+        ...doc.data(),
+      } as LogEntry));
+      setLogEntries(entries);
+      setIsLogLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [crop.id, user]);
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const addLogEntry = async (type: 'note' | 'water' | 'fertilize' | 'photo') => {
+    if (!user) return;
+    
+    let content = "";
+    let data: { type: string; fecha_nota: any; texto_nota: string; url_foto?: string } = {
+        type: type,
+        fecha_nota: serverTimestamp(),
+        texto_nota: "",
+    };
 
     switch(type) {
         case 'note':
-            icon = NotebookText;
-            content = "Nueva nota añadida.";
+            if (!newNote) return;
+            setIsAddingNote(true);
+            data.texto_nota = newNote;
             break;
         case 'water':
-            icon = Droplet;
-            content = "Riego registrado.";
+            data.texto_nota = "Riego registrado.";
             break;
         case 'fertilize':
-            icon = Zap;
-            content = "Abonado registrado.";
+            data.texto_nota = "Abonado registrado.";
             break;
         case 'photo':
-            icon = Camera;
-            content = "Nueva foto subida.";
-            imageUrl = 'https://placehold.co/100x100.png';
-            dataAiHint = 'new plant photo';
+            if (!imageFile) return;
+            setIsUploading(true);
+            try {
+                const storageRef = ref(storage, `cultivos_fotos/${user.uid}/${crop.id}/${Date.now()}_${imageFile.name}`);
+                const snapshot = await uploadBytes(storageRef, imageFile);
+                const downloadURL = await getDownloadURL(snapshot.ref);
+                data.url_foto = downloadURL;
+                data.texto_nota = newNote || "Foto de progreso añadida.";
+            } catch (error) {
+                console.error("Error uploading image:", error);
+                toast({ variant: 'destructive', title: "Error al subir imagen" });
+                setIsUploading(false);
+                return;
+            }
             break;
     }
     
-    const newEntry = {
-        id: Date.now(),
-        type,
-        date: new Date().toISOString().split('T')[0],
-        content,
-        icon,
-        imageUrl,
-        dataAiHint
-    };
-    setLogEntries([newEntry, ...logEntries]);
+    try {
+        const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'notas_progreso');
+        await addDoc(logCollectionRef, data);
+        setNewNote("");
+        setImageFile(null);
+        setImagePreview(null);
+        toast({ title: "Diario actualizado", description: "Se ha añadido una nueva entrada."});
+    } catch (error) {
+        console.error("Error adding log entry:", error);
+        toast({ variant: 'destructive', title: "Error al guardar" });
+    } finally {
+        setIsAddingNote(false);
+        setIsUploading(false);
+    }
   };
 
-  const removeLogEntry = (id: number) => {
-    setLogEntries(logEntries.filter(entry => entry.id !== id));
+  const removeLogEntry = async (id: string) => {
+    if (!user) return;
+    try {
+        await deleteDoc(doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'notas_progreso', id));
+        toast({ title: "Entrada eliminada" });
+    } catch (error) {
+        console.error("Error removing log entry:", error);
+        toast({ variant: 'destructive', title: "Error al eliminar" });
+    }
   };
   
   return (
@@ -96,9 +168,9 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="text-3xl font-nunito font-bold">{crop.name}</DialogTitle>
+          <DialogTitle className="text-3xl font-nunito font-bold">{crop.nombre_cultivo_personal}</DialogTitle>
           <DialogDescription>
-            Detalles y seguimiento de tu cultivo de {crop.name}.
+            Detalles y seguimiento de tu cultivo.
           </DialogDescription>
         </DialogHeader>
         <div className="grid md:grid-cols-2 gap-6 mt-4 h-full overflow-hidden">
@@ -106,7 +178,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden">
                     <Image
                         src={crop.imageUrl}
-                        alt={`Imagen de ${crop.name}`}
+                        alt={`Imagen de ${crop.nombre_cultivo_personal}`}
                         fill
                         className="object-cover"
                         data-ai-hint={crop.dataAiHint}
@@ -117,12 +189,10 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                         <CardTitle className="text-xl">Ficha Rápida</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
-                        <p><strong>Fecha de Siembra:</strong> {new Date(crop.datePlanted).toLocaleDateString()}</p>
+                        <p><strong>Fecha de Siembra:</strong> {new Date(crop.fecha_plantacion.seconds * 1000).toLocaleDateString()}</p>
                         <p><strong>Cosecha Estimada en:</strong> {crop.daysToHarvest - Math.round(crop.progress / 100 * crop.daysToHarvest)} días</p>
                         <p><strong>Progreso General:</strong></p>
-                        <div className="w-full bg-secondary rounded-full h-2.5">
-                            <div className="bg-primary h-2.5 rounded-full" style={{ width: `${crop.progress}%` }}></div>
-                        </div>
+                        <Progress value={crop.progress} />
                     </CardContent>
                 </Card>
             </div>
@@ -137,21 +207,17 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                         <Card className="flex-grow flex flex-col overflow-hidden">
                             <CardHeader>
                                 <CardTitle className="text-xl">Diario de Cultivo</CardTitle>
-                                <div className="flex flex-wrap gap-2 pt-2">
-                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('note')}><NotebookText className="mr-2 h-4 w-4" />Nota</Button>
-                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('water')}><Droplet className="mr-2 h-4 w-4" />Riego</Button>
-                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('fertilize')}><Zap className="mr-2 h-4 w-4" />Abonado</Button>
-                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('photo')}><Camera className="mr-2 h-4 w-4" />Foto</Button>
-                                </div>
+                                <CardDescription>Añade notas, fotos y registra cuidados.</CardDescription>
                             </CardHeader>
                             <CardContent className="flex-grow overflow-auto p-0">
-                                <ScrollArea className="h-full pr-4 p-6">
+                                <ScrollArea className="h-full p-6">
                                     <div className="space-y-4">
+                                        {isLogLoading && <p>Cargando diario...</p>}
                                         {logEntries.map(entry => (
                                             <div key={entry.id} className={`relative p-3 rounded-lg border flex items-start gap-3 text-sm ${getLogEntryColor(entry.type)}`}>
                                                 <div className="p-2 bg-white/50 rounded-full"><entry.icon className="h-5 w-5 text-gray-700" /></div>
                                                 <div className="flex-grow">
-                                                    <p className="font-nunito font-semibold">{new Date(entry.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                                    <p className="font-nunito font-semibold">{new Date(entry.date.seconds * 1000).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                                     <p className="text-gray-700">{entry.content}</p>
                                                     {entry.imageUrl && <Image src={entry.imageUrl} alt="Foto del diario" width={80} height={80} className="mt-2 rounded-md" data-ai-hint={entry.dataAiHint || ''} />}
                                                 </div>
@@ -163,7 +229,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                                     </AlertDialogTrigger>
                                                     <AlertDialogContent>
                                                         <AlertDialogHeader>
-                                                            <AlertDialogTitle>¿Estás seguro que deseas eliminar esto?</AlertDialogTitle>
+                                                            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                                                             <AlertDialogDescription>
                                                                 Esta acción no se puede deshacer. Esto eliminará permanentemente la entrada del diario.
                                                             </AlertDialogDescription>
@@ -179,13 +245,33 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                     </div>
                                 </ScrollArea>
                             </CardContent>
+                             <CardFooter className="flex-col items-start gap-2 border-t pt-4">
+                                <div className="w-full space-y-2">
+                                  <Textarea placeholder="Escribe una nueva nota..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
+                                  <div className="flex justify-between items-center">
+                                      <div className="flex gap-2">
+                                        <Button size="sm" variant="outline" onClick={() => addLogEntry('note')} disabled={isAddingNote || !newNote}><NotebookText className="mr-2 h-4 w-4" />Guardar Nota</Button>
+                                        <Button size="sm" variant="outline" onClick={() => addLogEntry('water')}><Droplet className="mr-2 h-4 w-4" />Registrar Riego</Button>
+                                        <Button size="sm" variant="outline" onClick={() => addLogEntry('fertilize')}><Zap className="mr-2 h-4 w-4" />Abonado</Button>
+                                      </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                     <Input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageFileChange} className="text-xs" />
+                                     {imagePreview && <Image src={imagePreview} alt="Preview" width={40} height={40} className="rounded-md" />}
+                                     <Button size="sm" variant="outline" onClick={() => addLogEntry('photo')} disabled={isUploading || !imageFile}>
+                                        {isUploading ? 'Subiendo...' : <Camera className="mr-2 h-4 w-4" />}
+                                        Subir Foto
+                                     </Button>
+                                  </div>
+                                </div>
+                             </CardFooter>
                         </Card>
                     </TabsContent>
                     <TabsContent value="datasheet" className="flex-grow overflow-auto">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-xl">Ficha Técnica (Ejemplo)</CardTitle>
-                                <CardDescription>Información general sobre el cultivo de {crop.name}.</CardDescription>
+                                <CardDescription>Información general sobre el cultivo de {crop.nombre_cultivo_personal}.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-2 text-sm">
                                 <p><strong>Especie:</strong> <i>Solanum lycopersicum var. cerasiforme</i></p>

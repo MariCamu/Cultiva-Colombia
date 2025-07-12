@@ -1,15 +1,20 @@
 
 "use client";
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText } from 'lucide-react';
+import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/auth-context';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 interface SampleCrop {
   id: string;
@@ -26,22 +31,18 @@ interface SampleCrop {
 }
 
 const sampleCropsData: SampleCrop[] = [
-  // Andina
+  // This data now serves as the 'fichas_tecnicas'
+  { id: 'tomate_cherry_id', name: 'Tomate Cherry', description: 'Pequeño y dulce, ideal para ensaladas y snacks. Crece bien en macetas.', regionSlug: 'andina', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'cherry tomatoes', estimatedPrice: 'Precio moderado', duration: 'Media (3–5 meses)', spaceRequired: 'Maceta mediana (4–10 L)', plantType: 'Hortalizas de fruto', difficulty: 3 },
   { id: 'papa_andina', name: 'Papa (Región Andina)', description: 'Tubérculo versátil y nutritivo, base de la alimentación en la región andina.', regionSlug: 'andina', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'potato field', estimatedPrice: 'Precio bajo', duration: 'Media (3–5 meses)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Tubérculos', difficulty: 2 },
   { id: 'cafe_andino', name: 'Café (Región Andina)', description: 'Reconocido mundialmente por su aroma y sabor, cultivado en las laderas montañosas.', regionSlug: 'andina', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'coffee plant', estimatedPrice: 'Precio moderado', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 4 },
-  // Amazonía
   { id: 'yuca_amazonia', name: 'Yuca (Región Amazonía)', description: 'Raíz comestible fundamental en la dieta amazónica, adaptable a climas tropicales.', regionSlug: 'amazonia', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'cassava plant', estimatedPrice: 'Precio bajo', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Tubérculos', difficulty: 2 },
   { id: 'copoazu_amazonia', name: 'Copoazú (Región Amazonía)', description: 'Fruta exótica con pulpa aromática, usada en jugos, postres y cosméticos.', regionSlug: 'amazonia', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'copoazu fruit', estimatedPrice: 'Precio moderado', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 3 },
-  // Caribe
   { id: 'platano_caribe', name: 'Plátano (Región Caribe)', description: 'Fruta esencial en la cocina caribeña, consumida verde o madura.', regionSlug: 'caribe', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'banana tree', estimatedPrice: 'Precio bajo', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 2 },
   { id: 'mango_caribe', name: 'Mango (Región Caribe)', description: 'Fruta tropical dulce y jugosa, con múltiples variedades en la región.', regionSlug: 'caribe', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'mango fruit', estimatedPrice: 'Precio moderado', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 3 },
-  // Orinoquía
   { id: 'arroz_orinoquia', name: 'Arroz (Región Orinoquía)', description: 'Cereal básico cultivado extensamente en las llanuras inundables de la Orinoquía.', regionSlug: 'orinoquia', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'rice paddy', estimatedPrice: 'Precio bajo', duration: 'Media (3–5 meses)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Cereales', difficulty: 3 },
   { id: 'marañon_orinoquia', name: 'Marañón (Región Orinoquía)', description: 'Fruto seco y pseudofruto carnoso, apreciado por su nuez y pulpa agridulce.', regionSlug: 'orinoquia', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'cashew fruit', estimatedPrice: 'Precio alto', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 4 },
-  // Pacífica
   { id: 'chontaduro_pacifica', name: 'Chontaduro (Región Pacífica)', description: 'Fruto de palmera altamente nutritivo, parte integral de la cultura del Pacífico.', regionSlug: 'pacifica', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'chontaduro fruit', estimatedPrice: 'Precio moderado', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 3 },
   { id: 'borojo_pacifica', name: 'Borojó (Región Pacífica)', description: 'Fruta energética con propiedades afrodisíacas, consumida en jugos y jaleas.', regionSlug: 'pacifica', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'borojo fruit', estimatedPrice: 'Precio moderado', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 4 },
-  // Insular
   { id: 'coco_insular', name: 'Coco (Región Insular)', description: 'Fruto tropical versátil, utilizado para agua, pulpa y aceite en las islas.', regionSlug: 'insular', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'coconut tree', estimatedPrice: 'Precio bajo', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 2 },
   { id: 'pan_de_fruta_insular', name: 'Pan de Fruta (Región Insular)', description: 'Fruto grande y almidonado, básico en la alimentación de las islas caribeñas.', regionSlug: 'insular', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'breadfruit tree', estimatedPrice: 'Precio moderado', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 3 },
 ];
@@ -122,7 +123,10 @@ const testSpaceMap: { [key: string]: string | null } = {
 
 export default function CultivosPage() {
   const searchParams = useSearchParams();
-  
+  const router = useRouter();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
   const [geolocationStatus, setGeolocationStatus] = useState<GeolocationStatus>('idle');
   const [geolocationErrorMsg, setGeolocationErrorMsg] = useState<string | null>(null);
   const [detectedRegionSlug, setDetectedRegionSlug] = useState<string | null>(null);
@@ -140,6 +144,51 @@ export default function CultivosPage() {
   const [isTestFilterActive, setIsTestFilterActive] = useState(false);
   const [testFilterAlertMessage, setTestFilterAlertMessage] = useState<string | null>(null);
   const [regionFromTest, setRegionFromTest] = useState<string | null>(null);
+  const [isAddingCrop, setIsAddingCrop] = useState<string | null>(null);
+
+  const handleAddCropToDashboard = async (crop: SampleCrop) => {
+    if (!user) {
+      toast({
+        title: "Inicia Sesión",
+        description: "Debes iniciar sesión para añadir cultivos a tu dashboard.",
+        variant: "destructive",
+      });
+      router.push('/login');
+      return;
+    }
+
+    setIsAddingCrop(crop.id);
+    try {
+      const userCropsCollection = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario');
+      await addDoc(userCropsCollection, {
+        ficha_cultivo_id: crop.id,
+        nombre_cultivo_personal: crop.name,
+        imageUrl: crop.imageUrl,
+        dataAiHint: crop.dataAiHint,
+        fecha_plantacion: serverTimestamp(),
+        // Placeholder data, to be calculated based on ficha_tecnica
+        proxima_tarea_tipo: 'Riego', 
+        fecha_proxima_tarea: new Date(new Date().setDate(new Date().getDate() + 3)),
+        estado_actual: 'Semilla',
+      });
+
+      toast({
+        title: "¡Cultivo Añadido!",
+        description: `${crop.name} ha sido añadido a tu dashboard.`,
+      });
+      router.push('/dashboard');
+
+    } catch (error) {
+      console.error("Error adding crop to dashboard: ", error);
+      toast({
+        title: "Error",
+        description: "No se pudo añadir el cultivo. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingCrop(null);
+    }
+  };
 
 
   useEffect(() => {
@@ -375,7 +424,7 @@ export default function CultivosPage() {
     alertMessageForPage = (
       <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
         <MapPin className="h-4 w-4 text-primary" />
-        <AlertTitle className="font-nunito font-semibold">Filtro Activo por URL</AlertTitle>
+        <AlertTitle className="font-nunito font-semibold">Filtro por Región</AlertTitle>
         <AlertDescription>
           Mostrando cultivos para la región: <strong>{activeRegionNameForDisplay}</strong>.
         </AlertDescription>
@@ -439,7 +488,7 @@ export default function CultivosPage() {
       )}
       {alertMessageForPage}
       
-      <Card className="bg-primary"> {/* Changed to bg-background for filter card */}
+      <Card>
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2 font-nunito font-bold">
             <Filter className="h-5 w-5" />
@@ -520,7 +569,7 @@ export default function CultivosPage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-nunito font-bold">
-            Fichas Detalladas de Cultivos
+            Fichas Técnicas de Cultivos
           </CardTitle>
           <CardDescription>
             {pageDescription}
@@ -573,6 +622,16 @@ export default function CultivosPage() {
                         <Badge variant="outline" className="font-nunito">Tipo: {crop.plantType}</Badge>
                     </div>
                   </CardContent>
+                  <CardFooter className="flex-col items-start gap-2">
+                     <Button 
+                        onClick={() => handleAddCropToDashboard(crop)} 
+                        disabled={isAddingCrop === crop.id}
+                        className="w-full"
+                      >
+                       <PlusCircle className="mr-2 h-4 w-4" />
+                       {isAddingCrop === crop.id ? 'Añadiendo...' : 'Añadir a mi Dashboard'}
+                     </Button>
+                  </CardFooter>
                 </Card>
               ))}
             </div>
@@ -595,6 +654,3 @@ export default function CultivosPage() {
     </div>
   );
 }
-    
-
-    
