@@ -161,11 +161,6 @@ export default function CultivosPage() {
       return;
     }
   
-    // --- COMIENZO DE LOS CONSOLE.LOG CRUCIALES ---
-    console.log("1. Usuario autenticado con UID:", user.uid);
-    console.log("2. Instancia de Firestore (db):", db);
-    console.log("3. Datos del cultivo 'crop' recibidos:", crop);
-  
     const dataToAdd = {
       ficha_cultivo_id: crop.id || '',
       nombre_cultivo_personal: crop.name || 'Cultivo Desconocido',
@@ -180,9 +175,6 @@ export default function CultivosPage() {
       },
       lastNote: '¡Cultivo recién añadido! Empieza a registrar tu progreso.',
     };
-  
-    console.log("4. Datos finales que se intentarán añadir a Firestore (JSON):", JSON.stringify(dataToAdd, null, 2));
-    // --- FIN DE LOS CONSOLE.LOG CRUCIALES ---
   
     setIsAddingCrop(crop.id);
     
@@ -672,7 +664,5 @@ export default function CultivosPage() {
     </div>
   );
 }
-
-    
 
     
