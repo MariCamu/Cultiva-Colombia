@@ -151,6 +151,7 @@ export default function CultivosPage() {
 
   const handleAddCropToDashboard = async (crop: SampleCrop) => {
     if (!user) {
+      console.log("Usuario no autenticado, no se puede añadir el cultivo.");
       toast({
         title: "Inicia Sesión",
         description: "Debes iniciar sesión para añadir cultivos a tu dashboard.",
@@ -159,21 +160,28 @@ export default function CultivosPage() {
       router.push('/login');
       return;
     }
-
+  
+    // Debugging logs as requested
+    console.log("1. Usuario autenticado con UID:", user.uid);
+    console.log("2. Instancia de Firestore (db):", db);
+    console.log("3. Datos del cultivo 'crop' recibidos:", crop);
+    const dataToSave = {
+      ficha_cultivo_id: crop.id,
+      nombre_cultivo_personal: crop.name,
+      fecha_plantacion: serverTimestamp(),
+      imageUrl: crop.imageUrl,
+      dataAiHint: crop.dataAiHint,
+      daysToHarvest: crop.daysToHarvest,
+      nextTask: { name: 'Regar', dueInDays: 2, iconName: 'Droplets' },
+      lastNote: '¡Cultivo recién añadido! Empieza a registrar tu progreso.',
+    };
+    console.log("4. Datos finales que se intentarán añadir a Firestore:", dataToSave);
+  
     setIsAddingCrop(crop.id);
     try {
       const userCropsCollection = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario');
-      await addDoc(userCropsCollection, {
-        ficha_cultivo_id: crop.id,
-        nombre_cultivo_personal: crop.name,
-        fecha_plantacion: serverTimestamp(),
-        imageUrl: crop.imageUrl,
-        dataAiHint: crop.dataAiHint,
-        daysToHarvest: crop.daysToHarvest, // Make sure this is saved
-        nextTask: { name: 'Regar', dueInDays: 2, iconName: 'Droplets' },
-        lastNote: '¡Cultivo recién añadido! Empieza a registrar tu progreso.',
-      });
-
+      await addDoc(userCropsCollection, dataToSave);
+  
       toast({
         title: "¡Cultivo Añadido!",
         description: `${crop.name} ha sido añadido a tu dashboard.`,
@@ -181,10 +189,10 @@ export default function CultivosPage() {
       router.push('/dashboard');
       
     } catch (error) {
-      console.error("Error al añadir cultivo:", error);
+      console.error("Error al añadir cultivo al dashboard:", error);
       toast({
-        title: "Error al Añadir",
-        description: "No se pudo añadir el cultivo a tu dashboard. Revisa los permisos de la base de datos o inténtalo más tarde.",
+        title: "Error",
+        description: "No se pudo añadir el cultivo. Revisa tu conexión o la consola para más detalles.",
         variant: "destructive",
       });
     } finally {
@@ -656,3 +664,5 @@ export default function CultivosPage() {
     </div>
   );
 }
+
+    
