@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, type AuthError } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -33,10 +33,14 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (error: any) {
       console.error("Error de inicio de sesión: ", error);
+      let description = 'Ocurrió un error. Por favor, intenta de nuevo.';
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        description = 'Credenciales inválidas. Por favor, revisa tu correo y contraseña.';
+      }
       toast({
         variant: 'destructive',
         title: 'Error de inicio de sesión',
-        description: error.message || 'Ocurrió un error. Por favor, intenta de nuevo.',
+        description: description,
       });
     } finally {
       setIsLoading(false);
