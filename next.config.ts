@@ -1,6 +1,11 @@
-import type {NextConfig} from 'next';
+/**
+ * @type {import('next').NextConfig}
+ */
 
-const nextConfig: NextConfig = {
+// Load environment variables from .env file
+require('dotenv').config();
+
+const nextConfig = {
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
@@ -20,4 +25,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
