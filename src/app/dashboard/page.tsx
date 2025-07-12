@@ -83,7 +83,11 @@ function DashboardContent() {
     const unsubscribe = onSnapshot(userCropsQuery, (snapshot) => {
       const cropsData = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
         const data = doc.data();
-        if (!data.fecha_plantacion) return null; // Skip crops without a planting date
+        // Robust check for required data
+        if (!data.fecha_plantacion || typeof data.daysToHarvest !== 'number') {
+            console.warn("Skipping crop with incomplete data:", doc.id, data);
+            return null;
+        }
 
         const plantedDate = new Date(data.fecha_plantacion.seconds * 1000);
         const daysSincePlanted = differenceInDays(new Date(), plantedDate);
