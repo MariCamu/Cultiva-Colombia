@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
@@ -179,6 +179,7 @@ export default function CultivosPage() {
         description: `${crop.name} ha sido añadido a tu dashboard.`,
       });
       router.push('/dashboard');
+      
     } catch (error) {
       console.error("Error adding crop to dashboard: ", error);
       toast({
@@ -655,5 +656,7 @@ export default function CultivosPage() {
     </div>
   );
 }
+
+    
 
     
