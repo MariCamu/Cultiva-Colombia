@@ -50,20 +50,23 @@ const getLogEntryIcon = (type: string) => {
 }
 
 const formatRemainingDays = (days: number) => {
-  if (days > 365) {
+  if (days <= 0) return '¡Listo para cosechar!';
+  if (days > 365 * 2) {
     const years = Math.floor(days / 365);
-    const remainingDays = days % 365;
-    const months = Math.round(remainingDays / 30);
-    if (years > 1) {
-        return `aprox. ${years} años${months > 0 ? ` y ${months} meses` : ''}`;
-    }
-    return `aprox. 1 año${months > 0 ? ` y ${months} meses` : ''}`;
+    return `aprox. ${years} años`;
+  }
+   if (days > 365) {
+    const years = Math.floor(days / 365);
+    const months = Math.round((days % 365) / 30);
+    let result = `aprox. ${years} año`;
+    if (months > 0) result += ` y ${months} mes${months > 1 ? 'es' : ''}`;
+    return result;
   }
   if (days > 60) {
       const months = Math.floor(days/30);
       return `aprox. ${months} meses`;
   }
-  return `${days} días`;
+  return `${days} día${days > 1 ? 's' : ''}`;
 };
 
 
@@ -82,7 +85,6 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    // Simulate fetching log entries
     setIsLogLoading(true);
     const sampleLogs: Omit<LogEntry, 'icon'>[] = [
         { id: '1', type: 'planted', date: crop.fecha_plantacion, content: '¡La aventura comienza! Cultivo plantado.' },
@@ -150,20 +152,22 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     toast({ title: "Entrada eliminada (simulado)" });
   };
   
-  const remainingDays = crop.daysToHarvest - Math.round(crop.progress / 100 * crop.daysToHarvest);
+  const plantedDate = new Date(crop.fecha_plantacion.seconds * 1000);
+  const daysSincePlanted = Math.max(0, Math.floor((new Date().getTime() - plantedDate.getTime()) / (1000 * 3600 * 24)));
+  const remainingDays = Math.max(0, crop.daysToHarvest - daysSincePlanted);
 
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-4xl h-[90vh]">
+      <DialogContent className="max-w-6xl h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-3xl font-nunito font-bold">{crop.nombre_cultivo_personal}</DialogTitle>
           <DialogDescription>
             Detalles y seguimiento de tu cultivo.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid md:grid-cols-2 gap-8 mt-4 h-full overflow-hidden">
-            <div className="flex flex-col gap-6">
+        <div className="grid lg:grid-cols-3 gap-8 mt-4 h-full overflow-hidden">
+            <div className="lg:col-span-1 flex flex-col gap-6">
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
                     <Image
                         src={crop.imageUrl}
@@ -188,7 +192,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                 </Card>
             </div>
 
-            <div className="flex flex-col h-full overflow-hidden">
+            <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
                  <Tabs defaultValue="journal" className="flex flex-col h-full">
                     <TabsList className="w-full">
                         <TabsTrigger value="journal" className="flex-1">Diario de Cultivo</TabsTrigger>
