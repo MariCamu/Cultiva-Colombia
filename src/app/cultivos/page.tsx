@@ -390,8 +390,8 @@ export default function CultivosPage() {
     }
 
     alertMessageForPage = (
-      <Alert variant="default" className="bg-purple-50 border-purple-300 text-purple-700"> {/* Consider using accent color here */}
-        <MessageSquareText className="h-4 w-4 text-purple-600" /> {/* Consider using accent color here */}
+      <Alert variant="default" className="bg-accent/10 border-accent/30 text-accent-foreground">
+        <MessageSquareText className="h-4 w-4 text-accent" />
         <AlertTitle className="font-nunito font-semibold">Preferencias del Test Aplicadas</AlertTitle>
         <AlertDescription>
           {testFilterAlertMessage}
@@ -439,8 +439,8 @@ export default function CultivosPage() {
     pageTitle = `Cultivos Sugeridos para tu Región: ${activeRegionNameForDisplay}`;
     pageDescription = `Basado en tu ubicación (aproximada), te sugerimos estos cultivos de la región ${activeRegionNameForDisplay}.`;
     alertMessageForPage = (
-       <Alert variant="default" className="bg-green-50 border-green-300 text-green-700"> {/* Use a theme-consistent green */}
-          <CheckCircle className="h-4 w-4 text-green-600" /> {/* Use a theme-consistent green */}
+       <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
+          <CheckCircle className="h-4 w-4 text-primary" />
           <AlertTitle className="font-nunito font-semibold">Región Detectada: {activeRegionNameForDisplay}</AlertTitle>
           <AlertDescription>
             Mostrando cultivos sugeridos para tu región. La detección de región es aproximada.

@@ -34,12 +34,12 @@ interface LogEntry {
 
 const getLogEntryColor = (type: string) => {
     switch(type) {
-        case 'note': return 'bg-yellow-100 border-yellow-300';
-        case 'water': return 'bg-blue-100 border-blue-300';
-        case 'photo': return 'bg-purple-100 border-purple-300';
-        case 'fertilize': return 'bg-green-100 border-green-300';
-        case 'planted': return 'bg-orange-100 border-orange-300';
-        default: return 'bg-gray-100 border-gray-300';
+        case 'note': return 'bg-accent/10 border-accent/20 text-accent-foreground';
+        case 'water': return 'bg-primary/10 border-primary/20 text-primary';
+        case 'photo': return 'bg-secondary border-border';
+        case 'fertilize': return 'bg-accent/10 border-accent/20 text-accent-foreground';
+        case 'planted': return 'bg-card border-border';
+        default: return 'bg-muted/50 border-border';
     }
 }
 
@@ -109,6 +109,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
       
       const hasPlantedEntry = entries.some(e => e.type === 'planted');
       if (!hasPlantedEntry && crop.fecha_plantacion) {
+         // This entry is "virtual" and doesn't exist in firestore. It's just for display.
         entries.push({
             id: '0', 
             type: 'planted',
@@ -117,7 +118,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
             icon: getLogEntryIcon('planted'),
         });
       }
-
+      
       // Filter out entries that don't have a valid date yet to prevent crashes
       const validEntries = entries.filter(e => e.date && typeof e.date.seconds === 'number');
 
@@ -180,6 +181,8 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         content,
     };
     
+    // For now, photo uploads are not saved to the cloud to reduce storage costs.
+    // The image is shown in the log but will be lost on refresh.
     if (isPhotoEntry) {
         logData.imageUrl = imagePreview || undefined;
     }
@@ -205,7 +208,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
   };
 
   const removeLogEntry = async (id: string) => {
-    if (!user || id === '0') return; 
+    if (!user || id === '0') return; // Cannot delete the 'planted' virtual entry
     
     try {
         const logDocRef = doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'diario', id);
@@ -217,10 +220,10 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     }
   };
   
-  const plantedDate = new Date((crop.fecha_plantacion as Timestamp).seconds * 1000);
+  const plantedDate = crop.fecha_plantacion ? new Date((crop.fecha_plantacion as Timestamp).seconds * 1000) : new Date();
   const daysSincePlanted = Math.max(0, Math.floor((new Date().getTime() - plantedDate.getTime()) / (1000 * 3600 * 24)));
   const remainingDays = Math.max(0, crop.daysToHarvest - daysSincePlanted);
-  const progress = Math.min(Math.round((daysSincePlanted / crop.daysToHarvest) * 100), 100);
+  const progress = crop.daysToHarvest > 0 ? Math.min(Math.round((daysSincePlanted / crop.daysToHarvest) * 100), 100) : 0;
 
   return (
     <Dialog>
@@ -234,6 +237,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         </DialogHeader>
 
         <div className="grid lg:grid-cols-3 gap-8 px-6 pb-6 flex-grow overflow-hidden">
+            {/* Left Column */}
             <div className="lg:col-span-1 flex flex-col gap-6 overflow-y-auto p-1">
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
                     <Image
@@ -249,7 +253,9 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                         <CardTitle className="text-xl">Ficha Rápida</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm">
-                        <p><strong>Fecha de Siembra:</strong> {new Date((crop.fecha_plantacion as Timestamp).seconds * 1000).toLocaleDateString()}</p>
+                        {crop.fecha_plantacion && (
+                          <p><strong>Fecha de Siembra:</strong> {new Date((crop.fecha_plantacion as Timestamp).seconds * 1000).toLocaleDateString()}</p>
+                        )}
                         <p><strong>Cosecha Estimada en:</strong> {formatRemainingDays(remainingDays)}</p>
                         <div>
                             <p className="mb-1"><strong>Progreso General:</strong></p>
@@ -259,6 +265,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                 </Card>
             </div>
 
+            {/* Right Column */}
             <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
                 <Tabs defaultValue="journal" className="flex flex-col h-full">
                     <TabsList className="w-full flex-shrink-0">
@@ -286,10 +293,10 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                         ))}
                                         {!isLogLoading && logEntries.map(entry => (
                                             <div key={entry.id} className={`relative p-4 rounded-lg border flex items-start gap-4 text-sm ${getLogEntryColor(entry.type)}`}>
-                                                <div className="p-2 bg-white/50 rounded-full"><entry.icon className="h-5 w-5 text-gray-700" /></div>
+                                                <div className="p-2 bg-background/50 rounded-full"><entry.icon className="h-5 w-5 text-foreground/80" /></div>
                                                 <div className="flex-grow">
-                                                    <p className="font-nunito font-semibold">{new Date(entry.date.seconds * 1000).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                                    <p className="text-gray-700 mt-1">{entry.content}</p>
+                                                    <p className="font-nunito font-semibold">{entry.date ? new Date(entry.date.seconds * 1000).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Fecha pendiente'}</p>
+                                                    <p className="text-foreground/90 mt-1">{entry.content}</p>
                                                     {entry.imageUrl && (
                                                       <Dialog>
                                                         <DialogTrigger asChild>
@@ -317,7 +324,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                                 {entry.id !== '0' && (
                                                   <AlertDialog>
                                                       <AlertDialogTrigger asChild>
-                                                          <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-gray-500 hover:text-destructive hover:bg-destructive/10">
+                                                          <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
                                                               <Trash2 className="h-4 w-4" />
                                                           </Button>
                                                       </AlertDialogTrigger>
