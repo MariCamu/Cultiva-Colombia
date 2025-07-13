@@ -16,13 +16,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { useAuth } from '@/context/auth-context';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, deleteDoc, type Timestamp, type DocumentData } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 interface LogEntry {
   id: string;
   type: 'note' | 'water' | 'fertilize' | 'photo' | 'planted';
-  date: { seconds: number; };
+  date: Timestamp;
   content: string;
-  imageUrl?: string;
+  imageUrl?: string; // For local preview for now
   dataAiHint?: string;
   icon: React.ElementType;
 }
@@ -71,6 +76,7 @@ const formatRemainingDays = (days: number) => {
 
 
 export function CropDetailDialog({ crop, children }: { crop: UserCrop; children: React.ReactNode }) {
+  const { user } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -85,15 +91,45 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
+    if (!user || !crop.id) return;
+
     setIsLogLoading(true);
-    const sampleLogs: Omit<LogEntry, 'icon'>[] = [
-        { id: '1', type: 'planted', date: crop.fecha_plantacion, content: '¡La aventura comienza! Cultivo plantado.' },
-    ];
-    setTimeout(() => {
-        setLogEntries(sampleLogs.map(log => ({ ...log, icon: getLogEntryIcon(log.type) })));
+    const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'diario');
+    const q = query(logCollectionRef, orderBy('date', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const entries = snapshot.docs.map(doc => {
+        const data = doc.data() as DocumentData;
+        // The 'planted' entry is now part of the main crop document, so we create it virtually.
+        return {
+          id: doc.id,
+          ...data,
+          icon: getLogEntryIcon(data.type),
+        } as LogEntry;
+      });
+      
+      // Virtually add the "planted" entry
+      entries.push({
+          id: '0',
+          type: 'planted',
+          date: crop.fecha_plantacion as Timestamp,
+          content: '¡La aventura comienza! Cultivo plantado.',
+          icon: getLogEntryIcon('planted'),
+      });
+
+      // Sort again to ensure the virtual entry is in the correct place
+      entries.sort((a,b) => b.date.seconds - a.date.seconds);
+
+      setLogEntries(entries);
+      setIsLogLoading(false);
+    }, (error) => {
+        console.error("Error fetching log entries:", error);
+        toast({ title: "Error", description: "No se pudo cargar el diario.", variant: "destructive" });
         setIsLogLoading(false);
-    }, 500);
-  }, [crop.id, crop.fecha_plantacion]);
+    });
+
+    return () => unsubscribe();
+  }, [crop.id, user, toast, crop.fecha_plantacion]);
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -104,11 +140,17 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
   };
 
   const addLogEntry = async (type: 'note' | 'water' | 'fertilize' | 'photo') => {
-    let content = "";
+    if (!user) return;
     
+    let content = "";
+    let isPhotoEntry = false;
+
     switch(type) {
         case 'note':
-            if (!newNote) return;
+            if (!newNote.trim()) {
+                toast({ title: "Nota vacía", description: "Por favor escribe algo en la nota.", variant: "destructive" });
+                return;
+            }
             setIsAddingNote(true);
             content = newNote;
             break;
@@ -119,38 +161,66 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
             content = "Abonado registrado.";
             break;
         case 'photo':
-            if (!imageFile) return;
+            if (!imageFile) {
+                toast({ title: "Sin imagen", description: "Por favor selecciona una imagen para subir.", variant: "destructive" });
+                return;
+            }
             setIsUploading(true);
             content = newNote || "Foto de progreso añadida.";
+            isPhotoEntry = true;
             break;
     }
     
-    const newEntry: LogEntry = {
-        id: new Date().getTime().toString(),
+    const logData: Omit<LogEntry, 'id' | 'icon'> = {
         type,
-        date: { seconds: new Date().getTime() / 1000 },
+        date: serverTimestamp() as Timestamp,
         content,
-        icon: getLogEntryIcon(type),
-        imageUrl: type === 'photo' ? imagePreview || undefined : undefined,
     };
+    
+    if (isPhotoEntry) {
+        logData.imageUrl = imagePreview || undefined; // This will only be a local blob URL
+    }
 
-    setTimeout(() => {
-        setLogEntries(prev => [newEntry, ...prev]);
+    try {
+        const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'diario');
+        
+        const dataToSave: {type: string; date: Timestamp; content: string} = { type, date: serverTimestamp() as Timestamp, content };
+        
+        await addDoc(logCollectionRef, dataToSave);
+        
+        if (isPhotoEntry) {
+          toast({ title: "Foto registrada (simulado)", description: "Se guardó una entrada de foto. La imagen no se sube a la nube por ahora." });
+        } else {
+          toast({ title: "Diario actualizado", description: "Se ha añadido una nueva entrada."});
+        }
+
+    } catch (error) {
+        console.error("Error adding log entry: ", error);
+        toast({ title: "Error", description: "No se pudo guardar la entrada.", variant: "destructive" });
+    } finally {
         setNewNote("");
         setImageFile(null);
         setImagePreview(null);
-        toast({ title: "Diario actualizado", description: "Se ha añadido una nueva entrada (simulado)."});
+        if (fileInputRef.current) fileInputRef.current.value = "";
         setIsAddingNote(false);
         setIsUploading(false);
-    }, 1000);
+    }
   };
 
   const removeLogEntry = async (id: string) => {
-    setLogEntries(prev => prev.filter(entry => entry.id !== id));
-    toast({ title: "Entrada eliminada (simulado)" });
+    if (!user || id === '0') return; // Cannot delete the virtual 'planted' entry
+    
+    try {
+        const logDocRef = doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'diario', id);
+        await deleteDoc(logDocRef);
+        toast({ title: "Entrada eliminada" });
+    } catch (error) {
+        console.error("Error deleting log entry:", error);
+        toast({ title: "Error", description: "No se pudo eliminar la entrada.", variant: "destructive" });
+    }
   };
   
-  const plantedDate = new Date(crop.fecha_plantacion.seconds * 1000);
+  const plantedDate = new Date((crop.fecha_plantacion as Timestamp).seconds * 1000);
   const daysSincePlanted = Math.max(0, Math.floor((new Date().getTime() - plantedDate.getTime()) / (1000 * 3600 * 24)));
   const remainingDays = Math.max(0, crop.daysToHarvest - daysSincePlanted);
   const progress = Math.min(Math.round((daysSincePlanted / crop.daysToHarvest) * 100), 100);
@@ -168,7 +238,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
 
         <div className="grid lg:grid-cols-3 gap-8 mt-4 px-6 pb-6 flex-grow overflow-hidden">
             {/* Columna Izquierda: Imagen y Ficha Rápida */}
-            <div className="lg:col-span-1 flex flex-col gap-6 overflow-y-auto">
+            <div className="lg:col-span-1 flex flex-col gap-6 overflow-y-auto p-1">
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
                     <Image
                         src={crop.imageUrl}
@@ -183,7 +253,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                         <CardTitle className="text-xl">Ficha Rápida</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm">
-                        <p><strong>Fecha de Siembra:</strong> {new Date(crop.fecha_plantacion.seconds * 1000).toLocaleDateString()}</p>
+                        <p><strong>Fecha de Siembra:</strong> {new Date((crop.fecha_plantacion as Timestamp).seconds * 1000).toLocaleDateString()}</p>
                         <p><strong>Cosecha Estimada en:</strong> {formatRemainingDays(remainingDays)}</p>
                         <div>
                             <p className="mb-1"><strong>Progreso General:</strong></p>
@@ -205,13 +275,21 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                         <Card className="h-full flex flex-col">
                             <CardHeader>
                                 <CardTitle className="text-xl">Añade Notas y Registros</CardTitle>
-                                <CardDescription>Documenta el progreso de tu cultivo.</CardDescription>
+                                <CardDescription>Documenta el progreso de tu cultivo. Las imágenes no se guardan en la nube.</CardDescription>
                             </CardHeader>
                             <CardContent className="flex-grow overflow-hidden">
                                 <ScrollArea className="h-full pr-4">
                                     <div className="space-y-6">
-                                        {isLogLoading && <p>Cargando diario...</p>}
-                                        {logEntries.map(entry => (
+                                        {isLogLoading && Array.from({ length: 3 }).map((_, i) => (
+                                          <div key={i} className="flex items-start gap-4">
+                                            <Skeleton className="h-10 w-10 rounded-full" />
+                                            <div className="flex-grow space-y-2">
+                                              <Skeleton className="h-4 w-1/4" />
+                                              <Skeleton className="h-4 w-3/4" />
+                                            </div>
+                                          </div>
+                                        ))}
+                                        {!isLogLoading && logEntries.map(entry => (
                                             <div key={entry.id} className={`relative p-4 rounded-lg border flex items-start gap-4 text-sm ${getLogEntryColor(entry.type)}`}>
                                                 <div className="p-2 bg-white/50 rounded-full"><entry.icon className="h-5 w-5 text-gray-700" /></div>
                                                 <div className="flex-grow">
@@ -241,28 +319,35 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                                       </Dialog>
                                                     )}
                                                 </div>
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-gray-500 hover:text-destructive hover:bg-destructive/10">
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                Esta acción no se puede deshacer. Esto eliminará permanentemente la entrada del diario.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => removeLogEntry(entry.id)}>Eliminar</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+                                                {entry.id !== '0' && (
+                                                  <AlertDialog>
+                                                      <AlertDialogTrigger asChild>
+                                                          <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-gray-500 hover:text-destructive hover:bg-destructive/10">
+                                                              <Trash2 className="h-4 w-4" />
+                                                          </Button>
+                                                      </AlertDialogTrigger>
+                                                      <AlertDialogContent>
+                                                          <AlertDialogHeader>
+                                                              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                                              <AlertDialogDescription>
+                                                                  Esta acción no se puede deshacer. Esto eliminará permanentemente la entrada del diario.
+                                                              </AlertDialogDescription>
+                                                          </AlertDialogHeader>
+                                                          <AlertDialogFooter>
+                                                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                              <AlertDialogAction onClick={() => removeLogEntry(entry.id)}>Eliminar</AlertDialogAction>
+                                                          </AlertDialogFooter>
+                                                      </AlertDialogContent>
+                                                  </AlertDialog>
+                                                )}
                                             </div>
                                         ))}
-                                        {!isLogLoading && logEntries.length === 0 && <p className="text-muted-foreground text-center">No hay entradas en el diario.</p>}
+                                        {!isLogLoading && logEntries.length <= 1 && ( // <=1 because of the virtual entry
+                                          <div className="text-center text-muted-foreground py-8">
+                                            <p>Aún no hay entradas en el diario.</p>
+                                            <p className="text-xs">¡Empieza añadiendo una nota o un registro!</p>
+                                          </div>
+                                        )}
                                     </div>
                                 </ScrollArea>
                             </CardContent>
@@ -271,7 +356,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                 <Textarea placeholder="Escribe una nueva nota..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
                                 <div className="flex justify-between items-center">
                                     <div className="flex gap-2">
-                                        <Button size="sm" variant="outline" onClick={() => addLogEntry('note')} disabled={isAddingNote || !newNote}><NotebookText className="mr-2 h-4 w-4" />Guardar Nota</Button>
+                                        <Button size="sm" variant="outline" onClick={() => addLogEntry('note')} disabled={isAddingNote}><NotebookText className="mr-2 h-4 w-4" />Guardar Nota</Button>
                                         <Button size="sm" variant="outline" onClick={() => addLogEntry('water')}><Droplet className="mr-2 h-4 w-4" />Registrar Riego</Button>
                                         <Button size="sm" variant="outline" onClick={() => addLogEntry('fertilize')}><Zap className="mr-2 h-4 w-4" />Abonado</Button>
                                     </div>
@@ -280,8 +365,8 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                     <Input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageFileChange} className="text-xs" />
                                     {imagePreview && <Image src={imagePreview} alt="Preview" width={40} height={40} className="rounded-md" />}
                                     <Button size="sm" variant="outline" onClick={() => addLogEntry('photo')} disabled={isUploading || !imageFile}>
-                                        {isUploading ? 'Subiendo...' : <Camera className="mr-2 h-4 w-4" />}
-                                        Subir Foto
+                                        {isUploading ? 'Añadiendo...' : <Camera className="mr-2 h-4 w-4" />}
+                                        Añadir Foto
                                     </Button>
                                 </div>
                                 </div>
@@ -311,5 +396,4 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
       </DialogContent>
     </Dialog>
   );
-
-    
+}

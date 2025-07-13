@@ -21,7 +21,7 @@ import { addDays, format, isToday, isTomorrow, differenceInDays, startOfDay } fr
 import { es } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc, type Timestamp } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,7 +29,7 @@ export interface UserCrop {
   id: string; 
   ficha_cultivo_id: string;
   nombre_cultivo_personal: string;
-  fecha_plantacion: { seconds: number };
+  fecha_plantacion: Timestamp;
   imageUrl: string;
   dataAiHint: string;
   daysToHarvest: number;
