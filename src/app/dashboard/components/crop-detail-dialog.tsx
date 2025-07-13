@@ -27,7 +27,7 @@ interface LogEntry {
   type: 'note' | 'water' | 'fertilize' | 'photo' | 'planted';
   date: Timestamp;
   content: string;
-  imageUrl?: string; // For local preview for now
+  imageUrl?: string;
   dataAiHint?: string;
   icon: React.ElementType;
 }
@@ -64,7 +64,7 @@ const formatRemainingDays = (days: number) => {
     const years = Math.floor(days / 365);
     const months = Math.round((days % 365) / 30);
     let result = `aprox. ${years} año`;
-    if (months > 0) result += ` y ${months > 1 ? 'es' : ''}`;
+    if (months > 0) result += ` y ${months} mes${months > 1 ? 'es' : ''}`;
     return result;
   }
   if (days > 60) {
@@ -100,7 +100,6 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const entries = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData;
-        // The 'planted' entry is now part of the main crop document, so we create it virtually.
         return {
           id: doc.id,
           ...data,
@@ -108,16 +107,18 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         } as LogEntry;
       });
       
-      // Virtually add the "planted" entry
-      entries.push({
-          id: '0',
-          type: 'planted',
-          date: crop.fecha_plantacion as Timestamp,
-          content: '¡La aventura comienza! Cultivo plantado.',
-          icon: getLogEntryIcon('planted'),
-      });
+      // Virtually add the "planted" entry for display purposes if not present
+      const hasPlantedEntry = entries.some(e => e.type === 'planted');
+      if (!hasPlantedEntry && crop.fecha_plantacion) {
+        entries.push({
+            id: '0', // Virtual ID
+            type: 'planted',
+            date: crop.fecha_plantacion as Timestamp,
+            content: '¡La aventura comienza! Cultivo plantado.',
+            icon: getLogEntryIcon('planted'),
+        });
+      }
 
-      // Sort again to ensure the virtual entry is in the correct place
       entries.sort((a,b) => b.date.seconds - a.date.seconds);
 
       setLogEntries(entries);
@@ -171,28 +172,24 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
             break;
     }
     
-    const logData: Omit<LogEntry, 'id' | 'icon'> = {
+    const logData: Omit<LogEntry, 'id' | 'icon' | 'date'> & { date: any } = {
         type,
-        date: serverTimestamp() as Timestamp,
+        date: serverTimestamp(),
         content,
     };
     
     if (isPhotoEntry) {
-        logData.imageUrl = imagePreview || undefined; // This will only be a local blob URL
+        // In a real app, you would upload the image to Firebase Storage and get a URL.
+        // For now, we are not saving the image to the cloud.
+        logData.imageUrl = imagePreview || undefined;
     }
 
     try {
         const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'diario');
         
-        const dataToSave: {type: string; date: Timestamp; content: string} = { type, date: serverTimestamp() as Timestamp, content };
+        await addDoc(logCollectionRef, logData);
         
-        await addDoc(logCollectionRef, dataToSave);
-        
-        if (isPhotoEntry) {
-          toast({ title: "Foto registrada (simulado)", description: "Se guardó una entrada de foto. La imagen no se sube a la nube por ahora." });
-        } else {
-          toast({ title: "Diario actualizado", description: "Se ha añadido una nueva entrada."});
-        }
+        toast({ title: "Diario actualizado", description: "Se ha añadido una nueva entrada."});
 
     } catch (error) {
         console.error("Error adding log entry: ", error);
@@ -229,14 +226,14 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
-        <DialogHeader className="p-6 pb-0">
+        <DialogHeader className="p-6 pb-0 flex-shrink-0">
           <DialogTitle className="text-3xl font-nunito font-bold">{crop.nombre_cultivo_personal}</DialogTitle>
           <DialogDescription>
             Detalles y seguimiento de tu cultivo.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid lg:grid-cols-3 gap-8 mt-4 px-6 pb-6 flex-grow overflow-hidden">
+        <div className="grid lg:grid-cols-3 gap-8 px-6 pb-6 flex-grow overflow-hidden">
             {/* Columna Izquierda: Imagen y Ficha Rápida */}
             <div className="lg:col-span-1 flex flex-col gap-6 overflow-y-auto p-1">
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
@@ -266,14 +263,14 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
             {/* Columna Derecha: Pestañas de Diario y Ficha Técnica */}
             <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
                 <Tabs defaultValue="journal" className="flex flex-col h-full">
-                    <TabsList className="w-full">
+                    <TabsList className="w-full flex-shrink-0">
                         <TabsTrigger value="journal" className="flex-1">Diario de Cultivo</TabsTrigger>
                         <TabsTrigger value="datasheet" className="flex-1">Ficha Técnica</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="journal" className="flex-grow overflow-hidden mt-4">
                         <Card className="h-full flex flex-col">
-                            <CardHeader>
+                            <CardHeader className="flex-shrink-0">
                                 <CardTitle className="text-xl">Añade Notas y Registros</CardTitle>
                                 <CardDescription>Documenta el progreso de tu cultivo. Las imágenes no se guardan en la nube.</CardDescription>
                             </CardHeader>
@@ -342,7 +339,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                                 )}
                                             </div>
                                         ))}
-                                        {!isLogLoading && logEntries.length <= 1 && ( // <=1 because of the virtual entry
+                                        {!isLogLoading && logEntries.length === 0 && (
                                           <div className="text-center text-muted-foreground py-8">
                                             <p>Aún no hay entradas en el diario.</p>
                                             <p className="text-xs">¡Empieza añadiendo una nota o un registro!</p>
@@ -351,7 +348,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                     </div>
                                 </ScrollArea>
                             </CardContent>
-                            <CardFooter className="flex-col items-start gap-4 border-t pt-4 bg-background/95 sticky bottom-0">
+                            <CardFooter className="flex-col items-start gap-4 border-t pt-4 bg-background/95 flex-shrink-0">
                                 <div className="w-full space-y-2">
                                 <Textarea placeholder="Escribe una nueva nota..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
                                 <div className="flex justify-between items-center">
