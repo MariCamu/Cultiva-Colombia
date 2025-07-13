@@ -163,12 +163,12 @@ export default function CultivosPage() {
     setIsAddingCrop(crop.id);
 
     const dataToAdd = {
-      ficha_cultivo_id: crop.id || '',
-      nombre_cultivo_personal: crop.name || 'Cultivo Desconocido',
+      ficha_cultivo_id: crop.id,
+      nombre_cultivo_personal: crop.name,
       fecha_plantacion: serverTimestamp(),
-      imageUrl: crop.imageUrl || '',
-      dataAiHint: crop.dataAiHint || null,
-      daysToHarvest: crop.daysToHarvest !== undefined ? crop.daysToHarvest : null,
+      imageUrl: crop.imageUrl,
+      dataAiHint: crop.dataAiHint,
+      daysToHarvest: crop.daysToHarvest,
       nextTask: { name: 'Regar', dueInDays: 2, iconName: 'Droplets' },
       lastNote: '¡Cultivo recién añadido! Empieza a registrar tu progreso.',
     };
