@@ -50,6 +50,26 @@ const recommendedArticles = [
     { id: '3', title: 'Control orgánico de pulgones', href: '/articulos' },
 ];
 
+const formatHarvestTime = (days: number) => {
+  if (days <= 0) return '¡Listo para cosechar!';
+  if (days > 365 * 2) {
+    const years = Math.floor(days / 365);
+    return `~${years} años est.`;
+  }
+   if (days > 365) {
+    const years = Math.floor(days / 365);
+    const months = Math.round((days % 365) / 30);
+    let result = `~${years} año`;
+    if (months > 0) result += ` y ${months} mes${months > 1 ? 'es' : ''}`;
+    return `${result} est.`;
+  }
+  if (days > 60) {
+      const months = Math.floor(days/30);
+      return `~${months} meses est.`;
+  }
+  return `${days} días est.`;
+};
+
 
 function getTaskBadgeVariant(days: number) {
   if (days <= 1) return 'destructive';
@@ -251,7 +271,7 @@ function DashboardContent() {
                             </Badge>
                         </div>
                         <div>
-                          <Label className="text-xs font-nunito font-semibold">Progreso a cosecha ({crop.daysToHarvest} días est.)</Label>
+                          <Label className="text-xs font-nunito font-semibold">Progreso a cosecha ({formatHarvestTime(crop.daysToHarvest)})</Label>
                           <Progress value={crop.progress} className="h-3 mt-1" />
                         </div>
                         <p className="text-sm font-sans italic text-muted-foreground">Última nota: "{crop.lastNote}"</p>
