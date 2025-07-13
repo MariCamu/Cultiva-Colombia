@@ -34,11 +34,11 @@ interface LogEntry {
 
 const getLogEntryColor = (type: string) => {
     switch(type) {
-        case 'note': return 'bg-accent/10 border-accent/20 text-accent-foreground';
-        case 'water': return 'bg-primary/10 border-primary/20 text-primary';
+        case 'note': return 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400';
+        case 'water': return 'bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-400';
         case 'photo': return 'bg-secondary border-border';
-        case 'fertilize': return 'bg-accent/10 border-accent/20 text-accent-foreground';
-        case 'planted': return 'bg-card border-border';
+        case 'fertilize': return 'bg-yellow-800/10 border-yellow-800/20 text-yellow-800 dark:text-yellow-500';
+        case 'planted': return 'bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400';
         default: return 'bg-muted/50 border-border';
     }
 }
@@ -49,7 +49,7 @@ const getLogEntryIcon = (type: string) => {
         case 'water': return Droplet;
         case 'photo': return Camera;
         case 'fertilize': return Zap;
-        case 'planted': return Sun;
+        case 'planted': return Sprout;
         default: return NotebookText;
     }
 }
@@ -98,7 +98,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     const q = query(logCollectionRef, orderBy('date', 'desc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      let entries = snapshot.docs.map(doc => {
+      const entries = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData;
         return {
           id: doc.id,
@@ -106,19 +106,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
           icon: getLogEntryIcon(data.type),
         } as LogEntry;
       });
-      
-      const hasPlantedEntry = entries.some(e => e.type === 'planted');
-      if (!hasPlantedEntry && crop.fecha_plantacion) {
-         // This entry is "virtual" and doesn't exist in firestore. It's just for display.
-        entries.push({
-            id: '0', 
-            type: 'planted',
-            date: crop.fecha_plantacion as Timestamp,
-            content: '¡La aventura comienza! Cultivo plantado.',
-            icon: getLogEntryIcon('planted'),
-        });
-      }
-      
+
       // Filter out entries that don't have a valid date yet to prevent crashes
       const validEntries = entries.filter(e => e.date && typeof e.date.seconds === 'number');
 
@@ -133,7 +121,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     });
 
     return () => unsubscribe();
-  }, [crop.id, user, toast, crop.fecha_plantacion]);
+  }, [crop.id, user, toast]);
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -143,36 +131,41 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     }
   };
 
-  const addLogEntry = async (type: 'note' | 'water' | 'fertilize' | 'photo') => {
+  const addLogEntry = async (type: 'note' | 'water' | 'fertilize' | 'photo' | 'planted', initialContent?: string) => {
     if (!user) return;
     
     let content = "";
     let isPhotoEntry = false;
+    let isInitialEntry = type === 'planted';
 
-    switch(type) {
-        case 'note':
-            if (!newNote.trim()) {
-                toast({ title: "Nota vacía", description: "Por favor escribe algo en la nota.", variant: "destructive" });
-                return;
-            }
-            setIsAddingNote(true);
-            content = newNote;
-            break;
-        case 'water':
-            content = "Riego registrado.";
-            break;
-        case 'fertilize':
-            content = "Abonado registrado.";
-            break;
-        case 'photo':
-            if (!imageFile) {
-                toast({ title: "Sin imagen", description: "Por favor selecciona una imagen para subir.", variant: "destructive" });
-                return;
-            }
-            setIsUploading(true);
-            content = newNote || "Foto de progreso añadida.";
-            isPhotoEntry = true;
-            break;
+    if (isInitialEntry) {
+        content = initialContent || "¡La aventura comienza! Cultivo plantado.";
+    } else {
+        switch(type) {
+            case 'note':
+                if (!newNote.trim()) {
+                    toast({ title: "Nota vacía", description: "Por favor escribe algo en la nota.", variant: "destructive" });
+                    return;
+                }
+                setIsAddingNote(true);
+                content = newNote;
+                break;
+            case 'water':
+                content = "Riego registrado.";
+                break;
+            case 'fertilize':
+                content = "Abonado registrado.";
+                break;
+            case 'photo':
+                if (!imageFile) {
+                    toast({ title: "Sin imagen", description: "Por favor selecciona una imagen para subir.", variant: "destructive" });
+                    return;
+                }
+                setIsUploading(true);
+                content = newNote || "Foto de progreso añadida.";
+                isPhotoEntry = true;
+                break;
+        }
     }
     
     const logData: Omit<LogEntry, 'id' | 'icon' | 'date'> & { date: any } = {
@@ -181,19 +174,16 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         content,
     };
     
-    // For now, photo uploads are not saved to the cloud to reduce storage costs.
-    // The image is shown in the log but will be lost on refresh.
     if (isPhotoEntry) {
         logData.imageUrl = imagePreview || undefined;
     }
 
     try {
         const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'diario');
-        
         await addDoc(logCollectionRef, logData);
-        
-        toast({ title: "Diario actualizado", description: "Se ha añadido una nueva entrada."});
-
+        if (!isInitialEntry) {
+            toast({ title: "Diario actualizado", description: "Se ha añadido una nueva entrada."});
+        }
     } catch (error) {
         console.error("Error adding log entry: ", error);
         toast({ title: "Error", description: "No se pudo guardar la entrada.", variant: "destructive" });
@@ -208,7 +198,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
   };
 
   const removeLogEntry = async (id: string) => {
-    if (!user || id === '0') return; // Cannot delete the 'planted' virtual entry
+    if (!user) return;
     
     try {
         const logDocRef = doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'diario', id);
@@ -293,10 +283,10 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                         ))}
                                         {!isLogLoading && logEntries.map(entry => (
                                             <div key={entry.id} className={`relative p-4 rounded-lg border flex items-start gap-4 text-sm ${getLogEntryColor(entry.type)}`}>
-                                                <div className="p-2 bg-background/50 rounded-full"><entry.icon className="h-5 w-5 text-foreground/80" /></div>
+                                                <div className="p-2 bg-background/50 rounded-full"><entry.icon className="h-5 w-5" /></div>
                                                 <div className="flex-grow">
                                                     <p className="font-nunito font-semibold">{entry.date ? new Date(entry.date.seconds * 1000).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Fecha pendiente'}</p>
-                                                    <p className="text-foreground/90 mt-1">{entry.content}</p>
+                                                    <p className="mt-1">{entry.content}</p>
                                                     {entry.imageUrl && (
                                                       <Dialog>
                                                         <DialogTrigger asChild>
@@ -399,3 +389,5 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     </Dialog>
   );
 }
+
+    
