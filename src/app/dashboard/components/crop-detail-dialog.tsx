@@ -49,6 +49,23 @@ const getLogEntryIcon = (type: string) => {
     }
 }
 
+const formatRemainingDays = (days: number) => {
+  if (days > 365) {
+    const years = Math.floor(days / 365);
+    const remainingDays = days % 365;
+    const months = Math.round(remainingDays / 30);
+    if (years > 1) {
+        return `aprox. ${years} años${months > 0 ? ` y ${months} meses` : ''}`;
+    }
+    return `aprox. 1 año${months > 0 ? ` y ${months} meses` : ''}`;
+  }
+  if (days > 60) {
+      const months = Math.floor(days/30);
+      return `aprox. ${months} meses`;
+  }
+  return `${days} días`;
+};
+
 
 export function CropDetailDialog({ crop, children }: { crop: UserCrop; children: React.ReactNode }) {
   const { toast } = useToast();
@@ -69,13 +86,11 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     setIsLogLoading(true);
     const sampleLogs: Omit<LogEntry, 'icon'>[] = [
         { id: '1', type: 'planted', date: crop.fecha_plantacion, content: '¡La aventura comienza! Cultivo plantado.' },
-        { id: '2', type: 'water', date: { seconds: crop.fecha_plantacion.seconds + (86400 * 3) }, content: 'Primer riego registrado.' },
-        { id: '3', type: 'note', date: { seconds: crop.fecha_plantacion.seconds + (86400 * 7) }, content: 'Han aparecido los primeros brotes.' },
     ];
     setTimeout(() => {
         setLogEntries(sampleLogs.map(log => ({ ...log, icon: getLogEntryIcon(log.type) })));
         setIsLogLoading(false);
-    }, 1000);
+    }, 500);
   }, [crop.id, crop.fecha_plantacion]);
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,6 +150,8 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     toast({ title: "Entrada eliminada (simulado)" });
   };
   
+  const remainingDays = crop.daysToHarvest - Math.round(crop.progress / 100 * crop.daysToHarvest);
+
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -145,9 +162,9 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
             Detalles y seguimiento de tu cultivo.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid md:grid-cols-2 gap-6 mt-4 h-full overflow-hidden">
-            <div className="flex flex-col gap-4">
-                <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+        <div className="grid md:grid-cols-2 gap-8 mt-4 h-full overflow-hidden">
+            <div className="flex flex-col gap-6">
+                <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
                     <Image
                         src={crop.imageUrl}
                         alt={`Imagen de ${crop.nombre_cultivo_personal}`}
@@ -160,11 +177,13 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                     <CardHeader>
                         <CardTitle className="text-xl">Ficha Rápida</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
+                    <CardContent className="space-y-3 text-sm">
                         <p><strong>Fecha de Siembra:</strong> {new Date(crop.fecha_plantacion.seconds * 1000).toLocaleDateString()}</p>
-                        <p><strong>Cosecha Estimada en:</strong> {crop.daysToHarvest - Math.round(crop.progress / 100 * crop.daysToHarvest)} días</p>
-                        <p><strong>Progreso General:</strong></p>
-                        <Progress value={crop.progress} />
+                        <p><strong>Cosecha Estimada en:</strong> {formatRemainingDays(remainingDays)}</p>
+                        <div>
+                            <p className="mb-1"><strong>Progreso General:</strong></p>
+                            <Progress value={crop.progress} />
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -183,14 +202,14 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                             </CardHeader>
                             <CardContent className="flex-grow overflow-auto p-0">
                                 <ScrollArea className="h-full p-6">
-                                    <div className="space-y-4">
+                                    <div className="space-y-6">
                                         {isLogLoading && <p>Cargando diario...</p>}
                                         {logEntries.map(entry => (
-                                            <div key={entry.id} className={`relative p-3 rounded-lg border flex items-start gap-3 text-sm ${getLogEntryColor(entry.type)}`}>
+                                            <div key={entry.id} className={`relative p-4 rounded-lg border flex items-start gap-4 text-sm ${getLogEntryColor(entry.type)}`}>
                                                 <div className="p-2 bg-white/50 rounded-full"><entry.icon className="h-5 w-5 text-gray-700" /></div>
                                                 <div className="flex-grow">
                                                     <p className="font-nunito font-semibold">{new Date(entry.date.seconds * 1000).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                                    <p className="text-gray-700">{entry.content}</p>
+                                                    <p className="text-gray-700 mt-1">{entry.content}</p>
                                                     {entry.imageUrl && <Image src={entry.imageUrl} alt="Foto del diario" width={80} height={80} className="mt-2 rounded-md" data-ai-hint={entry.dataAiHint || ''} />}
                                                 </div>
                                                  <AlertDialog>
@@ -218,7 +237,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                     </div>
                                 </ScrollArea>
                             </CardContent>
-                             <CardFooter className="flex-col items-start gap-2 border-t pt-4">
+                             <CardFooter className="flex-col items-start gap-4 border-t pt-4">
                                 <div className="w-full space-y-2">
                                   <Textarea placeholder="Escribe una nueva nota..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
                                   <div className="flex justify-between items-center">
@@ -228,7 +247,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                         <Button size="sm" variant="outline" onClick={() => addLogEntry('fertilize')}><Zap className="mr-2 h-4 w-4" />Abonado</Button>
                                       </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 pt-2 border-t mt-2">
                                      <Input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageFileChange} className="text-xs" />
                                      {imagePreview && <Image src={imagePreview} alt="Preview" width={40} height={40} className="rounded-md" />}
                                      <Button size="sm" variant="outline" onClick={() => addLogEntry('photo')} disabled={isUploading || !imageFile}>
