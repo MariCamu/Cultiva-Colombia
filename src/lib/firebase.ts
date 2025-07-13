@@ -9,7 +9,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCArr2NtU7FN5LTjVRq7cnmrhIVGS_8nOs",
   authDomain: "agrinavigate.firebaseapp.com",
   projectId: "agrinavigate",
-  storageBucket: "agrinavigate.appspot.com",
+  storageBucket: "agrinavigate.firebasestorage.app",
   messagingSenderId: "619147792018",
   appId: "1:619147792018:web:0d779d71bfba162962a04b"
 };
@@ -27,3 +27,4 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 
 export { app, db, auth, storage };
+
