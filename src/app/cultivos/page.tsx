@@ -151,7 +151,6 @@ export default function CultivosPage() {
 
   const handleAddCropToDashboard = async (crop: SampleCrop) => {
     if (!user) {
-      console.log("Usuario no autenticado. No se puede añadir el cultivo.");
       toast({
         title: "Inicia Sesión",
         description: "Debes iniciar sesión para añadir cultivos a tu dashboard.",
@@ -161,25 +160,22 @@ export default function CultivosPage() {
       return;
     }
   
-    const dataToAdd = {
-      ficha_cultivo_id: crop.id || '',
-      nombre_cultivo_personal: crop.name || 'Cultivo Desconocido',
-      fecha_plantacion: serverTimestamp(),
-      imageUrl: crop.imageUrl || '',
-      dataAiHint: crop.dataAiHint || null,
-      daysToHarvest: crop.daysToHarvest !== undefined ? crop.daysToHarvest : null,
-      nextTask: { 
-        name: 'Regar', 
-        dueInDays: 2, 
-        iconName: 'Droplets' 
-      },
-      lastNote: '¡Cultivo recién añadido! Empieza a registrar tu progreso.',
-    };
-  
     setIsAddingCrop(crop.id);
     
     try {
       const userCropsCollection = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario');
+      
+      const dataToAdd = {
+        ficha_cultivo_id: crop.id || '',
+        nombre_cultivo_personal: crop.name || 'Cultivo Desconocido',
+        fecha_plantacion: serverTimestamp(),
+        imageUrl: crop.imageUrl || '',
+        dataAiHint: crop.dataAiHint || null,
+        daysToHarvest: crop.daysToHarvest !== undefined ? crop.daysToHarvest : null,
+        nextTask: { name: 'Regar', dueInDays: 2, iconName: 'Droplets' },
+        lastNote: '¡Cultivo recién añadido! Empieza a registrar tu progreso.',
+      };
+
       await addDoc(userCropsCollection, dataToAdd);
   
       toast({
@@ -189,10 +185,10 @@ export default function CultivosPage() {
       router.push('/dashboard');
       
     } catch (error: any) {
-      console.error("Error al añadir cultivo al dashboard (detalles): ", error.code, error.message, error);
+      console.error("Error al añadir cultivo al dashboard:", error);
       toast({
         title: "Error al añadir cultivo",
-        description: `Hubo un problema: ${error.message || "Error desconocido"}. Revisa la consola para más detalles.`,
+        description: `Hubo un problema al guardar los datos: ${error.message}. Revisa la consola para más detalles.`,
         variant: "destructive",
       });
     } finally {
