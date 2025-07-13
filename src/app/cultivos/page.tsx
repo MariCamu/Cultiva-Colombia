@@ -150,11 +150,10 @@ export default function CultivosPage() {
   const [isAddingCrop, setIsAddingCrop] = useState<string | null>(null);
 
   const testSimpleWrite = async () => {
-    if (!user) { /* ... */ return; }
+    console.log("DEBUG TEST: Iniciando prueba de escritura simple a Firestore...");
     try {
         const testCollectionRef = collection(db, "minimal_test");
         await addDoc(testCollectionRef, {
-            // Solo un campo simple de tipo string
             data: "hello_world"
         });
         console.log("DEBUG TEST: ¡Minimal write SUCCESS!");

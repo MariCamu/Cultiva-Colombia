@@ -2,7 +2,6 @@
 import { initializeApp, getApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -24,6 +23,9 @@ if (!getApps().length) {
 
 const db: Firestore = getFirestore(app);
 const auth = getAuth(app);
-const storage = getStorage(app);
 
-export { app, db, auth, storage };
+// For simplicity, storage is commented out as it's not used in the core functionality being debugged.
+// import { getStorage } from "firebase/storage";
+// const storage = getStorage(app);
+
+export { app, db, auth };
