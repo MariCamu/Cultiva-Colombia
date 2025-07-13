@@ -11,7 +11,7 @@ const firebaseConfig = {
   projectId: "agrinavigate",
   storageBucket: "agrinavigate.firebasestorage.app",
   messagingSenderId: "619147792018",
-  appId: "1:619147792018:web:0d779d71bfba162962a04b"
+  appId: "1:619147792018:web:b7591b27fd28c34a62a04b"
 };
 
 // Initialize Firebase
