@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useToast } from '@/hooks/use-toast';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, type AuthError } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -25,7 +25,22 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Comprobar si el documento del usuario existe y crearlo si no
+      const userRef = doc(db, 'usuarios', user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        await setDoc(userRef, {
+            nombre: user.displayName || email.split('@')[0], // Usar nombre de pantalla o parte del email
+            email: user.email,
+            fecha_registro: serverTimestamp(),
+            preferencia_tema: 'cultiva_verde_default',
+        }, { merge: true });
+      }
+
       toast({
         title: "Inicio de Sesión Exitoso",
         description: "Redirigiendo al dashboard...",
@@ -54,14 +69,14 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Create user document in Firestore if it's a new user
+      // Crear documento del usuario en Firestore (o fusionar si ya existe)
       const userRef = doc(db, 'usuarios', user.uid);
       await setDoc(userRef, {
         nombre: user.displayName || '',
         email: user.email,
         fecha_registro: serverTimestamp(),
         preferencia_tema: 'cultiva_verde_default',
-      }, { merge: true }); // Use merge to not overwrite existing data if user logs in again
+      }, { merge: true });
 
       toast({
           title: "Inicio de Sesión con Google Exitoso",
