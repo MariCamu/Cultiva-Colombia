@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle, Beaker } from 'lucide-react';
+import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
@@ -149,21 +149,6 @@ export default function CultivosPage() {
   const [regionFromTest, setRegionFromTest] = useState<string | null>(null);
   const [isAddingCrop, setIsAddingCrop] = useState<string | null>(null);
 
-  const testSimpleWrite = async () => {
-    console.log("DEBUG TEST: Iniciando prueba de escritura simple a Firestore...");
-    try {
-        const testCollectionRef = collection(db, "minimal_test");
-        await addDoc(testCollectionRef, {
-            data: "hello_world"
-        });
-        console.log("DEBUG TEST: ¡Minimal write SUCCESS!");
-        toast({ title: "Minimal Test OK", description: "Minimal write worked.", variant: "default" });
-    } catch (err: any) {
-        console.error("DEBUG TEST: ¡Minimal write FAILED!", err);
-        toast({ title: "Minimal Test FAILED", description: `Minimal write failed: ${err.message}`, variant: "destructive" });
-    }
-  };
-  
   const handleAddCropToDashboard = async (crop: SampleCrop) => {
     if (!user) {
       toast({
@@ -583,12 +568,6 @@ export default function CultivosPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="md:col-span-2 lg:col-span-3">
-              <Button onClick={testSimpleWrite} variant="outline" size="sm">
-                <Beaker className="mr-2 h-4 w-4" />
-                Probar Escritura a Firestore
-              </Button>
-            </div>
         </CardContent>
       </Card>
       
@@ -681,7 +660,3 @@ export default function CultivosPage() {
     </div>
   );
 }
-
-    
-
-    
