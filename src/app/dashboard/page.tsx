@@ -4,7 +4,7 @@
 import { ProtectedRoute, useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Leaf, CalendarDays, Droplets, Sun, Wind, BookOpen, Sparkles, MessageSquarePlus, AlertCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Leaf, CalendarDays, Droplets, Sun, Wind, BookOpen, Sparkles, MessageSquarePlus, AlertCircle, Trash2, LocateFixed } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,7 @@ import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc, type Timestamp } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { fetchWeatherForecast, getWeatherDescription, getWeatherIcon, type WeatherData } from '@/services/weatherService';
 
 export interface UserCrop {
   id: string; 
@@ -75,6 +76,104 @@ function getTaskBadgeVariant(days: number) {
   if (days <= 1) return 'destructive';
   if (days <= 3) return 'secondary';
   return 'outline';
+}
+
+function WeatherWidget() {
+  const [location, setLocation] = useState<{ lat: number, lon: number } | null>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setStatus('pending');
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setLocation({ lat: latitude, lon: longitude });
+      },
+      (err) => {
+        setError("No se pudo obtener la ubicación. Revisa los permisos.");
+        setStatus('error');
+        console.error(err);
+      }
+    );
+  }, []);
+
+  useEffect(() => {
+    if (location) {
+      fetchWeatherForecast(location.lat, location.lon)
+        .then(data => {
+          setWeather(data);
+          setStatus('success');
+        })
+        .catch(err => {
+          setError("No se pudo cargar el pronóstico.");
+          setStatus('error');
+          console.error(err);
+        });
+    }
+  }, [location]);
+
+  const renderContent = () => {
+    if (status === 'pending') {
+      return (
+        <div className="flex flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+          <LocateFixed className="h-10 w-10 animate-pulse" />
+          <p className="font-nunito font-semibold">Obteniendo ubicación...</p>
+        </div>
+      );
+    }
+
+    if (status === 'error' || !weather) {
+      return (
+         <div className="flex flex-col items-center justify-center gap-2 text-center text-destructive">
+          <AlertCircle className="h-10 w-10" />
+          <p className="font-nunito font-semibold">{error || "Error desconocido"}</p>
+        </div>
+      );
+    }
+    
+    const now = new Date();
+    const currentHourIndex = weather.hourly.time.findIndex(t => new Date(t) > now) -1;
+    if (currentHourIndex < 0) return <p>Cargando datos actuales...</p>
+
+    const currentTemp = weather.hourly.temperature_2m[currentHourIndex];
+    const currentPrecipitation = weather.hourly.precipitation_probability[currentHourIndex];
+    const weatherCode = weather.hourly.weather_code[currentHourIndex];
+    const WeatherIcon = getWeatherIcon(weatherCode);
+
+    return (
+        <div className="flex items-center justify-around text-center w-full">
+            <div className="flex flex-col items-center gap-1">
+                <WeatherIcon className="h-10 w-10 text-yellow-500"/>
+                <p className="font-nunito font-bold text-2xl">{Math.round(currentTemp)}°C</p>
+                <p className="text-sm text-muted-foreground capitalize">{getWeatherDescription(weatherCode)}</p>
+            </div>
+            <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                <Droplets className="h-8 w-8"/>
+                <p className="font-nunito font-semibold">{currentPrecipitation}%</p>
+                <p className="text-xs">Lluvia</p>
+            </div>
+            <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                <Wind className="h-8 w-8"/>
+                <p className="font-nunito font-semibold">N/A</p>
+                <p className="text-xs">Viento</p>
+            </div>
+        </div>
+    );
+  };
+  
+  return (
+      <Card>
+          <CardHeader>
+              <CardTitle className="text-xl">Pronóstico del Tiempo</CardTitle>
+              <CardDescription>{status === 'success' ? `Para tu ubicación actual` : status === 'error' ? 'Error' : 'Obteniendo ubicación...'}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center justify-center min-h-[100px]">
+              {renderContent()}
+          </CardContent>
+      </Card>
+  );
 }
 
 function DashboardContent() {
@@ -447,29 +546,7 @@ function DashboardContent() {
             </CardContent>
           </Card>
 
-           <Card>
-                <CardHeader>
-                    <CardTitle className="text-xl">Pronóstico del Tiempo</CardTitle>
-                    <CardDescription>Ubicación: (Simulada)</CardDescription>
-                </CardHeader>
-                <CardContent className="flex items-center justify-around text-center">
-                    <div className="flex flex-col items-center gap-1">
-                        <Sun className="h-10 w-10 text-yellow-500"/>
-                        <p className="font-nunito font-bold text-2xl">24°C</p>
-                        <p className="text-sm text-muted-foreground">Hoy</p>
-                    </div>
-                     <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                        <Droplets className="h-8 w-8"/>
-                        <p className="font-nunito font-semibold">10%</p>
-                        <p className="text-xs">Lluvia</p>
-                    </div>
-                     <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                        <Wind className="h-8 w-8"/>
-                        <p className="font-nunito font-semibold">5 km/h</p>
-                        <p className="text-xs">Viento</p>
-                    </div>
-                </CardContent>
-            </Card>
+          <WeatherWidget />
 
           <Card className="shadow-md">
             <CardHeader>

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2, Upload, FlaskConical, Sprout, ShieldCheck, ShieldAlert, List } from 'lucide-react';
+import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2, Upload, FlaskConical, Sprout, ShieldCheck, ShieldAlert, List, CloudRain } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,6 +20,8 @@ import { useAuth } from '@/context/auth-context';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, deleteDoc, type Timestamp, type DocumentData } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { fetchWeatherForecast, willItRainSoon, type WeatherData } from '@/services/weatherService';
 
 
 interface LogEntry {
@@ -73,6 +75,45 @@ const formatRemainingDays = (days: number) => {
   }
   return `${days} día${days > 1 ? 's' : ''}`;
 };
+
+function WeatherRecommendation() {
+  const [showRecommendation, setShowRecommendation] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        fetchWeatherForecast(latitude, longitude)
+          .then((weatherData) => {
+            if (willItRainSoon(weatherData.hourly, 30)) { // 30% threshold
+              setShowRecommendation(true);
+            }
+          })
+          .catch(console.error)
+          .finally(() => setIsLoading(false));
+      },
+      (error) => {
+        console.warn("Could not get location for weather recommendation:", error.message);
+        setIsLoading(false);
+      }
+    );
+  }, []);
+
+  if (isLoading || !showRecommendation) {
+    return null;
+  }
+
+  return (
+    <Alert className="mb-4 bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-300">
+      <CloudRain className="h-4 w-4" />
+      <AlertTitle className="font-nunito font-bold">¡Atención para tu cultivo!</AlertTitle>
+      <AlertDescription>
+        Es probable que llueva en tu ubicación en las próximas horas. Considera <strong>no regar</strong> hoy para evitar el exceso de humedad.
+      </AlertDescription>
+    </Alert>
+  );
+}
 
 
 export function CropDetailDialog({ crop, children }: { crop: UserCrop; children: React.ReactNode }) {
@@ -271,6 +312,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                             </CardHeader>
                             <CardContent className="flex-grow overflow-hidden">
                                 <ScrollArea className="h-full pr-4">
+                                     <WeatherRecommendation />
                                     <div className="space-y-6">
                                         {isLogLoading && Array.from({ length: 3 }).map((_, i) => (
                                           <div key={i} className="flex items-start gap-4">
@@ -389,5 +431,3 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     </Dialog>
   );
 }
-
-    
