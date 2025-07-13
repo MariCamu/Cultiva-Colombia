@@ -21,7 +21,8 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, deleteDoc, type Timestamp, type DocumentData } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { fetchWeatherForecast, willItRainSoon, type WeatherData } from '@/services/weatherService';
+import { fetchWeatherForecast } from '@/services/weatherService';
+import { willItRainSoon, type WeatherData } from '@/lib/weather-utils';
 
 
 interface LogEntry {
@@ -85,7 +86,7 @@ function WeatherRecommendation() {
       (position) => {
         const { latitude, longitude } = position.coords;
         fetchWeatherForecast(latitude, longitude)
-          .then((weatherData) => {
+          .then(async (weatherData) => {
             if (willItRainSoon(weatherData.hourly, 30)) { // 30% threshold
               setShowRecommendation(true);
             }

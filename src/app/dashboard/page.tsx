@@ -24,7 +24,9 @@ import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc, type Timestamp } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { fetchWeatherForecast, getWeatherDescription, getWeatherIcon, type WeatherData } from '@/services/weatherService';
+import { fetchWeatherForecast } from '@/services/weatherService';
+import { getWeatherDescription, getWeatherIcon, type WeatherData } from '@/lib/weather-utils';
+
 
 export interface UserCrop {
   id: string; 
@@ -83,6 +85,8 @@ function WeatherWidget() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [weatherDescription, setWeatherDescription] = useState<string>('');
+  const [WeatherIcon, setWeatherIcon] = useState<React.ElementType | null>(null);
 
   useEffect(() => {
     setStatus('pending');
@@ -102,8 +106,15 @@ function WeatherWidget() {
   useEffect(() => {
     if (location) {
       fetchWeatherForecast(location.lat, location.lon)
-        .then(data => {
+        .then(async data => {
           setWeather(data);
+           if (data.hourly.weather_code.length > 0) {
+            const code = data.hourly.weather_code[new Date().getHours()];
+            const desc = getWeatherDescription(code);
+            const icon = getWeatherIcon(code);
+            setWeatherDescription(desc);
+            setWeatherIcon(() => icon);
+          }
           setStatus('success');
         })
         .catch(err => {
@@ -139,15 +150,13 @@ function WeatherWidget() {
 
     const currentTemp = weather.hourly.temperature_2m[currentHourIndex];
     const currentPrecipitation = weather.hourly.precipitation_probability[currentHourIndex];
-    const weatherCode = weather.hourly.weather_code[currentHourIndex];
-    const WeatherIcon = getWeatherIcon(weatherCode);
 
     return (
         <div className="flex items-center justify-around text-center w-full">
             <div className="flex flex-col items-center gap-1">
-                <WeatherIcon className="h-10 w-10 text-yellow-500"/>
+                {WeatherIcon && <WeatherIcon className="h-10 w-10 text-yellow-500"/>}
                 <p className="font-nunito font-bold text-2xl">{Math.round(currentTemp)}°C</p>
-                <p className="text-sm text-muted-foreground capitalize">{getWeatherDescription(weatherCode)}</p>
+                <p className="text-sm text-muted-foreground capitalize">{weatherDescription}</p>
             </div>
             <div className="flex flex-col items-center gap-1 text-muted-foreground">
                 <Droplets className="h-8 w-8"/>
