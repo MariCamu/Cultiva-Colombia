@@ -109,11 +109,16 @@ function WeatherWidget() {
         .then(async data => {
           setWeather(data);
            if (data.hourly.weather_code.length > 0) {
-            const code = data.hourly.weather_code[new Date().getHours()];
-            const desc = getWeatherDescription(code);
-            const icon = getWeatherIcon(code);
-            setWeatherDescription(desc);
-            setWeatherIcon(() => icon);
+            const now = new Date();
+            const currentHourIndex = now.getHours();
+            
+            if (currentHourIndex >= 0 && currentHourIndex < data.hourly.weather_code.length) {
+              const code = data.hourly.weather_code[currentHourIndex];
+              const desc = getWeatherDescription(code);
+              const icon = getWeatherIcon(code);
+              setWeatherDescription(desc);
+              setWeatherIcon(() => icon);
+            }
           }
           setStatus('success');
         })
@@ -145,8 +150,11 @@ function WeatherWidget() {
     }
     
     const now = new Date();
-    const currentHourIndex = weather.hourly.time.findIndex(t => new Date(t) > now) -1;
-    if (currentHourIndex < 0) return <p>Cargando datos actuales...</p>
+    const currentHourIndex = now.getHours();
+
+    if (currentHourIndex < 0 || currentHourIndex >= weather.hourly.time.length) {
+      return <p>Cargando datos actuales...</p>
+    }
 
     const currentTemp = weather.hourly.temperature_2m[currentHourIndex];
     const currentPrecipitation = weather.hourly.precipitation_probability[currentHourIndex];
