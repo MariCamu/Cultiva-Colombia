@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle } from 'lucide-react';
+import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle, Beaker } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
@@ -149,6 +149,35 @@ export default function CultivosPage() {
   const [regionFromTest, setRegionFromTest] = useState<string | null>(null);
   const [isAddingCrop, setIsAddingCrop] = useState<string | null>(null);
 
+  const testSimpleWrite = async () => {
+    console.log("DEBUG TEST: Iniciando prueba de escritura simple a Firestore...");
+    if (!user) {
+        console.error("DEBUG TEST: ¡PRUEBA FALLIDA! No hay usuario autenticado.");
+        toast({ title: "Test Falló", description: "Debes iniciar sesión para probar la escritura.", variant: "destructive" });
+        return;
+    }
+    try {
+      const testCollectionRef = collection(db, "mi_coleccion_de_prueba_automatica");
+  
+      await addDoc(testCollectionRef, {
+        mensaje: "¡Hola Firestore desde la prueba!",
+        fecha_test: new Date(),
+        numero_random: Math.random(),
+        usuarioId: user.uid,
+      });
+  
+      console.log("DEBUG TEST: ¡Prueba de escritura simple a Firestore EXITOSA!");
+      toast({ title: "Test OK", description: "La escritura simple funcionó. Revisa tu Firestore.", variant: "default" });
+  
+    } catch (testError: any) {
+      console.error("DEBUG TEST: ¡PRUEBA DE ESCRITURA SIMPLE FALLÓ! Detalles:");
+      console.error("  Código de error:", testError.code);
+      console.error("  Mensaje de error:", testError.message);
+      console.error("  Objeto de error completo:", testError);
+      toast({ title: "Test Falló", description: `La escritura simple NO funcionó: ${testError.message}`, variant: "destructive" });
+    }
+  };
+  
   const handleAddCropToDashboard = async (crop: SampleCrop) => {
     if (!user) {
       toast({
@@ -159,25 +188,24 @@ export default function CultivosPage() {
       router.push('/login');
       return;
     }
-  
+
     setIsAddingCrop(crop.id);
+
+    const dataToAdd = {
+      ficha_cultivo_id: crop.id || '',
+      nombre_cultivo_personal: crop.name || 'Cultivo Desconocido',
+      fecha_plantacion: serverTimestamp(),
+      imageUrl: crop.imageUrl || '',
+      dataAiHint: crop.dataAiHint || null,
+      daysToHarvest: crop.daysToHarvest !== undefined ? crop.daysToHarvest : null,
+      nextTask: { name: 'Regar', dueInDays: 2, iconName: 'Droplets' },
+      lastNote: '¡Cultivo recién añadido! Empieza a registrar tu progreso.',
+    };
     
     try {
       const userCropsCollection = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario');
-      
-      const dataToAdd = {
-        ficha_cultivo_id: crop.id || '',
-        nombre_cultivo_personal: crop.name || 'Cultivo Desconocido',
-        fecha_plantacion: serverTimestamp(),
-        imageUrl: crop.imageUrl || '',
-        dataAiHint: crop.dataAiHint || null,
-        daysToHarvest: crop.daysToHarvest !== undefined ? crop.daysToHarvest : null,
-        nextTask: { name: 'Regar', dueInDays: 2, iconName: 'Droplets' },
-        lastNote: '¡Cultivo recién añadido! Empieza a registrar tu progreso.',
-      };
-
       await addDoc(userCropsCollection, dataToAdd);
-  
+      
       toast({
         title: "¡Cultivo Añadido!",
         description: `${crop.name} ha sido añadido a tu dashboard.`,
@@ -185,7 +213,7 @@ export default function CultivosPage() {
       router.push('/dashboard');
       
     } catch (error: any) {
-      console.error("Error al añadir cultivo al dashboard:", error);
+      console.error("Error al añadir cultivo al dashboard:", error.code, error.message, error);
       toast({
         title: "Error al añadir cultivo",
         description: `Hubo un problema al guardar los datos: ${error.message}. Revisa la consola para más detalles.`,
@@ -569,6 +597,12 @@ export default function CultivosPage() {
               </SelectContent>
             </Select>
           </div>
+          <div className="md:col-span-2 lg:col-span-3">
+              <Button onClick={testSimpleWrite} variant="outline" size="sm">
+                <Beaker className="mr-2 h-4 w-4" />
+                Probar Escritura a Firestore
+              </Button>
+            </div>
         </CardContent>
       </Card>
       
@@ -657,8 +691,11 @@ export default function CultivosPage() {
           </p>
         </CardContent>
       </Card>
+
     </div>
   );
 }
+
+    
 
     
