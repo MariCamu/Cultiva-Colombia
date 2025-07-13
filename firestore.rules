@@ -1,18 +1,27 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Regla para la colección de usuarios
-    match /usuarios/{userId}/{documents=**} {
-      // Solo permite leer y escribir sus propios documentos al usuario autenticado
+    
+    // Allow users to create their own user document upon signup/login
+    // and manage their own document afterwards.
+    match /usuarios/{userId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+    }
+
+    // Allow users to read, create, update, and delete crops within their own subcollection.
+    match /usuarios/{userId}/cultivos_del_usuario/{cultivoId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Reglas para otras colecciones (si las hubiera en el futuro)
-    match /{document=**} {
-      // Por defecto, se deniega el acceso a cualquier otro documento
-      allow read, write: if false;
+    // Public collections like technical sheets can be read by anyone.
+    // We will assume for now they are not writable from the client.
+    match /fichas_tecnicas_cultivos/{fichaId} {
+      allow read: if true;
+      allow write: if false; // Protect this data from client-side changes
     }
+    
+    // Any other collection is closed by default.
   }
 }
