@@ -98,7 +98,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     const q = query(logCollectionRef, orderBy('date', 'desc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const entries = snapshot.docs.map(doc => {
+      let entries = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData;
         return {
           id: doc.id,
@@ -107,11 +107,10 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         } as LogEntry;
       });
       
-      // Virtually add the "planted" entry for display purposes if not present
       const hasPlantedEntry = entries.some(e => e.type === 'planted');
       if (!hasPlantedEntry && crop.fecha_plantacion) {
         entries.push({
-            id: '0', // Virtual ID
+            id: '0', 
             type: 'planted',
             date: crop.fecha_plantacion as Timestamp,
             content: '¡La aventura comienza! Cultivo plantado.',
@@ -119,9 +118,12 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         });
       }
 
-      entries.sort((a,b) => b.date.seconds - a.date.seconds);
+      // Filter out entries that don't have a valid date yet to prevent crashes
+      const validEntries = entries.filter(e => e.date && typeof e.date.seconds === 'number');
 
-      setLogEntries(entries);
+      validEntries.sort((a,b) => b.date.seconds - a.date.seconds);
+
+      setLogEntries(validEntries);
       setIsLogLoading(false);
     }, (error) => {
         console.error("Error fetching log entries:", error);
@@ -179,8 +181,6 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     };
     
     if (isPhotoEntry) {
-        // In a real app, you would upload the image to Firebase Storage and get a URL.
-        // For now, we are not saving the image to the cloud.
         logData.imageUrl = imagePreview || undefined;
     }
 
@@ -205,7 +205,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
   };
 
   const removeLogEntry = async (id: string) => {
-    if (!user || id === '0') return; // Cannot delete the virtual 'planted' entry
+    if (!user || id === '0') return; 
     
     try {
         const logDocRef = doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'diario', id);
@@ -234,7 +234,6 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         </DialogHeader>
 
         <div className="grid lg:grid-cols-3 gap-8 px-6 pb-6 flex-grow overflow-hidden">
-            {/* Columna Izquierda: Imagen y Ficha Rápida */}
             <div className="lg:col-span-1 flex flex-col gap-6 overflow-y-auto p-1">
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
                     <Image
@@ -260,7 +259,6 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                 </Card>
             </div>
 
-            {/* Columna Derecha: Pestañas de Diario y Ficha Técnica */}
             <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
                 <Tabs defaultValue="journal" className="flex flex-col h-full">
                     <TabsList className="w-full flex-shrink-0">
