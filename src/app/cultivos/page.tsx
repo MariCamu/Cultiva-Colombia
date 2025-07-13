@@ -150,31 +150,18 @@ export default function CultivosPage() {
   const [isAddingCrop, setIsAddingCrop] = useState<string | null>(null);
 
   const testSimpleWrite = async () => {
-    console.log("DEBUG TEST: Iniciando prueba de escritura simple a Firestore...");
-    if (!user) {
-        console.error("DEBUG TEST: ¡PRUEBA FALLIDA! No hay usuario autenticado.");
-        toast({ title: "Test Falló", description: "Debes iniciar sesión para probar la escritura.", variant: "destructive" });
-        return;
-    }
+    if (!user) { /* ... */ return; }
     try {
-      const testCollectionRef = collection(db, "mi_coleccion_de_prueba_automatica");
-  
-      await addDoc(testCollectionRef, {
-        mensaje: "¡Hola Firestore desde la prueba!",
-        fecha_test: new Date(),
-        numero_random: Math.random(),
-        usuarioId: user.uid,
-      });
-  
-      console.log("DEBUG TEST: ¡Prueba de escritura simple a Firestore EXITOSA!");
-      toast({ title: "Test OK", description: "La escritura simple funcionó. Revisa tu Firestore.", variant: "default" });
-  
-    } catch (testError: any) {
-      console.error("DEBUG TEST: ¡PRUEBA DE ESCRITURA SIMPLE FALLÓ! Detalles:");
-      console.error("  Código de error:", testError.code);
-      console.error("  Mensaje de error:", testError.message);
-      console.error("  Objeto de error completo:", testError);
-      toast({ title: "Test Falló", description: `La escritura simple NO funcionó: ${testError.message}`, variant: "destructive" });
+        const testCollectionRef = collection(db, "minimal_test");
+        await addDoc(testCollectionRef, {
+            // Solo un campo simple de tipo string
+            data: "hello_world"
+        });
+        console.log("DEBUG TEST: ¡Minimal write SUCCESS!");
+        toast({ title: "Minimal Test OK", description: "Minimal write worked.", variant: "default" });
+    } catch (err: any) {
+        console.error("DEBUG TEST: ¡Minimal write FAILED!", err);
+        toast({ title: "Minimal Test FAILED", description: `Minimal write failed: ${err.message}`, variant: "destructive" });
     }
   };
   
