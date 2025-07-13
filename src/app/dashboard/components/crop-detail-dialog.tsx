@@ -6,10 +6,10 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2, Upload } from 'lucide-react';
+import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2, Upload, FlaskConical, Sprout, ShieldCheck, ShieldAlert, List } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import type { UserCrop } from '../page';
 import { Textarea } from '@/components/ui/textarea';
@@ -59,7 +59,7 @@ const formatRemainingDays = (days: number) => {
     const years = Math.floor(days / 365);
     const months = Math.round((days % 365) / 30);
     let result = `aprox. ${years} año`;
-    if (months > 0) result += ` y ${months} mes${months > 1 ? 'es' : ''}`;
+    if (months > 0) result += ` y ${months > 1 ? 'es' : ''}`;
     return result;
   }
   if (days > 60) {
@@ -158,17 +158,17 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-3xl font-nunito font-bold">{crop.nombre_cultivo_personal}</DialogTitle>
           <DialogDescription>
             Detalles y seguimiento de tu cultivo.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid lg:grid-cols-3 gap-8 mt-4 flex-grow overflow-hidden">
+        <div className="grid lg:grid-cols-3 gap-8 mt-4 px-6 pb-6 flex-grow overflow-hidden">
             {/* Columna Izquierda: Imagen y Ficha Rápida */}
-            <div className="lg:col-span-1 flex flex-col gap-6">
+            <div className="lg:col-span-1 flex flex-col gap-6 overflow-y-auto">
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
                     <Image
                         src={crop.imageUrl}
@@ -201,13 +201,13 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                         <TabsTrigger value="datasheet" className="flex-1">Ficha Técnica</TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="journal" className="flex-grow overflow-auto mt-4">
+                    <TabsContent value="journal" className="flex-grow overflow-hidden mt-4">
                         <Card className="h-full flex flex-col">
                             <CardHeader>
                                 <CardTitle className="text-xl">Añade Notas y Registros</CardTitle>
                                 <CardDescription>Documenta el progreso de tu cultivo.</CardDescription>
                             </CardHeader>
-                            <CardContent className="flex-grow overflow-y-auto">
+                            <CardContent className="flex-grow overflow-hidden">
                                 <ScrollArea className="h-full pr-4">
                                     <div className="space-y-6">
                                         {isLogLoading && <p>Cargando diario...</p>}
@@ -217,7 +217,29 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                                 <div className="flex-grow">
                                                     <p className="font-nunito font-semibold">{new Date(entry.date.seconds * 1000).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                                     <p className="text-gray-700 mt-1">{entry.content}</p>
-                                                    {entry.imageUrl && <Image src={entry.imageUrl} alt="Foto del diario" width={80} height={80} className="mt-2 rounded-md" data-ai-hint={entry.dataAiHint || ''} />}
+                                                    {entry.imageUrl && (
+                                                      <Dialog>
+                                                        <DialogTrigger asChild>
+                                                          <Image 
+                                                            src={entry.imageUrl} 
+                                                            alt="Foto del diario" 
+                                                            width={80} 
+                                                            height={80} 
+                                                            className="mt-2 rounded-md cursor-pointer hover:opacity-80 transition-opacity" 
+                                                            data-ai-hint={entry.dataAiHint || ''}
+                                                          />
+                                                        </DialogTrigger>
+                                                        <DialogContent className="max-w-3xl">
+                                                            <Image 
+                                                                src={entry.imageUrl} 
+                                                                alt="Foto del diario ampliada" 
+                                                                width={800} 
+                                                                height={600} 
+                                                                className="rounded-md object-contain w-full h-auto"
+                                                            />
+                                                        </DialogContent>
+                                                      </Dialog>
+                                                    )}
                                                 </div>
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
@@ -289,6 +311,5 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
       </DialogContent>
     </Dialog>
   );
-}
 
     
