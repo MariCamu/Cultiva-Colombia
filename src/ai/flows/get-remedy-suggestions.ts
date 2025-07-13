@@ -21,10 +21,15 @@ export type CropDiseaseRemedySuggestionsInput = z.infer<
   typeof CropDiseaseRemedySuggestionsInputSchema
 >;
 
+const RemedySuggestionSchema = z.object({
+    title: z.string().describe('Un título corto y descriptivo para el remedio.'),
+    description: z.string().describe('Una explicación detallada del remedio. Usa **negritas** para resaltar palabras clave importantes (ej. **Jabón potásico**, **aceite de Neem**, **buen drenaje**).'),
+});
+
 const CropDiseaseRemedySuggestionsOutputSchema = z.object({
   remedySuggestions: z
-    .array(z.string())
-    .describe('A list of at least two suggested remedies or treatments for the crop problem, explained in simple terms.'),
+    .array(RemedySuggestionSchema)
+    .describe('Una lista de al menos dos remedios o tratamientos sugeridos para el problema del cultivo, cada uno con un título y una descripción formateada.'),
 });
 export type CropDiseaseRemedySuggestionsOutput = z.infer<
   typeof CropDiseaseRemedySuggestionsOutputSchema
@@ -46,8 +51,10 @@ Responde siempre en español.
 Cultivo: {{{cropName}}}
 Problema observado: {{{diseaseName}}}
 
-Basado en el problema descrito para este cultivo específico, sugiere al menos dos remedios o tratamientos posibles. Explica cada remedio de forma clara y sencilla, idealmente mencionando opciones orgánicas o caseras si es posible.
-Concéntrate en dar soluciones prácticas.
+Basado en el problema descrito para este cultivo específico, sugiere al menos dos remedios o tratamientos posibles. Para cada remedio:
+1.  Proporciona un 'title' (título) corto y claro.
+2.  Proporciona una 'description' (descripción) detallada. En esta descripción, usa la sintaxis de Markdown con doble asterisco (p. ej., **Jabón potásico**) para resaltar en negrita las palabras más importantes como ingredientes, técnicas o conceptos clave.
+Explica cada remedio de forma sencilla, mencionando opciones orgánicas o caseras si es posible. Concéntrate en dar soluciones prácticas.
 `,
 });
 

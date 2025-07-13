@@ -211,6 +211,13 @@ function DashboardContent() {
     if (isTomorrow(date)) return 'Mañana';
     return format(date, 'EEEE d MMM', { locale: es });
   }
+  
+  const formatAiSuggestion = (text: string) => {
+    const parts = text.split(/\*\*(.*?)\*\*/g);
+    return parts.map((part, index) =>
+      index % 2 === 1 ? <strong key={index}>{part}</strong> : part
+    );
+  };
 
   return (
     <div className="space-y-8">
@@ -361,10 +368,14 @@ function DashboardContent() {
                       <Alert variant="default" className="bg-primary/10 border-primary/20">
                           <Sparkles className="h-4 w-4 text-primary" />
                           <AlertTitle className="font-nunito font-bold text-primary">Sugerencia de la IA</AlertTitle>
-                          <AlertDescription className="text-primary/90 space-y-2">
+                          <AlertDescription className="text-primary/90 space-y-3">
                             <p className="font-sans font-semibold">Para tu problema con "{journalProblem}" en {userCrops.find(c => c.id === journalCropId)?.nombre_cultivo_personal}, aquí tienes algunas ideas:</p>
-                              <ul className="list-disc pl-5 font-sans space-y-1">
-                                  {aiSuggestion.remedySuggestions.map((s, i) => <li key={i}>{s}</li>)}
+                              <ul className="list-disc pl-5 font-sans space-y-2">
+                                  {aiSuggestion.remedySuggestions.map((s, i) => (
+                                      <li key={i}>
+                                          <strong className='text-primary'>{s.title}:</strong> {formatAiSuggestion(s.description)}
+                                      </li>
+                                  ))}
                               </ul>
                           </AlertDescription>
                       </Alert>
