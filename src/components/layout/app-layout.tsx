@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Input } from '@/components/ui/input';
@@ -66,9 +68,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="flex flex-col p-0">
-                <div className="p-4 border-b">
+                <SheetHeader className="p-4 border-b">
+                   <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
                   <AppName />
-                </div>
+                </SheetHeader>
                 <nav className="flex-grow grid gap-1 p-4">
                   {displayedNavItems.map((item) => (
                     <Link
