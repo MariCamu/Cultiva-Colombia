@@ -158,138 +158,137 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-6xl h-[90vh]">
-        <div className="flex flex-col h-full">
-            <DialogHeader>
-              <DialogTitle className="text-3xl font-nunito font-bold">{crop.nombre_cultivo_personal}</DialogTitle>
-              <DialogDescription>
-                Detalles y seguimiento de tu cultivo.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid lg:grid-cols-3 gap-8 mt-4 flex-grow overflow-hidden">
-                {/* Columna Izquierda: Imagen y Ficha Rápida */}
-                <div className="lg:col-span-1 flex flex-col gap-6">
-                    <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
-                        <Image
-                            src={crop.imageUrl}
-                            alt={`Imagen de ${crop.nombre_cultivo_personal}`}
-                            fill
-                            className="object-cover"
-                            data-ai-hint={crop.dataAiHint}
-                        />
-                    </div>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-xl">Ficha Rápida</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3 text-sm">
-                            <p><strong>Fecha de Siembra:</strong> {new Date(crop.fecha_plantacion.seconds * 1000).toLocaleDateString()}</p>
-                            <p><strong>Cosecha Estimada en:</strong> {formatRemainingDays(remainingDays)}</p>
-                            <div>
-                                <p className="mb-1"><strong>Progreso General:</strong></p>
-                                <Progress value={progress} />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+      <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-3xl font-nunito font-bold">{crop.nombre_cultivo_personal}</DialogTitle>
+          <DialogDescription>
+            Detalles y seguimiento de tu cultivo.
+          </DialogDescription>
+        </DialogHeader>
 
-                {/* Columna Derecha: Pestañas de Diario y Ficha Técnica */}
-                <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
-                    <Tabs defaultValue="journal" className="flex-grow flex flex-col h-full">
-                        <TabsList className="w-full">
-                            <TabsTrigger value="journal" className="flex-1">Diario de Cultivo</TabsTrigger>
-                            <TabsTrigger value="datasheet" className="flex-1">Ficha Técnica</TabsTrigger>
-                        </TabsList>
-                        
-                        {/* Contenido Pestaña Diario */}
-                        <TabsContent value="journal" className="flex-grow flex flex-col m-0 h-full overflow-hidden mt-4">
-                            <Card className="flex-grow flex flex-col overflow-hidden">
-                                <CardHeader>
-                                    <CardTitle className="text-xl">Añade Notas y Registros</CardTitle>
-                                    <CardDescription>Documenta el progreso de tu cultivo.</CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-grow overflow-auto p-0">
-                                    <ScrollArea className="h-full p-6">
-                                        <div className="space-y-6">
-                                            {isLogLoading && <p>Cargando diario...</p>}
-                                            {logEntries.map(entry => (
-                                                <div key={entry.id} className={`relative p-4 rounded-lg border flex items-start gap-4 text-sm ${getLogEntryColor(entry.type)}`}>
-                                                    <div className="p-2 bg-white/50 rounded-full"><entry.icon className="h-5 w-5 text-gray-700" /></div>
-                                                    <div className="flex-grow">
-                                                        <p className="font-nunito font-semibold">{new Date(entry.date.seconds * 1000).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                                        <p className="text-gray-700 mt-1">{entry.content}</p>
-                                                        {entry.imageUrl && <Image src={entry.imageUrl} alt="Foto del diario" width={80} height={80} className="mt-2 rounded-md" data-ai-hint={entry.dataAiHint || ''} />}
-                                                    </div>
-                                                    <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-gray-500 hover:text-destructive hover:bg-destructive/10">
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    Esta acción no se puede deshacer. Esto eliminará permanentemente la entrada del diario.
-                                                                </AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => removeLogEntry(entry.id)}>Eliminar</AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
+        <div className="grid lg:grid-cols-3 gap-8 mt-4 flex-grow overflow-hidden">
+            {/* Columna Izquierda: Imagen y Ficha Rápida */}
+            <div className="lg:col-span-1 flex flex-col gap-6">
+                <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+                    <Image
+                        src={crop.imageUrl}
+                        alt={`Imagen de ${crop.nombre_cultivo_personal}`}
+                        fill
+                        className="object-cover"
+                        data-ai-hint={crop.dataAiHint}
+                    />
+                </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-xl">Ficha Rápida</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                        <p><strong>Fecha de Siembra:</strong> {new Date(crop.fecha_plantacion.seconds * 1000).toLocaleDateString()}</p>
+                        <p><strong>Cosecha Estimada en:</strong> {formatRemainingDays(remainingDays)}</p>
+                        <div>
+                            <p className="mb-1"><strong>Progreso General:</strong></p>
+                            <Progress value={progress} />
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Columna Derecha: Pestañas de Diario y Ficha Técnica */}
+            <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
+                <Tabs defaultValue="journal" className="flex flex-col h-full">
+                    <TabsList className="w-full">
+                        <TabsTrigger value="journal" className="flex-1">Diario de Cultivo</TabsTrigger>
+                        <TabsTrigger value="datasheet" className="flex-1">Ficha Técnica</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="journal" className="flex-grow overflow-auto mt-4">
+                        <Card className="h-full flex flex-col">
+                            <CardHeader>
+                                <CardTitle className="text-xl">Añade Notas y Registros</CardTitle>
+                                <CardDescription>Documenta el progreso de tu cultivo.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow overflow-y-auto">
+                                <ScrollArea className="h-full pr-4">
+                                    <div className="space-y-6">
+                                        {isLogLoading && <p>Cargando diario...</p>}
+                                        {logEntries.map(entry => (
+                                            <div key={entry.id} className={`relative p-4 rounded-lg border flex items-start gap-4 text-sm ${getLogEntryColor(entry.type)}`}>
+                                                <div className="p-2 bg-white/50 rounded-full"><entry.icon className="h-5 w-5 text-gray-700" /></div>
+                                                <div className="flex-grow">
+                                                    <p className="font-nunito font-semibold">{new Date(entry.date.seconds * 1000).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                                    <p className="text-gray-700 mt-1">{entry.content}</p>
+                                                    {entry.imageUrl && <Image src={entry.imageUrl} alt="Foto del diario" width={80} height={80} className="mt-2 rounded-md" data-ai-hint={entry.dataAiHint || ''} />}
                                                 </div>
-                                            ))}
-                                            {!isLogLoading && logEntries.length === 0 && <p className="text-muted-foreground text-center">No hay entradas en el diario.</p>}
-                                        </div>
-                                    </ScrollArea>
-                                </CardContent>
-                                <CardFooter className="flex-col items-start gap-4 border-t pt-4">
-                                    <div className="w-full space-y-2">
-                                    <Textarea placeholder="Escribe una nueva nota..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
-                                    <div className="flex justify-between items-center">
-                                        <div className="flex gap-2">
-                                            <Button size="sm" variant="outline" onClick={() => addLogEntry('note')} disabled={isAddingNote || !newNote}><NotebookText className="mr-2 h-4 w-4" />Guardar Nota</Button>
-                                            <Button size="sm" variant="outline" onClick={() => addLogEntry('water')}><Droplet className="mr-2 h-4 w-4" />Registrar Riego</Button>
-                                            <Button size="sm" variant="outline" onClick={() => addLogEntry('fertilize')}><Zap className="mr-2 h-4 w-4" />Abonado</Button>
-                                        </div>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-gray-500 hover:text-destructive hover:bg-destructive/10">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                Esta acción no se puede deshacer. Esto eliminará permanentemente la entrada del diario.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => removeLogEntry(entry.id)}>Eliminar</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
+                                        ))}
+                                        {!isLogLoading && logEntries.length === 0 && <p className="text-muted-foreground text-center">No hay entradas en el diario.</p>}
                                     </div>
-                                    <div className="flex items-center gap-2 pt-2 border-t mt-2">
-                                        <Input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageFileChange} className="text-xs" />
-                                        {imagePreview && <Image src={imagePreview} alt="Preview" width={40} height={40} className="rounded-md" />}
-                                        <Button size="sm" variant="outline" onClick={() => addLogEntry('photo')} disabled={isUploading || !imageFile}>
-                                            {isUploading ? 'Subiendo...' : <Camera className="mr-2 h-4 w-4" />}
-                                            Subir Foto
-                                        </Button>
+                                </ScrollArea>
+                            </CardContent>
+                            <CardFooter className="flex-col items-start gap-4 border-t pt-4 bg-background/95 sticky bottom-0">
+                                <div className="w-full space-y-2">
+                                <Textarea placeholder="Escribe una nueva nota..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
+                                <div className="flex justify-between items-center">
+                                    <div className="flex gap-2">
+                                        <Button size="sm" variant="outline" onClick={() => addLogEntry('note')} disabled={isAddingNote || !newNote}><NotebookText className="mr-2 h-4 w-4" />Guardar Nota</Button>
+                                        <Button size="sm" variant="outline" onClick={() => addLogEntry('water')}><Droplet className="mr-2 h-4 w-4" />Registrar Riego</Button>
+                                        <Button size="sm" variant="outline" onClick={() => addLogEntry('fertilize')}><Zap className="mr-2 h-4 w-4" />Abonado</Button>
                                     </div>
-                                    </div>
-                                </CardFooter>
-                            </Card>
-                        </TabsContent>
+                                </div>
+                                <div className="flex items-center gap-2 pt-2 border-t mt-2">
+                                    <Input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageFileChange} className="text-xs" />
+                                    {imagePreview && <Image src={imagePreview} alt="Preview" width={40} height={40} className="rounded-md" />}
+                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('photo')} disabled={isUploading || !imageFile}>
+                                        {isUploading ? 'Subiendo...' : <Camera className="mr-2 h-4 w-4" />}
+                                        Subir Foto
+                                    </Button>
+                                </div>
+                                </div>
+                            </CardFooter>
+                        </Card>
+                    </TabsContent>
 
-                        {/* Contenido Pestaña Ficha Técnica */}
-                        <TabsContent value="datasheet" className="flex-grow overflow-auto m-0 mt-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-xl">Ficha Técnica (Ejemplo)</CardTitle>
-                                    <CardDescription>Información general sobre el cultivo de {crop.nombre_cultivo_personal}.</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-2 text-sm">
-                                    <p><strong>Especie:</strong> <i>Solanum lycopersicum var. cerasiforme</i></p>
-                                    <p><strong>Familia:</strong> Solanaceae</p>
-                                    <p><strong>Clima:</strong> Templado a cálido.</p>
-                                    <p><strong>Exposición Solar:</strong> Pleno sol (mínimo 6 horas diarias).</p>
-                                    <p><strong>Riego:</strong> Frecuente y regular, evitando encharcamiento.</p>
-                                    <p><strong>Suelo:</strong> Rico en materia orgánica, bien drenado.</p>
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                    </Tabs>
-                </div>
+                    <TabsContent value="datasheet" className="flex-grow overflow-auto mt-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-xl">Ficha Técnica (Ejemplo)</CardTitle>
+                                <CardDescription>Información general sobre el cultivo de {crop.nombre_cultivo_personal}.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-2 text-sm">
+                                <p><strong>Especie:</strong> <i>Solanum lycopersicum var. cerasiforme</i></p>
+                                <p><strong>Familia:</strong> Solanaceae</p>
+                                <p><strong>Clima:</strong> Templado a cálido.</p>
+                                <p><strong>Exposición Solar:</strong> Pleno sol (mínimo 6 horas diarias).</p>
+                                <p><strong>Riego:</strong> Frecuente y regular, evitando encharcamiento.</p>
+                                <p><strong>Suelo:</strong> Rico en materia orgánica, bien drenado.</p>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
             </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
+    
