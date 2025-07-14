@@ -1,4 +1,4 @@
-/* @import 'leaflet/dist/leaflet.css'; */
+@import 'leaflet/dist/leaflet.css';
 
 @tailwind base;
 @tailwind components;
@@ -33,8 +33,6 @@
     --border: 210 17% 91%; /* #E5E8EB */
     --input: 80 60% 99%; /* #FAFCF7 - Using light background for inputs */
     --ring: 101 30% 46%; /* #73964F - For focus border */
-
-    --radius: 0.5rem; /* 8px */
 
     --chart-1: 101 30% 45%; /* --primary */
     --chart-2: 28 90% 69%; /* --accent */
