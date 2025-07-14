@@ -1,8 +1,12 @@
 
 "use client";
 
-import { useState } from 'react';
-import { LocateFixed, Leaf, Coffee, Wheat, Filter, Trash2 } from 'lucide-react';
+import 'leaflet/dist/leaflet.css';
+import { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import ReactDOMServer from 'react-dom/server';
+import { LocateFixed, Filter, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,18 +43,45 @@ interface Crop {
   difficulty: 'easy' | 'medium' | 'hard';
   type: 'Hortaliza' | 'Fruta' | 'Aromática' | 'Grano';
   space: 'Maceta pequeña' | 'Maceta grande' | 'Jardín';
-  position: { top: string; left: string };
+  position: [number, number];
   icon: React.ElementType;
 }
 
+// Positions are now [lat, lng] for Colombia
 const mapCropsData: Crop[] = [
-  { id: '1', name: 'Lechuga', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta pequeña', position: { top: '30%', left: '45%' }, icon: LeafIcon },
-  { id: '2', name: 'Café de Altura', difficulty: 'hard', type: 'Fruta', space: 'Jardín', position: { top: '40%', left: '30%' }, icon: CoffeeIcon },
-  { id: '3', name: 'Maíz', difficulty: 'medium', type: 'Grano', space: 'Jardín', position: { top: '65%', left: '60%' }, icon: CornIcon },
-  { id: '4', name: 'Tomate Cherry', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta grande', position: { top: '55%', left: '15%' }, icon: LeafIcon },
-  { id: '5', name: 'Cilantro', difficulty: 'easy', type: 'Aromática', space: 'Maceta pequeña', position: { top: '20%', left: '70%' }, icon: LeafIcon },
-  { id: '6', name: 'Mango', difficulty: 'medium', type: 'Fruta', space: 'Jardín', position: { top: '15%', left: '25%' }, icon: LeafIcon },
+  { id: '1', name: 'Lechuga (Andina)', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta pequeña', position: [4.6, -74.08], icon: LeafIcon },
+  { id: '2', name: 'Café de Altura (Eje Cafetero)', difficulty: 'hard', type: 'Fruta', space: 'Jardín', position: [4.8, -75.7], icon: CoffeeIcon },
+  { id: '3', name: 'Maíz (Valle del Cauca)', difficulty: 'medium', type: 'Grano', space: 'Jardín', position: [3.4, -76.5], icon: CornIcon },
+  { id: '4', name: 'Tomate Cherry (Boyacá)', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta grande', position: [5.5, -73.3], icon: LeafIcon },
+  { id: '5', name: 'Cilantro (Caribe)', difficulty: 'easy', type: 'Aromática', space: 'Maceta pequeña', position: [10.9, -74.7], icon: LeafIcon },
+  { id: '6', name: 'Mango (Caribe)', difficulty: 'medium', type: 'Fruta', space: 'Jardín', position: [11.0, -74.2], icon: LeafIcon },
 ];
+
+const getDifficultyClass = (difficulty: 'easy' | 'medium' | 'hard') => {
+    switch (difficulty) {
+        case 'easy': return 'map-marker-easy';
+        case 'medium': return 'map-marker-medium';
+        case 'hard': return 'map-marker-hard';
+    }
+};
+
+const createCropIcon = (crop: Crop) => {
+    const IconComponent = crop.icon;
+    const difficultyClass = getDifficultyClass(crop.difficulty);
+    const iconHtml = ReactDOMServer.renderToString(
+      <div className={cn("map-marker", difficultyClass)}>
+        <IconComponent className="map-marker-icon" />
+      </div>
+    );
+
+    return new L.DivIcon({
+        html: iconHtml,
+        className: '', // Important to leave this empty
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -20],
+    });
+};
 
 export function InteractiveMap() {
     const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -75,43 +106,31 @@ export function InteractiveMap() {
     };
     
     // Trigger filter on change
-    useState(() => {
+    useEffect(() => {
         handleFilterChange();
-    });
+    }, [typeFilter, spaceFilter]);
 
-    const getDifficultyClass = (difficulty: 'easy' | 'medium' | 'hard') => {
-        switch (difficulty) {
-            case 'easy': return 'map-marker-easy';
-            case 'medium': return 'map-marker-medium';
-            case 'hard': return 'map-marker-hard';
-        }
-    };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Main Map Content */}
         <div className="lg:col-span-2 w-full">
-            <Card className="h-[600px] w-full relative overflow-hidden shadow-lg bg-primary/5">
-                {/* Map Simulation Background */}
-                <div className="absolute inset-0 bg-green-50/20" data-ai-hint="colombia map illustration"></div>
-
-                {/* Simulated Crop Markers */}
-                {filteredCrops.map(crop => (
-                    <div
-                        key={crop.id}
-                        className={cn("map-marker group", getDifficultyClass(crop.difficulty))}
-                        style={{ top: crop.position.top, left: crop.position.left }}
-                        title={crop.name}
-                    >
-                        <crop.icon className="map-marker-icon" />
-                        <div className="map-marker-tooltip group-hover:opacity-100 group-hover:translate-y-0">
-                            {crop.name}
-                        </div>
-                    </div>
-                ))}
-
+            <Card className="h-[600px] w-full relative overflow-hidden shadow-lg bg-primary/5 p-0 border-0">
+                <MapContainer center={[4.5709, -74.2973]} zoom={6} scrollWheelZoom={true} className="h-full w-full rounded-lg">
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    {filteredCrops.map(crop => (
+                        <Marker key={crop.id} position={crop.position} icon={createCropIcon(crop)}>
+                            <Popup>
+                                <div className="font-nunito font-bold">{crop.name}</div>
+                            </Popup>
+                        </Marker>
+                    ))}
+                </MapContainer>
                 {/* Center on my location button */}
-                <Button variant="default" size="sm" className="absolute bottom-4 left-4 z-10 shadow-lg">
+                <Button variant="default" size="sm" className="absolute bottom-4 left-4 z-[401] shadow-lg">
                     <LocateFixed className="mr-2 h-4 w-4" />
                     Centrar en mi ubicación
                 </Button>
@@ -173,7 +192,6 @@ export function InteractiveMap() {
                         </Select>
                     </div>
                     <div className="flex flex-col gap-2 pt-2">
-                       <Button onClick={handleFilterChange} className="w-full">Aplicar Filtros</Button>
                        <Button onClick={resetFilters} variant="ghost" className="w-full text-destructive hover:text-destructive">
                            <Trash2 className="mr-2 h-4 w-4" />
                            Limpiar Filtros

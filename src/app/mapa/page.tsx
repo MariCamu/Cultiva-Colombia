@@ -3,7 +3,6 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -13,12 +12,13 @@ const InteractiveMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full space-y-4">
-        <Skeleton className="h-[500px] w-full rounded-lg" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
-            {Array.from({ length: 7 }).map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-            ))}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-2">
+            <Skeleton className="h-[600px] w-full rounded-lg" />
+        </div>
+        <div className="lg:col-span-1 space-y-6">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-48 w-full" />
         </div>
       </div>
     )
