@@ -4,6 +4,7 @@
 
 const nextConfig = {
   /* config options here */
+  reactStrictMode: false,
   typescript: {
     ignoreBuildErrors: true,
   },

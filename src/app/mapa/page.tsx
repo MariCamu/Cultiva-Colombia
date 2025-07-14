@@ -25,18 +25,7 @@ const InteractiveMap = dynamic(
   }
 );
 
-const regions = [
-  { name: "Todas las Regiones", slug: "todas" },
-  { name: "Andina", slug: "andina" },
-  { name: "Caribe", slug: "caribe" },
-  { name: "Pacífica", slug: "pacifica" },
-  { name: "Orinoquía", slug: "orinoquia" },
-  { name: "Amazonía", slug: "amazonia" },
-  { name: "Insular", slug: "insular" },
-];
-
 export default function MapaPage() {
-  const [activeRegion, setActiveRegion] = useState('todas');
   
   return (
     <div className="space-y-8">
@@ -51,26 +40,6 @@ export default function MapaPage() {
 
       <InteractiveMap />
       
-      <section>
-        <h2 className="text-2xl font-nunito font-bold tracking-tight text-foreground mb-4">
-          Acceso Rápido por Región
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {regions.map((region) => (
-            <Button
-              key={region.slug}
-              onClick={() => setActiveRegion(region.slug)}
-              variant={activeRegion === region.slug ? 'default' : 'outline'}
-              className={cn(
-                "rounded-full transition-all duration-200",
-                activeRegion === region.slug ? "bg-primary text-primary-foreground" : "text-foreground"
-              )}
-            >
-              {region.name}
-            </Button>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
