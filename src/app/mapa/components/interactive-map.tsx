@@ -1,201 +1,187 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L, { type LatLngExpression } from 'leaflet';
-import Link from 'next/link';
-import { collection, getDocs, type QueryDocumentSnapshot, type DocumentData } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
-import { Card } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Info, AlertTriangle } from 'lucide-react';
+import { useState } from 'react';
+import { LocateFixed, Leaf, Coffee, Wheat, Filter, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from '@/lib/utils';
+
+// Simple SVG icons for crops, designed to be bubbly
+const CornIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 100 100" width="30" height="30" {...props}>
+    <path d="M50 10 C 40 30, 40 70, 50 90 C 60 70, 60 30, 50 10 Z" fill="#fde047" />
+    <path d="M50 10 C 55 30, 45 30, 50 10" fill="#84cc16" />
+    <path d="M45 15 C 40 35, 35 75, 45 95" fill="#a3e635" stroke="#84cc16" strokeWidth="2" />
+    <path d="M55 15 C 60 35, 65 75, 55 95" fill="#a3e635" stroke="#84cc16" strokeWidth="2" />
+  </svg>
+);
+const CoffeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}>
+      <path d="M30 40 Q 20 50, 30 60" stroke="#b91c1c" fill="none" strokeWidth="8" strokeLinecap="round"/>
+      <path d="M70 40 Q 80 50, 70 60" stroke="#b91c1c" fill="none" strokeWidth="8" strokeLinecap="round"/>
+      <circle cx="50" cy="50" r="20" fill="#ef4444" />
+      <circle cx="50" cy="50" r="12" fill="#dc2626" />
+    </svg>
+);
+const LeafIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}>
+        <path d="M50 10 C 20 40, 20 70, 50 90 C 80 70, 80 40, 50 10 Z" fill="#4ade80" />
+        <line x1="50" y1="90" x2="50" y2="25" stroke="#16a34a" strokeWidth="5" />
+    </svg>
+);
+
 
 interface Crop {
   id: string;
   name: string;
-  location: { lat: number; lng: number };
   difficulty: 'easy' | 'medium' | 'hard';
-  regionHint?: string;
+  type: 'Hortaliza' | 'Fruta' | 'Aromática' | 'Grano';
+  space: 'Maceta pequeña' | 'Maceta grande' | 'Jardín';
+  position: { top: string; left: string };
+  icon: React.ElementType;
 }
 
-const createDifficultyIcon = (difficulty: 'easy' | 'medium' | 'hard') => {
-  let bgColorClass = '';
-  switch (difficulty) {
-    case 'easy':
-      bgColorClass = 'difficulty-easy';
-      break;
-    case 'medium':
-      bgColorClass = 'difficulty-medium';
-      break;
-    case 'hard':
-      bgColorClass = 'difficulty-hard';
-      break;
-    default:
-      bgColorClass = 'bg-gray-400';
-  }
-  return L.divIcon({
-    className: `difficulty-marker-icon ${bgColorClass}`,
-    iconSize: [20, 20],
-    html: ``,
-  });
-};
-
-const sampleCropsData: Crop[] = [
-  {
-    id: 'lechuga_cundinamarca_sample',
-    name: 'Lechuga',
-    location: { lat: 5.0671, lng: -74.0 },
-    difficulty: 'easy',
-    regionHint: 'Cundinamarca (Andina)',
-  },
+const mapCropsData: Crop[] = [
+  { id: '1', name: 'Lechuga', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta pequeña', position: { top: '30%', left: '45%' }, icon: LeafIcon },
+  { id: '2', name: 'Café de Altura', difficulty: 'hard', type: 'Fruta', space: 'Jardín', position: { top: '40%', left: '30%' }, icon: CoffeeIcon },
+  { id: '3', name: 'Maíz', difficulty: 'medium', type: 'Grano', space: 'Jardín', position: { top: '65%', left: '60%' }, icon: CornIcon },
+  { id: '4', name: 'Tomate Cherry', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta grande', position: { top: '55%', left: '15%' }, icon: LeafIcon },
+  { id: '5', name: 'Cilantro', difficulty: 'easy', type: 'Aromática', space: 'Maceta pequeña', position: { top: '20%', left: '70%' }, icon: LeafIcon },
+  { id: '6', name: 'Mango', difficulty: 'medium', type: 'Fruta', space: 'Jardín', position: { top: '15%', left: '25%' }, icon: LeafIcon },
 ];
 
 export function InteractiveMap() {
-  const [mounted, setMounted] = useState(false);
-  const [crops, setCrops] = useState<Crop[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isSampleData, setIsSampleData] = useState(false);
+    const [typeFilter, setTypeFilter] = useState<string>('all');
+    const [spaceFilter, setSpaceFilter] = useState<string>('all');
+    const [filteredCrops, setFilteredCrops] = useState<Crop[]>(mapCropsData);
 
-  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
-
-  const colombiaCenter: LatLngExpression = [4.5709, -74.2973];
-  const initialZoom = 6;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (mapInstance) {
-        mapInstance.remove();
-      }
-      const container = document.querySelector('.leaflet-container') as any;
-      if (container && container._leaflet_id) {
-        container._leaflet_id = null;
-      }
-    };
-  }, [mapInstance]);
-
-  useEffect(() => {
-    const fetchCrops = async () => {
-      setIsLoading(true);
-      setError(null);
-      setIsSampleData(false);
-      try {
-        if (!db) throw new Error('Firestore no inicializada');
-        const snapshot = await getDocs(collection(db, 'crops'));
-        if (snapshot.empty) {
-          setCrops(sampleCropsData);
-          setIsSampleData(true);
-        } else {
-          const list = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
-            const data = doc.data();
-            const location = data.location && typeof data.location.lat === 'number' && typeof data.location.lng === 'number'
-              ? data.location
-              : { lat: 0, lng: 0 };
-            return {
-              id: doc.id,
-              name: data.name || 'Sin nombre',
-              location,
-              difficulty: data.difficulty || 'medium',
-              regionHint: data.regionHint || '',
-            } as Crop;
-          });
-          setCrops(list);
+    const handleFilterChange = () => {
+        let crops = mapCropsData;
+        if (typeFilter !== 'all') {
+            crops = crops.filter(c => c.type === typeFilter);
         }
-      } catch (err) {
-        console.error(err);
-        setError('Error cargando cultivos, mostrando datos de ejemplo.');
-        setCrops(sampleCropsData);
-        setIsSampleData(true);
-      } finally {
-        setIsLoading(false);
-      }
+        if (spaceFilter !== 'all') {
+            crops = crops.filter(c => c.space === spaceFilter);
+        }
+        setFilteredCrops(crops);
     };
-    if (mounted) fetchCrops();
-  }, [mounted]);
+    
+    const resetFilters = () => {
+        setTypeFilter('all');
+        setSpaceFilter('all');
+        setFilteredCrops(mapCropsData);
+    };
+    
+    // Trigger filter on change
+    useState(() => {
+        handleFilterChange();
+    });
 
-  if (!mounted) return null;
-  if (isLoading) return <p className="text-center p-4">Cargando mapa y cultivos...</p>;
+    const getDifficultyClass = (difficulty: 'easy' | 'medium' | 'hard') => {
+        switch (difficulty) {
+            case 'easy': return 'map-marker-easy';
+            case 'medium': return 'map-marker-medium';
+            case 'hard': return 'map-marker-hard';
+        }
+    };
 
   return (
-    <div className="w-full">
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error de Carga</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      {isSampleData && !error && (
-        <Alert variant="default" className="mb-4">
-          <Info className="h-4 w-4" />
-          <AlertTitle>Mostrando Ejemplo</AlertTitle>
-          <AlertDescription>No se encontraron cultivos en Firestore.</AlertDescription>
-        </Alert>
-      )}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Main Map Content */}
+        <div className="lg:col-span-2 w-full">
+            <Card className="h-[600px] w-full relative overflow-hidden shadow-lg bg-primary/5">
+                {/* Map Simulation Background */}
+                <div className="absolute inset-0 bg-green-50/20" data-ai-hint="colombia map illustration"></div>
 
-      <MapContainer
-        key={`map-${colombiaCenter[0]}-${colombiaCenter[1]}-${initialZoom}`}
-        whenCreated={setMapInstance}
-        center={colombiaCenter}
-        zoom={initialZoom}
-        scrollWheelZoom={true}
-        className="leaflet-container"
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {crops.map((crop) => (
-          <Marker
-            key={crop.id}
-            position={[crop.location.lat, crop.location.lng]}
-            icon={createDifficultyIcon(crop.difficulty)}
-          >
-            <Popup>
-              <div className="font-sans">
-                <h3 className="font-bold text-base mb-1">{crop.name}</h3>
-                {crop.regionHint && <p className="text-xs text-muted-foreground mb-1">Región (aprox.): {crop.regionHint}</p>}
-                <p className="text-xs capitalize mb-2">
-                  Dificultad:{' '}
-                  <span className={`font-semibold ${
-                    crop.difficulty === 'easy' ? 'text-green-600' :
-                    crop.difficulty === 'medium' ? 'text-yellow-600' :
-                    'text-red-600'
-                  }`}>
-                    {crop.difficulty}
-                  </span>
-                </p>
-                <Link href="/cultivos" className="text-sm text-primary hover:underline">
-                  Ver detalles
-                </Link>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+                {/* Simulated Crop Markers */}
+                {filteredCrops.map(crop => (
+                    <div
+                        key={crop.id}
+                        className={cn("map-marker group", getDifficultyClass(crop.difficulty))}
+                        style={{ top: crop.position.top, left: crop.position.left }}
+                        title={crop.name}
+                    >
+                        <crop.icon className="map-marker-icon" />
+                        <div className="map-marker-tooltip group-hover:opacity-100 group-hover:translate-y-0">
+                            {crop.name}
+                        </div>
+                    </div>
+                ))}
 
-      <Card className="map-legend mt-4">
-        <h4 className="text-lg font-semibold mb-2 text-foreground">Leyenda de Dificultad:</h4>
-        <div className="space-y-1">
-          <div className="map-legend-item">
-            <span className="map-legend-color difficulty-easy"></span>
-            <span className="text-sm text-muted-foreground">Fácil</span>
-          </div>
-          <div className="map-legend-item">
-            <span className="map-legend-color difficulty-medium"></span>
-            <span className="text-sm text-muted-foreground">Medio</span>
-          </div>
-          <div className="map-legend-item">
-            <span className="map-legend-color difficulty-hard"></span>
-            <span className="text-sm text-muted-foreground">Difícil</span>
-          </div>
+                {/* Center on my location button */}
+                <Button variant="default" size="sm" className="absolute bottom-4 left-4 z-10 shadow-lg">
+                    <LocateFixed className="mr-2 h-4 w-4" />
+                    Centrar en mi ubicación
+                </Button>
+            </Card>
         </div>
-      </Card>
+
+        {/* Sidebar Panel */}
+        <div className="lg:col-span-1 w-full space-y-6">
+            <Card className="shadow-lg bg-card">
+                <CardHeader>
+                    <CardTitle className="font-nunito font-bold">Leyenda del Mapa</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <div className="flex items-center gap-3">
+                        <div className="h-4 w-4 rounded-full bg-green-600 border-2 border-white shadow"></div>
+                        <span className="text-sm font-medium text-muted-foreground">Fácil</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="h-4 w-4 rounded-full bg-yellow-500 border-2 border-white shadow"></div>
+                        <span className="text-sm font-medium text-muted-foreground">Media</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="h-4 w-4 rounded-full bg-red-600 border-2 border-white shadow"></div>
+                        <span className="text-sm font-medium text-muted-foreground">Difícil</span>
+                    </div>
+                </CardContent>
+            </Card>
+            <Card className="shadow-lg bg-card">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 font-nunito font-bold">
+                        <Filter className="h-5 w-5" />
+                        Filtros
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div>
+                        <label htmlFor="type-filter" className="text-sm font-nunito font-semibold">Filtrar por Tipo de Cultivo</label>
+                        <Select value={typeFilter} onValueChange={setTypeFilter}>
+                            <SelectTrigger id="type-filter"><SelectValue placeholder="Todos los tipos" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los tipos</SelectItem>
+                                <SelectItem value="Hortaliza">Hortalizas</SelectItem>
+                                <SelectItem value="Fruta">Frutas</SelectItem>
+                                <SelectItem value="Aromática">Aromáticas</SelectItem>
+                                <SelectItem value="Grano">Granos</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <label htmlFor="space-filter" className="text-sm font-nunito font-semibold">Filtrar por Espacio</label>
+                         <Select value={spaceFilter} onValueChange={setSpaceFilter}>
+                            <SelectTrigger id="space-filter"><SelectValue placeholder="Todos los espacios" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los espacios</SelectItem>
+                                <SelectItem value="Maceta pequeña">Maceta pequeña</SelectItem>
+                                <SelectItem value="Maceta grande">Maceta grande</SelectItem>
+                                <SelectItem value="Jardín">Jardín</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex flex-col gap-2 pt-2">
+                       <Button onClick={handleFilterChange} className="w-full">Aplicar Filtros</Button>
+                       <Button onClick={resetFilters} variant="ghost" className="w-full text-destructive hover:text-destructive">
+                           <Trash2 className="mr-2 h-4 w-4" />
+                           Limpiar Filtros
+                       </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     </div>
   );
 }
