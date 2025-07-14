@@ -4,7 +4,7 @@
 import { ProtectedRoute, useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Leaf, CalendarDays, Droplets, Sun, Wind, BookOpen, Sparkles, MessageSquarePlus, AlertCircle, Trash2, LocateFixed } from 'lucide-react';
+import { PlusCircle, Leaf, CalendarDays, Droplets, Sun, Wind, BookOpen, Sparkles, MessageSquarePlus, AlertCircle, Trash2, LocateFixed, Bell, CheckCheck } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -17,11 +17,11 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { CropDetailDialog } from './components/crop-detail-dialog';
-import { addDays, format, isToday, isTomorrow, differenceInDays, startOfDay } from 'date-fns';
+import { addDays, format, isToday, isTomorrow, differenceInDays, startOfDay, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc, type Timestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc, type Timestamp, addDoc, serverTimestamp, where, getDocs, updateDoc, writeBatch } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { fetchWeatherForecast } from '@/services/weatherService';
@@ -41,11 +41,30 @@ export interface UserCrop {
   lastNote: string;
 }
 
+export interface UserAlert {
+    id: string;
+    cropId: string;
+    cropName: string;
+    message: string;
+    type: 'riego' | 'abono' | 'cosecha' | 'info';
+    date: Timestamp;
+    isRead: boolean;
+    icon: React.ElementType;
+}
+
 const ICONS: { [key: string]: React.ElementType } = {
   Droplets: Droplets,
   Sun: Sun,
   Wind: Wind,
+  Default: Leaf
 };
+
+const ALERT_ICONS: { [key: string]: React.ElementType } = {
+    riego: Droplets,
+    abono: Sparkles,
+    cosecha: Leaf,
+    info: AlertCircle
+}
 
 const recommendedArticles = [
     { id: '1', title: 'Guía de compostaje para principiantes', href: '/articulos' },
@@ -201,27 +220,64 @@ function DashboardContent() {
   const [userCrops, setUserCrops] = useState<UserCrop[]>([]);
   const [isCropsLoading, setIsCropsLoading] = useState(true);
 
+  const [alerts, setAlerts] = useState<UserAlert[]>([]);
+  const [attendedAlertsCount, setAttendedAlertsCount] = useState(0);
+  const [isAlertsLoading, setIsAlertsLoading] = useState(true);
+
+
   const [journalProblem, setJournalProblem] = useState('');
   const [journalCropId, setJournalCropId] = useState<string>('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<CropDiseaseRemedySuggestionsOutput | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
 
+
+    // Simulates a daily check for upcoming tasks and generates alerts
+    const checkForUpcomingTasks = async (crops: UserCrop[]) => {
+        if (!user) return;
+        const batch = writeBatch(db);
+        const alertsCollectionRef = collection(db, 'usuarios', user.uid, 'alertas');
+
+        for (const crop of crops) {
+            if (crop.nextTask.dueInDays <= 1) { // Alert for tasks due today or overdue
+                const taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}`;
+                const alertType = crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : 'abono';
+                
+                // Check if an active alert for this specific task already exists
+                const q = query(alertsCollectionRef, where("cropId", "==", crop.id), where("type", "==", alertType), where("isRead", "==", false));
+                const existingAlerts = await getDocs(q);
+
+                if (existingAlerts.empty) {
+                    const newAlertRef = doc(alertsCollectionRef);
+                    batch.set(newAlertRef, {
+                        cropId: crop.id,
+                        cropName: crop.nombre_cultivo_personal,
+                        message: `Es hora de "${crop.nextTask.name}" tu cultivo de ${crop.nombre_cultivo_personal}.`,
+                        type: alertType,
+                        date: serverTimestamp(),
+                        isRead: false,
+                    });
+                }
+            }
+        }
+        await batch.commit();
+    };
+
+
   useEffect(() => {
     if (!user) {
       setIsCropsLoading(false);
+      setIsAlertsLoading(false);
       return;
     };
 
     setIsCropsLoading(true);
     const userCropsQuery = query(collection(db, 'usuarios', user.uid, 'cultivos_del_usuario'));
 
-    const unsubscribe = onSnapshot(userCropsQuery, (snapshot) => {
+    const unsubscribeCrops = onSnapshot(userCropsQuery, (snapshot) => {
       const cropsData = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
         const data = doc.data();
-        // Robust check for required data
         if (!data.fecha_plantacion || typeof data.daysToHarvest !== 'number') {
-            console.warn("Skipping crop with incomplete data:", doc.id, data);
             return null;
         }
 
@@ -241,9 +297,11 @@ function DashboardContent() {
           nextTask: data.nextTask || { name: 'Revisar', dueInDays: 1, iconName: 'Sun' },
           lastNote: data.lastNote,
         } as UserCrop;
-      }).filter((crop): crop is UserCrop => crop !== null); // Filter out the null values
+      }).filter((crop): crop is UserCrop => crop !== null);
 
       setUserCrops(cropsData);
+      checkForUpcomingTasks(cropsData);
+
       if (cropsData.length > 0 && !journalCropId) {
         setJournalCropId(cropsData[0].id);
       }
@@ -252,8 +310,26 @@ function DashboardContent() {
       console.error("Error fetching user crops:", error);
       setIsCropsLoading(false);
     });
+    
+    // Listener for alerts
+    const alertsQuery = query(collection(db, 'usuarios', user.uid, 'alertas'));
+    const unsubscribeAlerts = onSnapshot(alertsQuery, (snapshot) => {
+        const alertsData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            icon: ALERT_ICONS[doc.data().type] || Leaf
+        } as UserAlert));
+        
+        setAlerts(alertsData.filter(a => !a.isRead));
+        setAttendedAlertsCount(alertsData.filter(a => a.isRead).length);
+        setIsAlertsLoading(false);
+    });
 
-    return () => unsubscribe();
+
+    return () => {
+        unsubscribeCrops();
+        unsubscribeAlerts();
+    };
   }, [user, journalCropId]);
 
   const handleDeleteCrop = async (cropId: string) => {
@@ -272,6 +348,18 @@ function DashboardContent() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleDismissAlert = async (alertId: string) => {
+      if (!user) return;
+      const alertRef = doc(db, 'usuarios', user.uid, 'alertas', alertId);
+      try {
+          await updateDoc(alertRef, { isRead: true });
+          toast({ title: "Alerta atendida", description: "¡Buen trabajo!"});
+      } catch (error) {
+          console.error("Error dismissing alert:", error);
+          toast({ title: "Error", description: "No se pudo marcar la alerta.", variant: "destructive" });
+      }
   };
 
 
@@ -440,6 +528,54 @@ function DashboardContent() {
               )}
             </CardContent>
           </Card>
+          
+          <Card className="shadow-lg">
+              <CardHeader>
+                  <CardTitle className="flex items-center gap-3 text-2xl">
+                      <Bell className="h-7 w-7 text-primary" />
+                      Tablero de Alertas
+                  </CardTitle>
+                  <CardDescription>
+                      Aquí aparecerán las tareas importantes y recomendaciones para tus cultivos.
+                  </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {isAlertsLoading && (
+                    <div className="space-y-2">
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                    </div>
+                )}
+                {!isAlertsLoading && alerts.length === 0 && (
+                    <Alert variant="default" className="bg-primary/5">
+                        <CheckCheck className="h-4 w-4 text-primary" />
+                        <AlertTitle>¡Todo en orden!</AlertTitle>
+                        <AlertDescription>No tienes alertas pendientes. ¡Sigue así!</AlertDescription>
+                    </Alert>
+                )}
+                {!isAlertsLoading && alerts.map(alert => {
+                    const AlertIcon = alert.icon;
+                    return(
+                        <div key={alert.id} className="flex items-center gap-4 p-3 rounded-lg bg-background border">
+                           <div className="p-2 bg-primary/10 rounded-full">
+                               <AlertIcon className="h-5 w-5 text-primary" />
+                           </div>
+                           <div className="flex-grow">
+                               <p className="font-nunito font-semibold">{alert.message}</p>
+                               <p className="text-xs text-muted-foreground">
+                                   {alert.date ? format(new Date(alert.date.seconds * 1000), 'PPp', { locale: es }) : 'Ahora'}
+                                </p>
+                           </div>
+                           <Button size="sm" variant="outline" onClick={() => handleDismissAlert(alert.id)}>
+                               <CheckCheck className="mr-2 h-4 w-4" />
+                               Marcar como Leída
+                           </Button>
+                        </div>
+                    )
+                })}
+              </CardContent>
+          </Card>
+
 
           <Card className="shadow-lg">
               <CardHeader>
@@ -509,7 +645,7 @@ function DashboardContent() {
                 <CardContent className="space-y-2">
                     <div className="flex justify-between font-nunito font-semibold"><span>Cultivos Cosechados:</span><span>0</span></div>
                     <div className="flex justify-between font-nunito font-semibold"><span>Kg. de Alimento:</span><span>0 kg</span></div>
-                    <div className="flex justify-between font-nunito font-semibold"><span>Alertas Atendidas:</span><span>0</span></div>
+                    <div className="flex justify-between font-nunito font-semibold"><span>Alertas Atendidas:</span><span>{attendedAlertsCount}</span></div>
                 </CardContent>
             </Card>
 
@@ -597,3 +733,5 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
+
+    
