@@ -1,27 +1,24 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow users to read/write their own user document
+    // Allow users to read and write only their own documents in the 'usuarios' collection.
     match /usuarios/{userId} {
-      allow read, update, delete: if request.auth.uid == userId;
-      allow create: if request.auth.uid != null;
-    }
+      allow read, write: if request.auth != null && request.auth.uid == userId;
 
-    // Allow users to manage their own crops
-    match /usuarios/{userId}/cultivos_del_usuario/{cropId} {
-      allow read, write, delete: if request.auth.uid == userId;
+      // Allow users to manage their own subcollections (crops, alerts, etc.)
+      match /{subcollection}/{docId=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
-
-    // Allow users to manage the journal for their own crops
-    match /usuarios/{userId}/cultivos_del_usuario/{cropId}/diario/{logId} {
-      allow read, write, delete: if request.auth.uid == userId;
-    }
-
-    // Public access to technical sheets (read-only)
-    match /fichas_tecnicas_cultivos/{fichaId} {
-      allow read: if true;
-    }
+    
+    // Public collections (if any) can be defined here.
+    // For example, to make 'fichas_tecnicas_cultivos' readable by anyone:
+    // match /fichas_tecnicas_cultivos/{fichaId} {
+    //   allow read: if true;
+    //   allow write: if false; // Or based on admin roles
+    // }
   }
 }
