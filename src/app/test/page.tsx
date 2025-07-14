@@ -187,33 +187,25 @@ export default function TestPage() {
     if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      // Logic to calculate and show results
-      let difficultyValue: string | null = null;
-      if (answers.experience) {
-          if (answers.experience === 'principiante') {
-              difficultyValue = '1';
-              if (answers.learning === 'si' && (answers.care === 'diario' || answers.care === 'dos_tres_semana')) difficultyValue = '2';
-          } else if (answers.experience === 'intermedio') {
-              difficultyValue = '2';
-              if (answers.learning === 'si') difficultyValue = '3';
-              if (answers.learning === 'si' && (answers.care === 'diario' || answers.care === 'dos_tres_semana')) difficultyValue = '4';
-          } else if (answers.experience === 'avanzado') {
-              difficultyValue = '3';
-              if (answers.learning === 'si') difficultyValue = '4';
-              if (answers.learning === 'si' && (answers.care === 'diario' || answers.care === 'dos_tres_semana')) difficultyValue = '5';
-          }
+      let maxDifficulty: number | null = null;
+      if (answers.experience === 'principiante') {
+          maxDifficulty = 2; // Fácil e Intermedio-bajo
+      } else if (answers.experience === 'intermedio') {
+          maxDifficulty = 4; // Hasta Difícil
+      } else if (answers.experience === 'avanzado') {
+          maxDifficulty = 5; // Todos los niveles
       }
 
       const regionFilter = answers.region !== 'any' ? answers.region : null;
       const spaceFilter = testSpaceMap[answers.space] || null;
       const plantTypeFilter = testPlantTypeMap[answers.plantType] || null;
-
+      
       const results = sampleCropsData.filter(crop => {
           let matches = true;
           if (regionFilter && crop.regionSlug !== regionFilter) matches = false;
           if (spaceFilter && crop.spaceRequired !== spaceFilter) matches = false;
           if (plantTypeFilter && crop.plantType !== plantTypeFilter) matches = false;
-          if (difficultyValue && crop.difficulty.toString() > difficultyValue) matches = false; // Show easier or equal
+          if (maxDifficulty !== null && crop.difficulty > maxDifficulty) matches = false;
           return matches;
       });
 
