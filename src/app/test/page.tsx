@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
-import { MapPin, Home, User, Leaf, Clock, Sun, ChevronLeft, ChevronRight, CheckCircle, RefreshCw, Star, PlusCircle } from 'lucide-react';
+import { MapPin, Home, User, Leaf, Clock, Sun, ChevronLeft, ChevronRight, CheckCircle, RefreshCw, Star, PlusCircle, Carrot, Wheat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -167,6 +167,38 @@ const testSpaceMap: { [key: string]: string | null } = {
   'grande': 'Maceta grande o jardín (10+ L)',
 };
 
+
+// SVG Icons for Crop Types
+const BeanIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}><path d="M50,10 C20,25 20,75 50,90 C80,75 80,25 50,10 M40,40 Q50,50 60,40 M40,60 Q50,50 60,60" stroke="#a16207" fill="#facc15" strokeWidth="5" /></svg>
+);
+const CarrotIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}><path d="M50 90 L60 30 L40 30 Z" fill="#f97316"/><path d="M50 30 L40 10 L45 30 M50 30 L60 10 L55 30" fill="#22c55e"/></svg>
+);
+const LeafIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}><path d="M50 10 C 20 40, 20 70, 50 90 C 80 70, 80 40, 50 10 Z" fill="#4ade80" /><line x1="50" y1="90" x2="50" y2="25" stroke="#16a34a" strokeWidth="5" /></svg>
+);
+const GenericFruitIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}><circle cx="50" cy="60" r="30" fill="#ef4444"/><path d="M50 30 Q 60 10, 70 20" stroke="#166534" strokeWidth="8" fill="none"/></svg>
+)
+
+const getCropTypeIcon = (plantType: string) => {
+    switch (plantType) {
+        case 'Leguminosas': return BeanIcon;
+        case 'Tubérculos':
+        case 'Hortalizas de raíz': return CarrotIconSvg;
+        case 'Frutales':
+        case 'Hortalizas de fruto': return GenericFruitIcon;
+        case 'Cereales': return Wheat;
+        default: return LeafIconSvg;
+    }
+};
+
+const getDifficultyStyles = (difficulty: number): { badge: string, iconBg: string, iconText: string } => {
+    if (difficulty <= 2) return { badge: 'bg-green-100 text-green-800 border-green-200', iconBg: 'bg-green-500', iconText: 'text-white' };
+    if (difficulty <= 4) return { badge: 'bg-yellow-100 text-yellow-800 border-yellow-200', iconBg: 'bg-yellow-500', iconText: 'text-white' };
+    return { badge: 'bg-red-100 text-red-800 border-red-200', iconBg: 'bg-red-600', iconText: 'text-white' };
+};
 
 export default function TestPage() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -353,51 +385,55 @@ export default function TestPage() {
                 <CheckCircle className="h-10 w-10 text-green-600" />
               </div>
               <CardTitle className="text-2xl mt-4">¡Estos son tus cultivos recomendados!</CardTitle>
-              <CardDescription>Basado en tus respuestas, estos cultivos son un excelente punto de partida.</CardDescription>
+              <CardDescription>Basado en tus respuestas, estos son los cultivos que mejor se adaptan a ti.</CardDescription>
             </CardHeader>
             <CardContent>
               {filteredCrops.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredCrops.map((crop) => (
-                    <Card key={crop.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-                       <Image
-                        src={crop.imageUrl}
-                        alt={crop.name}
-                        width={300}
-                        height={200}
-                        className="w-full h-48 object-cover"
-                        data-ai-hint={crop.dataAiHint}
-                      />
-                      <CardHeader>
-                        <CardTitle className="text-xl font-nunito font-bold">{crop.name}</CardTitle>
-                        <Badge variant="outline" className="mt-1 w-fit font-nunito">Región: {crop.regionSlug}</Badge>
-                      </CardHeader>
-                      <CardContent className="flex-grow space-y-3">
-                         <p className="text-sm text-muted-foreground mb-3">{crop.description}</p>
-                         <div className="space-y-2 pt-2 border-t">
-                             <div className="flex items-center">
-                                 <span className="text-xs font-nunito font-semibold mr-2 w-28">Dificultad:</span>
-                                 <div className="flex">
-                                     {Array.from({ length: 5 }).map((_, i) => (
-                                     <Star key={i} className={`h-4 w-4 ${i < crop.difficulty ? 'fill-yellow-400 text-yellow-500' : 'text-gray-300'}`} />
-                                     ))}
-                                 </div>
-                             </div>
-                             <Badge variant="outline" className="font-nunito">Espacio: {crop.spaceRequired}</Badge>
-                         </div>
-                      </CardContent>
-                      <CardFooter>
-                         <Button 
-                            onClick={() => handleAddCropToDashboard(crop)} 
-                            disabled={isAddingCrop === crop.id}
-                            className="w-full"
-                          >
-                           <PlusCircle className="mr-2 h-4 w-4" />
-                           {isAddingCrop === crop.id ? 'Añadiendo...' : 'Añadir a mi Dashboard'}
-                         </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
+                  {filteredCrops.map((crop) => {
+                     const TypeIcon = getCropTypeIcon(crop.plantType);
+                     const difficultyStyles = getDifficultyStyles(crop.difficulty);
+                     const difficultyText = crop.difficulty <= 2 ? 'Fácil' : crop.difficulty <=4 ? 'Media' : 'Difícil';
+                    
+                     return (
+                        <Card key={crop.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+                          <CardHeader>
+                              <div className="flex items-center gap-4">
+                                  <div className={cn("p-3 rounded-full", difficultyStyles.iconBg)}>
+                                      <TypeIcon className={cn("h-6 w-6", difficultyStyles.iconText)} />
+                                  </div>
+                                  <div>
+                                      <CardTitle className="text-xl font-nunito font-bold">{crop.name}</CardTitle>
+                                      <Badge variant="outline" className={cn("mt-1 w-fit font-nunito", difficultyStyles.badge)}>
+                                        Dificultad: {difficultyText}
+                                      </Badge>
+                                  </div>
+                              </div>
+                          </CardHeader>
+                          <CardContent className="flex-grow space-y-3 pt-0">
+                             <Image
+                                src={crop.imageUrl}
+                                alt={crop.name}
+                                width={300}
+                                height={200}
+                                className="w-full h-40 object-cover rounded-md"
+                                data-ai-hint={crop.dataAiHint}
+                              />
+                             <p className="text-sm text-muted-foreground pt-2">{crop.description}</p>
+                          </CardContent>
+                          <CardFooter>
+                             <Button 
+                                onClick={() => handleAddCropToDashboard(crop)} 
+                                disabled={isAddingCrop === crop.id}
+                                className="w-full"
+                              >
+                               <PlusCircle className="mr-2 h-4 w-4" />
+                               {isAddingCrop === crop.id ? 'Añadiendo...' : 'Añadir a mi Dashboard'}
+                             </Button>
+                          </CardFooter>
+                        </Card>
+                     );
+                  })}
                 </div>
               ) : (
                 <Alert>
