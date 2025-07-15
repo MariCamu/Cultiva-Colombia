@@ -26,20 +26,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { fetchWeatherForecast } from '@/services/weatherService';
 import { getWeatherDescription, getWeatherIcon, type WeatherData } from '@/lib/weather-utils';
+import type { UserCrop } from '@/models/crop-model';
 
-
-export interface UserCrop {
-  id: string; 
-  ficha_cultivo_id: string;
-  nombre_cultivo_personal: string;
-  fecha_plantacion: Timestamp;
-  imageUrl: string;
-  dataAiHint: string;
-  daysToHarvest: number;
-  progress: number;
-  nextTask: { name: string; dueInDays: number; iconName: 'Droplets' | 'Sun' | 'Wind' };
-  lastNote: string;
-}
 
 export interface UserAlert {
     id: string;
@@ -287,15 +275,8 @@ function DashboardContent() {
 
         return {
           id: doc.id,
-          ficha_cultivo_id: data.ficha_cultivo_id,
-          nombre_cultivo_personal: data.nombre_cultivo_personal,
-          fecha_plantacion: data.fecha_plantacion,
-          imageUrl: data.imageUrl,
-          dataAiHint: data.dataAiHint,
-          daysToHarvest: data.daysToHarvest,
+          ...data,
           progress,
-          nextTask: data.nextTask || { name: 'Revisar', dueInDays: 1, iconName: 'Sun' },
-          lastNote: data.lastNote,
         } as UserCrop;
       }).filter((crop): crop is UserCrop => crop !== null);
 
@@ -733,5 +714,7 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
+
+    
 
     
