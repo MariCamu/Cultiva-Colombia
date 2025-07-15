@@ -60,24 +60,27 @@ const recommendedArticles = [
     { id: '3', title: 'Control orgánico de pulgones', href: '/articulos' },
 ];
 
-const formatHarvestTime = (days: number) => {
-  if (days <= 0) return '¡Listo para cosechar!';
-  if (days > 365 * 2) {
-    const years = Math.floor(days / 365);
+const formatHarvestTime = (days: number, progress: number) => {
+  if (progress >= 100) return '¡Listo para Cosechar!';
+
+  const remainingDays = Math.max(0, days - Math.floor((days * progress) / 100));
+
+  if (remainingDays > 365 * 2) {
+    const years = Math.floor(remainingDays / 365);
     return `~${years} años est.`;
   }
-   if (days > 365) {
-    const years = Math.floor(days / 365);
-    const months = Math.round((days % 365) / 30);
+   if (remainingDays > 365) {
+    const years = Math.floor(remainingDays / 365);
+    const months = Math.round((remainingDays % 365) / 30);
     let result = `~${years} año`;
     if (months > 0) result += ` y ${months} mes${months > 1 ? 'es' : ''}`;
     return `${result} est.`;
   }
-  if (days > 60) {
-      const months = Math.floor(days/30);
+  if (remainingDays > 60) {
+      const months = Math.floor(remainingDays/30);
       return `~${months} meses est.`;
   }
-  return `${days} días est.`;
+  return `${remainingDays} días est.`;
 };
 
 
@@ -313,6 +316,24 @@ function DashboardContent() {
     };
   }, [user, journalCropId]);
 
+  const handleHarvestCrop = async (cropId: string) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', cropId));
+      toast({
+        title: "¡Cultivo Cosechado!",
+        description: "¡Felicitaciones! El cultivo ha sido cosechado y eliminado de tus plantas activas.",
+      });
+    } catch (error) {
+      console.error("Error harvesting crop: ", error);
+      toast({
+        title: "Error",
+        description: "No se pudo cosechar el cultivo.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteCrop = async (cropId: string) => {
     if (!user) return;
     try {
@@ -438,6 +459,7 @@ function DashboardContent() {
               ) : userCrops.length > 0 ? (
                 userCrops.map(crop => {
                   const NextTaskIcon = ICONS[crop.nextTask.iconName] || Leaf;
+                  const isReadyForHarvest = crop.progress >= 100;
                   return (
                     <Card key={crop.id} className="grid md:grid-cols-3 gap-4 p-4 items-center bg-card/50">
                       <div className="md:col-span-1">
@@ -458,20 +480,46 @@ function DashboardContent() {
                                 <p className="text-sm text-muted-foreground font-sans">Plantado el: {format(new Date(crop.fecha_plantacion.seconds * 1000), 'PPP', { locale: es })}</p>
                               )}
                             </div>
-                            <Badge variant={getTaskBadgeVariant(crop.nextTask.dueInDays)}>
-                              {crop.nextTask.dueInDays === 0 ? 'Hoy' : `En ${crop.nextTask.dueInDays} días`}
-                            </Badge>
+                            {!isReadyForHarvest && 
+                                <Badge variant={getTaskBadgeVariant(crop.nextTask.dueInDays)}>
+                                  {crop.nextTask.dueInDays === 0 ? 'Hoy' : `En ${crop.nextTask.dueInDays} días`}
+                                </Badge>
+                            }
                         </div>
                         <div>
-                          <Label className="text-xs font-nunito font-semibold">Progreso a cosecha ({formatHarvestTime(crop.daysToHarvest)})</Label>
+                          <Label className="text-xs font-nunito font-semibold">Progreso a cosecha ({formatHarvestTime(crop.daysToHarvest, crop.progress)})</Label>
                           <Progress value={crop.progress} className="h-3 mt-1" />
                         </div>
                         <p className="text-sm font-sans italic text-muted-foreground">Última nota: "{crop.lastNote}"</p>
                         <div className="flex justify-between items-center pt-2 border-t">
-                          <div className="flex items-center gap-2 text-sm font-nunito font-semibold">
-                            <NextTaskIcon className="h-4 w-4 text-primary" />
-                            <span>Próxima tarea: {crop.nextTask.name}</span>
-                          </div>
+                          {isReadyForHarvest ? (
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold">
+                                        <Leaf className="mr-2 h-4 w-4" />
+                                        ¡Cosechar!
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>¿Confirmas la cosecha de "{crop.nombre_cultivo_personal}"?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      ¡Felicidades! Al confirmar, este cultivo se marcará como cosechado y se eliminará de tu lista de cultivos activos.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleHarvestCrop(crop.id)} className="bg-green-600 hover:bg-green-700">Sí, Cosechar</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                          ) : (
+                            <div className="flex items-center gap-2 text-sm font-nunito font-semibold">
+                                <NextTaskIcon className="h-4 w-4 text-primary" />
+                                <span>Próxima tarea: {crop.nextTask.name}</span>
+                            </div>
+                          )}
+
                           <div className="flex gap-2">
                             <CropDetailDialog crop={crop}>
                               <Button variant="outline" size="sm">Ver Diario</Button>
