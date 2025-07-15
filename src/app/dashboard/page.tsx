@@ -426,12 +426,15 @@ function DashboardContent() {
     }
   };
 
-  const today = new Date();
-  const simulatedTasks = userCrops.filter(crop => crop.fecha_plantacion).map(crop => ({
-    date: addDays(today, crop.nextTask.dueInDays),
-    description: `${crop.nextTask.name} ${crop.nombre_cultivo_personal}`,
-    type: crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : crop.nextTask.name.toLowerCase().includes('abonar') ? 'abono' : 'cosecha'
-  })).sort((a,b) => a.date.getTime() - b.date.getTime());
+  const simulatedTasks = userCrops.filter(crop => crop.fecha_plantacion).map(crop => {
+    const plantedDate = new Date(crop.fecha_plantacion.seconds * 1000);
+    const daysSincePlanted = differenceInDays(new Date(), plantedDate);
+    return {
+      date: addDays(plantedDate, daysSincePlanted + crop.nextTask.dueInDays),
+      description: `${crop.nextTask.name} ${crop.nombre_cultivo_personal}`,
+      type: crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : crop.nextTask.name.toLowerCase().includes('abonar') ? 'abono' : 'cosecha'
+    };
+  }).sort((a,b) => a.date.getTime() - b.date.getTime());
 
   const plantingDates = userCrops.filter(c => c.fecha_plantacion).map(c => new Date(c.fecha_plantacion.seconds * 1000));
 
@@ -711,7 +714,7 @@ function DashboardContent() {
                 <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-x-6 gap-y-4 items-start p-2">
                     <Calendar
                         mode="single"
-                        selected={startOfDay(today)}
+                        selected={startOfDay(new Date())}
                         modifiers={calendarModifiers}
                         modifiersStyles={calendarModifierStyles}
                         className="p-0"
@@ -819,5 +822,6 @@ export default function DashboardPage() {
     
 
     
+
 
 
