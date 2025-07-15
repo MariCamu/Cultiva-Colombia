@@ -76,7 +76,7 @@ function capitalizeFirstLetter(string: string | null | undefined) {
 }
 
 type GeolocationStatus = 'idle' | 'pending' | 'success' | 'error';
-type FilterSource = 'manual_specific' | 'manual_all' | 'url_region_only' | 'geo' | 'none';
+type FilterSource = 'manual' | 'url_or_geo' | 'none';
 
 const regionOptions = regionBoundingBoxes.map(r => ({ value: r.slug, label: r.name }));
 const priceOptions = [
@@ -151,10 +151,10 @@ export default function CultivosPage() {
 
   const [geolocationStatus, setGeolocationStatus] = useState<GeolocationStatus>('idle');
   const [geolocationErrorMsg, setGeolocationErrorMsg] = useState<string | null>(null);
-  const [detectedRegionSlug, setDetectedRegionSlug] = useState<string | null>(null);
-  const [detectedRegionName, setDetectedRegionName] = useState<string | null>(null);
   
-  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  const [activeRegionSlug, setActiveRegionSlug] = useState<string | null>(searchParams.get('region'));
+  const [activeRegionName, setActiveRegionName] = useState<string | null>(null);
+
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
   const [selectedSpace, setSelectedSpace] = useState<string | null>(null);
@@ -164,28 +164,24 @@ export default function CultivosPage() {
   const [isAddingCrop, setIsAddingCrop] = useState<string | null>(null);
   
   const [filterSource, setFilterSource] = useState<FilterSource>('none');
-  const [activeRegionForDisplay, setActiveRegionForDisplay] = useState<{slug: string | null; name: string | null}>({slug: null, name: null});
-  const [isManualFilterActive, setIsManualFilterActive] = useState(false);
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
 
 
   useEffect(() => {
     const regionParam = searchParams.get('region');
     const qParam = searchParams.get('q');
-    
-    // Manual filters take precedence
-    if(isManualFilterActive) {
-        setFilterSource(selectedRegion ? 'manual_specific' : 'manual_all');
-        const regionName = regionOptions.find(r => r.value === selectedRegion)?.label || "Todas las Regiones";
-        setActiveRegionForDisplay({ slug: selectedRegion, name: regionName });
-        return;
+
+    if (userHasInteracted) {
+      setFilterSource('manual');
+      return;
     }
 
     if (regionParam) {
-        setFilterSource('url_region_only');
-        const regionName = regionOptions.find(r => r.value === regionParam)?.label || capitalizeFirstLetter(regionParam);
-        setActiveRegionForDisplay({ slug: regionParam, name: regionName });
-        setSelectedRegion(regionParam);
-        return;
+      setFilterSource('url_or_geo');
+      setActiveRegionSlug(regionParam);
+      const regionName = regionOptions.find(r => r.value === regionParam)?.label || capitalizeFirstLetter(regionParam);
+      setActiveRegionName(regionName);
+      return;
     }
 
     if (!qParam) {
@@ -193,35 +189,38 @@ export default function CultivosPage() {
         setGeolocationStatus('pending');
         navigator.geolocation.getCurrentPosition(
           (position) => {
+            if (userHasInteracted) return; // Double check to avoid race conditions
             const { latitude, longitude } = position.coords;
             const regionInfo = getRegionFromCoordinates(latitude, longitude);
             if (regionInfo) {
-              setFilterSource('geo');
-              setActiveRegionForDisplay({ slug: regionInfo.slug, name: regionInfo.name });
-              setDetectedRegionSlug(regionInfo.slug);
-              setDetectedRegionName(regionInfo.name);
+              setFilterSource('url_or_geo');
+              setActiveRegionSlug(regionInfo.slug);
+              setActiveRegionName(regionInfo.name);
             } else {
                setFilterSource('none');
-               setActiveRegionForDisplay({slug: null, name: null});
+               setActiveRegionSlug(null);
+               setActiveRegionName(null);
             }
             setGeolocationStatus('success');
           },
           (error) => {
+            if (userHasInteracted) return;
             let message = "No se pudo obtener tu ubicación.";
             if (error.code === error.PERMISSION_DENIED) message = "Permiso de ubicación denegado.";
             setGeolocationErrorMsg(message);
             setGeolocationStatus('error');
             setFilterSource('none');
-            setActiveRegionForDisplay({slug: null, name: null});
+            setActiveRegionSlug(null);
+            setActiveRegionName(null);
           }
         );
       } else {
         setFilterSource('none');
-        setActiveRegionForDisplay({slug: null, name: null});
+        setActiveRegionSlug(null);
+        setActiveRegionName(null);
       }
     }
-
-  }, [searchParams, isManualFilterActive, selectedRegion]);
+  }, [searchParams, userHasInteracted]);
 
 
   const handleAddCropToDashboard = async (crop: SampleCrop) => {
@@ -272,32 +271,30 @@ export default function CultivosPage() {
 
 
   const displayedCrops = sampleCropsData.filter(crop => {
-    let matches = true;
-    const activeRegionSlug = isManualFilterActive ? selectedRegion : (searchParams.get('region') || detectedRegionSlug);
     const qParam = searchParams.get('q');
     
-    if(qParam && !crop.name.toLowerCase().includes(qParam.toLowerCase())) {
-        matches = false;
+    if (qParam && !crop.name.toLowerCase().includes(qParam.toLowerCase())) {
+        return false;
     }
     if (activeRegionSlug && crop.regionSlug !== activeRegionSlug) {
-      matches = false;
+      return false;
     }
     if (selectedPrice && selectedPrice !== 'all' && crop.estimatedPrice !== selectedPrice) {
-      matches = false;
+      return false;
     }
     if (selectedDuration && selectedDuration !== 'all' && crop.duration !== selectedDuration) {
-      matches = false;
+      return false;
     }
     if (selectedSpace && selectedSpace !== 'all' && crop.spaceRequired !== selectedSpace) {
-      matches = false;
+      return false;
     }
     if (selectedPlantType && selectedPlantType !== 'all' && crop.plantType !== selectedPlantType) {
-      matches = false;
+      return false;
     }
     if (selectedDifficulty && selectedDifficulty !== 'all' && crop.difficulty.toString() !== selectedDifficulty) {
-      matches = false;
+      return false;
     }
-    return matches;
+    return true;
   });
 
   let pageTitle = "Todos los Cultivos";
@@ -307,38 +304,36 @@ export default function CultivosPage() {
   if (searchParams.get('q')) {
       pageTitle = `Resultados para: "${searchParams.get('q')}"`;
       pageDescription = `Mostrando todos los cultivos que coinciden con tu búsqueda.`;
-  } else {
-      switch (filterSource) {
-          case 'manual_specific':
-              pageTitle = `Cultivos para la Región: ${activeRegionForDisplay.name}`;
-              pageDescription = `Explora los cultivos característicos de la región ${activeRegionForDisplay.name} según los filtros aplicados.`;
-              break;
-          case 'manual_all':
-              pageTitle = "Cultivos Filtrados (Todas las Regiones)";
-              pageDescription = "Mostrando cultivos de todas las regiones, según los filtros aplicados.";
-              break;
-          case 'url_region_only':
-              pageTitle = `Cultivos de la Región ${activeRegionForDisplay.name}`;
-              pageDescription = `Explora los cultivos característicos de la región ${activeRegionForDisplay.name}.`;
-              alertMessageForPage = (
-                  <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <AlertTitle className="font-nunito font-semibold">Filtro por Región</AlertTitle>
-                      <AlertDescription>Mostrando cultivos para la región: <strong>{activeRegionForDisplay.name}</strong>.</AlertDescription>
-                  </Alert>
-              );
-              break;
-          case 'geo':
-              pageTitle = `Sugeridos para tu Región: ${activeRegionForDisplay.name}`;
-              pageDescription = `Basado en tu ubicación (aproximada), te sugerimos estos cultivos de la región ${activeRegionForDisplay.name}.`;
-              alertMessageForPage = (
-                  <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
-                      <CheckCircle className="h-4 w-4 text-primary" />
-                      <AlertTitle className="font-nunito font-semibold">Región Detectada: {activeRegionForDisplay.name}</AlertTitle>
-                      <AlertDescription>Mostrando cultivos sugeridos para tu región. La detección es aproximada.</AlertDescription>
-                  </Alert>
-              );
-              break;
+  } else if (filterSource === 'manual') {
+      if (activeRegionSlug) {
+          pageTitle = `Cultivos para la Región: ${activeRegionName}`;
+          pageDescription = `Explora los cultivos característicos de la región ${activeRegionName} según los filtros aplicados.`;
+      } else {
+          pageTitle = "Cultivos Filtrados";
+          pageDescription = "Mostrando cultivos de todas las regiones, según los filtros aplicados.";
+      }
+  } else if (filterSource === 'url_or_geo' && activeRegionName) {
+      const isFromUrl = searchParams.get('region');
+      if (isFromUrl) {
+          pageTitle = `Cultivos de la Región ${activeRegionName}`;
+          pageDescription = `Explora los cultivos característicos de la región ${activeRegionName}.`;
+          alertMessageForPage = (
+              <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <AlertTitle className="font-nunito font-semibold">Filtro por Región</AlertTitle>
+                  <AlertDescription>Mostrando cultivos para la región: <strong>{activeRegionName}</strong>.</AlertDescription>
+              </Alert>
+          );
+      } else {
+          pageTitle = `Sugeridos para tu Región: ${activeRegionName}`;
+          pageDescription = `Basado en tu ubicación (aproximada), te sugerimos estos cultivos de la región ${activeRegionName}.`;
+          alertMessageForPage = (
+              <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
+                  <CheckCircle className="h-4 w-4 text-primary" />
+                  <AlertTitle className="font-nunito font-semibold">Región Detectada: {activeRegionName}</AlertTitle>
+                  <AlertDescription>Mostrando cultivos sugeridos para tu región. La detección es aproximada.</AlertDescription>
+              </Alert>
+          );
       }
   }
 
@@ -348,14 +343,14 @@ export default function CultivosPage() {
         {pageTitle}
       </h1>
 
-      {geolocationStatus === 'pending' && !isManualFilterActive && !searchParams.get('region') && (
+      {geolocationStatus === 'pending' && !userHasInteracted && !searchParams.get('region') && (
         <Alert>
           <LocateFixed className="h-4 w-4 animate-ping" />
           <AlertTitle className="font-nunito font-semibold">Obteniendo Ubicación</AlertTitle>
           <AlertDescription>Intentando detectar tu región para mostrarte cultivos relevantes...</AlertDescription>
         </Alert>
       )}
-      {geolocationStatus === 'error' && !isManualFilterActive && !searchParams.get('region') && (
+      {geolocationStatus === 'error' && !userHasInteracted && !searchParams.get('region') && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle className="font-nunito font-semibold">Error de Geolocalización</AlertTitle>
@@ -376,11 +371,21 @@ export default function CultivosPage() {
           <div>
             <Label htmlFor="manualRegionSelect" className="text-sm font-nunito font-semibold">Región</Label>
             <Select 
-              value={selectedRegion || 'all'} 
+              value={activeRegionSlug || 'all'} 
               onValueChange={(value) => {
-                const newRegion = value === 'all' ? null : value;
-                setSelectedRegion(newRegion);
-                router.push(newRegion ? `/cultivos?region=${newRegion}` : '/cultivos');
+                setUserHasInteracted(true);
+                const newRegionSlug = value === 'all' ? null : value;
+                setActiveRegionSlug(newRegionSlug);
+                const regionName = newRegionSlug ? regionOptions.find(opt => opt.value === newRegionSlug)?.label || null : 'Todas las Regiones';
+                setActiveRegionName(regionName);
+                
+                const newParams = new URLSearchParams(searchParams.toString());
+                if (newRegionSlug) {
+                  newParams.set('region', newRegionSlug);
+                } else {
+                  newParams.delete('region');
+                }
+                router.push(`/cultivos?${newParams.toString()}`);
               }}
             >
               <SelectTrigger id="manualRegionSelect" className="font-nunito">
@@ -394,7 +399,7 @@ export default function CultivosPage() {
           </div>
           <div>
             <Label htmlFor="priceSelect" className="text-sm font-nunito font-semibold">Precio Estimado</Label>
-            <Select value={selectedPrice || 'all'} onValueChange={(value) => { setSelectedPrice(value === 'all' ? null : value); setIsManualFilterActive(true); }}>
+            <Select value={selectedPrice || 'all'} onValueChange={(value) => { setUserHasInteracted(true); setSelectedPrice(value === 'all' ? null : value); }}>
               <SelectTrigger id="priceSelect" className="font-nunito"><SelectValue placeholder="Todos los Precios" /></SelectTrigger>
               <SelectContent>
                 {priceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
@@ -403,7 +408,7 @@ export default function CultivosPage() {
           </div>
           <div>
             <Label htmlFor="durationSelect" className="text-sm font-nunito font-semibold">Duración</Label>
-            <Select value={selectedDuration || 'all'} onValueChange={(value) => { setSelectedDuration(value === 'all' ? null : value); setIsManualFilterActive(true); }}>
+            <Select value={selectedDuration || 'all'} onValueChange={(value) => { setUserHasInteracted(true); setSelectedDuration(value === 'all' ? null : value); }}>
               <SelectTrigger id="durationSelect" className="font-nunito"><SelectValue placeholder="Todas las Duraciones" /></SelectTrigger>
               <SelectContent>
                 {durationOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
@@ -412,7 +417,7 @@ export default function CultivosPage() {
           </div>
           <div>
             <Label htmlFor="spaceSelect" className="text-sm font-nunito font-semibold">Espacio Requerido</Label>
-            <Select value={selectedSpace || 'all'} onValueChange={(value) => { setSelectedSpace(value === 'all' ? null : value); setIsManualFilterActive(true); }}>
+            <Select value={selectedSpace || 'all'} onValueChange={(value) => { setUserHasInteracted(true); setSelectedSpace(value === 'all' ? null : value); }}>
               <SelectTrigger id="spaceSelect" className="font-nunito"><SelectValue placeholder="Todos los Espacios" /></SelectTrigger>
               <SelectContent>
                 {spaceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
@@ -423,7 +428,7 @@ export default function CultivosPage() {
             <Label htmlFor="plantTypeSelect" className="text-sm font-nunito font-semibold">Tipo de Planta</Label>
             <Select 
               value={selectedPlantType || 'all'} 
-              onValueChange={(value) => { setSelectedPlantType(value === 'all' ? null : value); setIsManualFilterActive(true); }}
+              onValueChange={(value) => { setUserHasInteracted(true); setSelectedPlantType(value === 'all' ? null : value); }}
             >
               <SelectTrigger id="plantTypeSelect" className="font-nunito"><SelectValue placeholder="Todos los Tipos" /></SelectTrigger>
               <SelectContent>
@@ -433,7 +438,7 @@ export default function CultivosPage() {
           </div>
           <div>
             <Label htmlFor="difficultySelect" className="text-sm font-nunito font-semibold">Dificultad</Label>
-            <Select value={selectedDifficulty || 'all'} onValueChange={(value) => { setSelectedDifficulty(value === 'all' ? null : value); setIsManualFilterActive(true); }}>
+            <Select value={selectedDifficulty || 'all'} onValueChange={(value) => { setUserHasInteracted(true); setSelectedDifficulty(value === 'all' ? null : value); }}>
               <SelectTrigger id="difficultySelect" className="font-nunito"><SelectValue placeholder="Todas las Dificultades" /></SelectTrigger>
               <SelectContent>
                 {difficultyOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
@@ -523,7 +528,3 @@ export default function CultivosPage() {
     </div>
   );
 }
-
-    
-
-    
