@@ -151,6 +151,9 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
                     disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                     initialFocus
                     locale={es}
+                    captionLayout="dropdown-buttons"
+                    fromYear={1990}
+                    toYear={new Date().getFullYear()}
                 />
                 </PopoverContent>
             </Popover>
