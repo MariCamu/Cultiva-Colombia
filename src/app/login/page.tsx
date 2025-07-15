@@ -38,6 +38,8 @@ export default function LoginPage() {
             email: user.email,
             fecha_registro: serverTimestamp(),
             preferencia_tema: 'cultiva_verde_default',
+            harvestedCropsCount: 0,
+            totalHarvestWeight: 0,
         }, { merge: true });
       }
 
@@ -76,6 +78,8 @@ export default function LoginPage() {
         email: user.email,
         fecha_registro: serverTimestamp(),
         preferencia_tema: 'cultiva_verde_default',
+        harvestedCropsCount: 0,
+        totalHarvestWeight: 0,
       }, { merge: true });
 
       toast({

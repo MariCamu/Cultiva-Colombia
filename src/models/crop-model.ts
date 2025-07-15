@@ -32,4 +32,12 @@ export interface UserCrop {
   notas_progreso_inicial?: string;
 }
 
+export interface UserProfile {
+    nombre: string;
+    email: string;
+    fecha_registro: Timestamp;
+    preferencia_tema: string;
+    harvestedCropsCount?: number;
+    totalHarvestWeight?: number;
+}
     

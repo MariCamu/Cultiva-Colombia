@@ -39,6 +39,8 @@ export default function SignupPage() {
         email: user.email,
         fecha_registro: serverTimestamp(),
         preferencia_tema: 'cultiva_verde_default',
+        harvestedCropsCount: 0,
+        totalHarvestWeight: 0,
       });
       
       toast({

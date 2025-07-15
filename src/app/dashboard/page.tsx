@@ -4,7 +4,7 @@
 import { ProtectedRoute, useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Leaf, CalendarDays, Droplets, Sun, Wind, BookOpen, Sparkles, MessageSquarePlus, AlertCircle, Trash2, LocateFixed, Bell, CheckCheck } from 'lucide-react';
+import { PlusCircle, Leaf, CalendarDays, Droplets, Sun, Wind, BookOpen, Sparkles, MessageSquarePlus, AlertCircle, Trash2, LocateFixed, Bell, CheckCheck, Weight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -21,12 +21,14 @@ import { addDays, format, isToday, isTomorrow, differenceInDays, startOfDay, isP
 import { es } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc, type Timestamp, addDoc, serverTimestamp, where, getDocs, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc, type Timestamp, addDoc, serverTimestamp, where, getDocs, updateDoc, writeBatch, getDoc, runTransaction, increment } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { fetchWeatherForecast } from '@/services/weatherService';
 import { getWeatherDescription, getWeatherIcon, type WeatherData } from '@/lib/weather-utils';
-import type { UserCrop } from '@/models/crop-model';
+import type { UserCrop, UserProfile } from '@/models/crop-model';
 
 
 export interface UserAlert {
@@ -208,13 +210,16 @@ function DashboardContent() {
   const { toast } = useToast();
   const displayUser = user || { displayName: 'Agricultor(a)', email: 'tu@correo.com' };
 
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userCrops, setUserCrops] = useState<UserCrop[]>([]);
   const [isCropsLoading, setIsCropsLoading] = useState(true);
 
   const [alerts, setAlerts] = useState<UserAlert[]>([]);
-  const [attendedAlertsCount, setAttendedAlertsCount] = useState(0);
   const [isAlertsLoading, setIsAlertsLoading] = useState(true);
 
+  const [harvestingCrop, setHarvestingCrop] = useState<UserCrop | null>(null);
+  const [harvestWeight, setHarvestWeight] = useState('');
+  const [isSavingHarvest, setIsSavingHarvest] = useState(false);
 
   const [journalProblem, setJournalProblem] = useState('');
   const [journalCropId, setJournalCropId] = useState<string>('');
@@ -263,6 +268,14 @@ function DashboardContent() {
     };
 
     setIsCropsLoading(true);
+    // Listener for user profile (for annual summary)
+    const userProfileRef = doc(db, 'usuarios', user.uid);
+    const unsubscribeProfile = onSnapshot(userProfileRef, (doc) => {
+        if (doc.exists()) {
+            setUserProfile(doc.data() as UserProfile);
+        }
+    });
+
     const userCropsQuery = query(collection(db, 'usuarios', user.uid, 'cultivos_del_usuario'));
 
     const unsubscribeCrops = onSnapshot(userCropsQuery, (snapshot) => {
@@ -305,32 +318,57 @@ function DashboardContent() {
         } as UserAlert));
         
         setAlerts(alertsData.filter(a => !a.isRead));
-        setAttendedAlertsCount(alertsData.filter(a => a.isRead).length);
         setIsAlertsLoading(false);
     });
 
 
     return () => {
+        unsubscribeProfile();
         unsubscribeCrops();
         unsubscribeAlerts();
     };
   }, [user, journalCropId]);
 
-  const handleHarvestCrop = async (cropId: string) => {
-    if (!user) return;
+  const handleHarvestCrop = async () => {
+    if (!user || !harvestingCrop) return;
+
+    setIsSavingHarvest(true);
+
     try {
-      await deleteDoc(doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', cropId));
-      toast({
-        title: "¡Cultivo Cosechado!",
-        description: "¡Felicitaciones! El cultivo ha sido cosechado y eliminado de tus plantas activas.",
-      });
+        const weight = parseFloat(harvestWeight) || 0;
+
+        await runTransaction(db, async (transaction) => {
+            const userRef = doc(db, "usuarios", user.uid);
+            const cropRef = doc(db, "usuarios", user.uid, "cultivos_del_usuario", harvestingCrop.id);
+            
+            // Increment user's annual stats
+            transaction.update(userRef, {
+                harvestedCropsCount: increment(1),
+                totalHarvestWeight: increment(weight)
+            });
+
+            // Delete the harvested crop
+            transaction.delete(cropRef);
+        });
+
+        toast({
+            title: "¡Cultivo Cosechado!",
+            description: "¡Felicitaciones! Tu cosecha ha sido registrada.",
+        });
+
+        // Close dialog and reset state
+        setHarvestingCrop(null);
+        setHarvestWeight('');
+
     } catch (error) {
       console.error("Error harvesting crop: ", error);
       toast({
         title: "Error",
-        description: "No se pudo cosechar el cultivo.",
+        description: "No se pudo registrar la cosecha.",
         variant: "destructive",
       });
+    } finally {
+        setIsSavingHarvest(false);
     }
   };
 
@@ -426,6 +464,7 @@ function DashboardContent() {
   };
 
   return (
+    <>
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-nunito font-bold tracking-tight text-foreground sm:text-4xl">
@@ -493,26 +532,10 @@ function DashboardContent() {
                         <p className="text-sm font-sans italic text-muted-foreground">Última nota: "{crop.lastNote}"</p>
                         <div className="flex justify-between items-center pt-2 border-t">
                           {isReadyForHarvest ? (
-                             <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold">
-                                        <Leaf className="mr-2 h-4 w-4" />
-                                        ¡Cosechar!
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>¿Confirmas la cosecha de "{crop.nombre_cultivo_personal}"?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      ¡Felicidades! Al confirmar, este cultivo se marcará como cosechado y se eliminará de tu lista de cultivos activos.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleHarvestCrop(crop.id)} className="bg-green-600 hover:bg-green-700">Sí, Cosechar</AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                             <Button onClick={() => setHarvestingCrop(crop)} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold">
+                                <Leaf className="mr-2 h-4 w-4" />
+                                ¡Cosechar!
+                             </Button>
                           ) : (
                             <div className="flex items-center gap-2 text-sm font-nunito font-semibold">
                                 <NextTaskIcon className="h-4 w-4 text-primary" />
@@ -672,9 +695,8 @@ function DashboardContent() {
                     <CardTitle className="text-xl">Resumen Anual</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                    <div className="flex justify-between font-nunito font-semibold"><span>Cultivos Cosechados:</span><span>0</span></div>
-                    <div className="flex justify-between font-nunito font-semibold"><span>Kg. de Alimento:</span><span>0 kg</span></div>
-                    <div className="flex justify-between font-nunito font-semibold"><span>Alertas Atendidas:</span><span>{attendedAlertsCount}</span></div>
+                    <div className="flex justify-between font-nunito font-semibold"><span>Cultivos Cosechados:</span><span>{userProfile?.harvestedCropsCount || 0}</span></div>
+                    <div className="flex justify-between font-nunito font-semibold"><span>Kg. de Alimento:</span><span>{userProfile?.totalHarvestWeight?.toFixed(2) || '0.00'} kg</span></div>
                 </CardContent>
             </Card>
 
@@ -752,6 +774,37 @@ function DashboardContent() {
         </div>
       </div>
     </div>
+    <Dialog open={!!harvestingCrop} onOpenChange={(isOpen) => !isOpen && setHarvestingCrop(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>¡Felicidades por tu Cosecha!</DialogTitle>
+                <DialogDescription>
+                    Registra el peso de tu cosecha de <strong>{harvestingCrop?.nombre_cultivo_personal}</strong> para llevar un control en tu resumen anual.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+                <Label htmlFor="harvest-weight">Peso de la Cosecha (en kg, opcional)</Label>
+                <div className="relative">
+                    <Weight className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        id="harvest-weight"
+                        type="number"
+                        placeholder="Ej: 1.5"
+                        value={harvestWeight}
+                        onChange={(e) => setHarvestWeight(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setHarvestingCrop(null)} disabled={isSavingHarvest}>Cancelar</Button>
+                <Button onClick={handleHarvestCrop} disabled={isSavingHarvest}>
+                    {isSavingHarvest ? 'Guardando...' : 'Confirmar Cosecha'}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
@@ -766,3 +819,4 @@ export default function DashboardPage() {
     
 
     
+
