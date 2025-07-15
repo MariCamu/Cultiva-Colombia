@@ -8,13 +8,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle } from 'lucide-react';
+import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle, Wheat } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 
 interface SampleCrop {
@@ -109,6 +110,38 @@ const difficultyOptions = [
   { value: '5', label: '⭐⭐⭐⭐⭐ (Muy Difícil)' },
 ];
 
+// SVG Icons for Crop Types
+const BeanIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}><path d="M50,10 C20,25 20,75 50,90 C80,75 80,25 50,10 M40,40 Q50,50 60,40 M40,60 Q50,50 60,60" stroke="#a16207" fill="#facc15" strokeWidth="5" /></svg>
+);
+const CarrotIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}><path d="M50 90 L60 30 L40 30 Z" fill="#f97316"/><path d="M50 30 L40 10 L45 30 M50 30 L60 10 L55 30" fill="#22c55e"/></svg>
+);
+const LeafIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}><path d="M50 10 C 20 40, 20 70, 50 90 C 80 70, 80 40, 50 10 Z" fill="#4ade80" /><line x1="50" y1="90" x2="50" y2="25" stroke="#16a34a" strokeWidth="5" /></svg>
+);
+const GenericFruitIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}><circle cx="50" cy="60" r="30" fill="#ef4444"/><path d="M50 30 Q 60 10, 70 20" stroke="#166534" strokeWidth="8" fill="none"/></svg>
+)
+
+const getCropTypeIcon = (plantType: string) => {
+    switch (plantType) {
+        case 'Leguminosas': return BeanIcon;
+        case 'Tubérculos':
+        case 'Hortalizas de raíz': return CarrotIconSvg;
+        case 'Frutales':
+        case 'Hortalizas de fruto': return GenericFruitIcon;
+        case 'Cereales': return Wheat;
+        default: return LeafIconSvg;
+    }
+};
+
+const getDifficultyStyles = (difficulty: number): { badge: string, iconBg: string, iconText: string } => {
+    if (difficulty <= 2) return { badge: 'bg-green-100 text-green-800 border-green-200', iconBg: 'bg-green-500', iconText: 'text-white' };
+    if (difficulty <= 4) return { badge: 'bg-yellow-100 text-yellow-800 border-yellow-200', iconBg: 'bg-yellow-500', iconText: 'text-white' };
+    return { badge: 'bg-red-100 text-red-800 border-red-200', iconBg: 'bg-red-600', iconText: 'text-white' };
+};
+
 
 export default function CultivosPage() {
   const searchParams = useSearchParams();
@@ -121,7 +154,6 @@ export default function CultivosPage() {
   const [detectedRegionSlug, setDetectedRegionSlug] = useState<string | null>(null);
   const [detectedRegionName, setDetectedRegionName] = useState<string | null>(null);
   
-  // State for manual filters
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
@@ -138,54 +170,55 @@ export default function CultivosPage() {
 
   useEffect(() => {
     const regionParam = searchParams.get('region');
-
-    // Prioritize manual selection over URL param or geolocation
-    if (isManualFilterActive) {
+    const qParam = searchParams.get('q');
+    
+    // Manual filters take precedence
+    if(isManualFilterActive) {
         setFilterSource(selectedRegion ? 'manual_specific' : 'manual_all');
         const regionName = regionOptions.find(r => r.value === selectedRegion)?.label || "Todas las Regiones";
         setActiveRegionForDisplay({ slug: selectedRegion, name: regionName });
         return;
     }
 
-    // If no manual filter, check for URL param
     if (regionParam) {
         setFilterSource('url_region_only');
         const regionName = regionOptions.find(r => r.value === regionParam)?.label || capitalizeFirstLetter(regionParam);
         setActiveRegionForDisplay({ slug: regionParam, name: regionName });
-        setSelectedRegion(regionParam); // Sync dropdown with URL
+        setSelectedRegion(regionParam);
         return;
     }
 
-    // If no manual or URL filter, attempt geolocation
-    if (navigator.geolocation) {
-      setGeolocationStatus('pending');
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const regionInfo = getRegionFromCoordinates(latitude, longitude);
-          if (regionInfo) {
-            setFilterSource('geo');
-            setActiveRegionForDisplay({ slug: regionInfo.slug, name: regionInfo.name });
-            setDetectedRegionSlug(regionInfo.slug);
-            setDetectedRegionName(regionInfo.name);
-          } else {
-             setFilterSource('none');
-             setActiveRegionForDisplay({slug: null, name: null});
+    if (!qParam) {
+      if (navigator.geolocation) {
+        setGeolocationStatus('pending');
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            const regionInfo = getRegionFromCoordinates(latitude, longitude);
+            if (regionInfo) {
+              setFilterSource('geo');
+              setActiveRegionForDisplay({ slug: regionInfo.slug, name: regionInfo.name });
+              setDetectedRegionSlug(regionInfo.slug);
+              setDetectedRegionName(regionInfo.name);
+            } else {
+               setFilterSource('none');
+               setActiveRegionForDisplay({slug: null, name: null});
+            }
+            setGeolocationStatus('success');
+          },
+          (error) => {
+            let message = "No se pudo obtener tu ubicación.";
+            if (error.code === error.PERMISSION_DENIED) message = "Permiso de ubicación denegado.";
+            setGeolocationErrorMsg(message);
+            setGeolocationStatus('error');
+            setFilterSource('none');
+            setActiveRegionForDisplay({slug: null, name: null});
           }
-          setGeolocationStatus('success');
-        },
-        (error) => {
-          let message = "No se pudo obtener tu ubicación.";
-          if (error.code === error.PERMISSION_DENIED) message = "Permiso de ubicación denegado.";
-          setGeolocationErrorMsg(message);
-          setGeolocationStatus('error');
-          setFilterSource('none');
-          setActiveRegionForDisplay({slug: null, name: null});
-        }
-      );
-    } else {
-      setFilterSource('none');
-      setActiveRegionForDisplay({slug: null, name: null});
+        );
+      } else {
+        setFilterSource('none');
+        setActiveRegionForDisplay({slug: null, name: null});
+      }
     }
 
   }, [searchParams, isManualFilterActive, selectedRegion]);
@@ -241,7 +274,11 @@ export default function CultivosPage() {
   const displayedCrops = sampleCropsData.filter(crop => {
     let matches = true;
     const activeRegionSlug = isManualFilterActive ? selectedRegion : (searchParams.get('region') || detectedRegionSlug);
+    const qParam = searchParams.get('q');
     
+    if(qParam && !crop.name.toLowerCase().includes(qParam.toLowerCase())) {
+        matches = false;
+    }
     if (activeRegionSlug && crop.regionSlug !== activeRegionSlug) {
       matches = false;
     }
@@ -267,37 +304,42 @@ export default function CultivosPage() {
   let pageDescription = "Descubre una variedad de cultivos de diferentes regiones de Colombia.";
   let alertMessageForPage: React.ReactNode = null;
 
-  switch (filterSource) {
-      case 'manual_specific':
-          pageTitle = `Cultivos para la Región: ${activeRegionForDisplay.name}`;
-          pageDescription = `Explora los cultivos característicos de la región ${activeRegionForDisplay.name} según los filtros aplicados.`;
-          break;
-      case 'manual_all':
-          pageTitle = "Cultivos Filtrados (Todas las Regiones)";
-          pageDescription = "Mostrando cultivos de todas las regiones, según los filtros aplicados.";
-          break;
-      case 'url_region_only':
-          pageTitle = `Cultivos de la Región ${activeRegionForDisplay.name}`;
-          pageDescription = `Explora los cultivos característicos de la región ${activeRegionForDisplay.name}.`;
-          alertMessageForPage = (
-              <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <AlertTitle className="font-nunito font-semibold">Filtro por Región</AlertTitle>
-                  <AlertDescription>Mostrando cultivos para la región: <strong>{activeRegionForDisplay.name}</strong>.</AlertDescription>
-              </Alert>
-          );
-          break;
-      case 'geo':
-          pageTitle = `Sugeridos para tu Región: ${activeRegionForDisplay.name}`;
-          pageDescription = `Basado en tu ubicación (aproximada), te sugerimos estos cultivos de la región ${activeRegionForDisplay.name}.`;
-          alertMessageForPage = (
-              <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
-                  <CheckCircle className="h-4 w-4 text-primary" />
-                  <AlertTitle className="font-nunito font-semibold">Región Detectada: {activeRegionForDisplay.name}</AlertTitle>
-                  <AlertDescription>Mostrando cultivos sugeridos para tu región. La detección es aproximada.</AlertDescription>
-              </Alert>
-          );
-          break;
+  if (searchParams.get('q')) {
+      pageTitle = `Resultados para: "${searchParams.get('q')}"`;
+      pageDescription = `Mostrando todos los cultivos que coinciden con tu búsqueda.`;
+  } else {
+      switch (filterSource) {
+          case 'manual_specific':
+              pageTitle = `Cultivos para la Región: ${activeRegionForDisplay.name}`;
+              pageDescription = `Explora los cultivos característicos de la región ${activeRegionForDisplay.name} según los filtros aplicados.`;
+              break;
+          case 'manual_all':
+              pageTitle = "Cultivos Filtrados (Todas las Regiones)";
+              pageDescription = "Mostrando cultivos de todas las regiones, según los filtros aplicados.";
+              break;
+          case 'url_region_only':
+              pageTitle = `Cultivos de la Región ${activeRegionForDisplay.name}`;
+              pageDescription = `Explora los cultivos característicos de la región ${activeRegionForDisplay.name}.`;
+              alertMessageForPage = (
+                  <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <AlertTitle className="font-nunito font-semibold">Filtro por Región</AlertTitle>
+                      <AlertDescription>Mostrando cultivos para la región: <strong>{activeRegionForDisplay.name}</strong>.</AlertDescription>
+                  </Alert>
+              );
+              break;
+          case 'geo':
+              pageTitle = `Sugeridos para tu Región: ${activeRegionForDisplay.name}`;
+              pageDescription = `Basado en tu ubicación (aproximada), te sugerimos estos cultivos de la región ${activeRegionForDisplay.name}.`;
+              alertMessageForPage = (
+                  <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
+                      <CheckCircle className="h-4 w-4 text-primary" />
+                      <AlertTitle className="font-nunito font-semibold">Región Detectada: {activeRegionForDisplay.name}</AlertTitle>
+                      <AlertDescription>Mostrando cultivos sugeridos para tu región. La detección es aproximada.</AlertDescription>
+                  </Alert>
+              );
+              break;
+      }
   }
 
   return (
@@ -336,8 +378,9 @@ export default function CultivosPage() {
             <Select 
               value={selectedRegion || 'all'} 
               onValueChange={(value) => {
-                setSelectedRegion(value === 'all' ? null : value);
-                setIsManualFilterActive(true);
+                const newRegion = value === 'all' ? null : value;
+                setSelectedRegion(newRegion);
+                router.push(newRegion ? `/cultivos?region=${newRegion}` : '/cultivos');
               }}
             >
               <SelectTrigger id="manualRegionSelect" className="font-nunito">
@@ -351,7 +394,7 @@ export default function CultivosPage() {
           </div>
           <div>
             <Label htmlFor="priceSelect" className="text-sm font-nunito font-semibold">Precio Estimado</Label>
-            <Select value={selectedPrice || 'all'} onValueChange={(value) => setSelectedPrice(value === 'all' ? null : value)}>
+            <Select value={selectedPrice || 'all'} onValueChange={(value) => { setSelectedPrice(value === 'all' ? null : value); setIsManualFilterActive(true); }}>
               <SelectTrigger id="priceSelect" className="font-nunito"><SelectValue placeholder="Todos los Precios" /></SelectTrigger>
               <SelectContent>
                 {priceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
@@ -360,7 +403,7 @@ export default function CultivosPage() {
           </div>
           <div>
             <Label htmlFor="durationSelect" className="text-sm font-nunito font-semibold">Duración</Label>
-            <Select value={selectedDuration || 'all'} onValueChange={(value) => setSelectedDuration(value === 'all' ? null : value)}>
+            <Select value={selectedDuration || 'all'} onValueChange={(value) => { setSelectedDuration(value === 'all' ? null : value); setIsManualFilterActive(true); }}>
               <SelectTrigger id="durationSelect" className="font-nunito"><SelectValue placeholder="Todas las Duraciones" /></SelectTrigger>
               <SelectContent>
                 {durationOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
@@ -369,7 +412,7 @@ export default function CultivosPage() {
           </div>
           <div>
             <Label htmlFor="spaceSelect" className="text-sm font-nunito font-semibold">Espacio Requerido</Label>
-            <Select value={selectedSpace || 'all'} onValueChange={(value) => setSelectedSpace(value === 'all' ? null : value)}>
+            <Select value={selectedSpace || 'all'} onValueChange={(value) => { setSelectedSpace(value === 'all' ? null : value); setIsManualFilterActive(true); }}>
               <SelectTrigger id="spaceSelect" className="font-nunito"><SelectValue placeholder="Todos los Espacios" /></SelectTrigger>
               <SelectContent>
                 {spaceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
@@ -380,7 +423,7 @@ export default function CultivosPage() {
             <Label htmlFor="plantTypeSelect" className="text-sm font-nunito font-semibold">Tipo de Planta</Label>
             <Select 
               value={selectedPlantType || 'all'} 
-              onValueChange={(value) => setSelectedPlantType(value === 'all' ? null : value)}
+              onValueChange={(value) => { setSelectedPlantType(value === 'all' ? null : value); setIsManualFilterActive(true); }}
             >
               <SelectTrigger id="plantTypeSelect" className="font-nunito"><SelectValue placeholder="Todos los Tipos" /></SelectTrigger>
               <SelectContent>
@@ -390,7 +433,7 @@ export default function CultivosPage() {
           </div>
           <div>
             <Label htmlFor="difficultySelect" className="text-sm font-nunito font-semibold">Dificultad</Label>
-            <Select value={selectedDifficulty || 'all'} onValueChange={(value) => setSelectedDifficulty(value === 'all' ? null : value)}>
+            <Select value={selectedDifficulty || 'all'} onValueChange={(value) => { setSelectedDifficulty(value === 'all' ? null : value); setIsManualFilterActive(true); }}>
               <SelectTrigger id="difficultySelect" className="font-nunito"><SelectValue placeholder="Todas las Dificultades" /></SelectTrigger>
               <SelectContent>
                 {difficultyOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
@@ -412,51 +455,55 @@ export default function CultivosPage() {
         <CardContent>
           {displayedCrops.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayedCrops.map((crop) => (
-                <Card key={crop.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-                  <Image
-                    src={crop.imageUrl}
-                    alt={crop.name}
-                    width={300}
-                    height={200}
-                    className="w-full h-48 object-cover"
-                    data-ai-hint={crop.dataAiHint}
-                  />
-                  <CardHeader>
-                    <CardTitle className="text-xl font-nunito font-bold">{crop.name}</CardTitle>
-                     { (selectedRegion === null && searchParams.get('region') == null) && (
-                        <Badge variant="outline" className="mt-1 w-fit font-nunito">{capitalizeFirstLetter(crop.regionSlug)}</Badge>
-                     )}
-                  </CardHeader>
-                  <CardContent className="flex-grow space-y-3">
-                    <p className="text-sm text-muted-foreground mb-3">{crop.description}</p>
-                    <div className="space-y-2 pt-2 border-t">
-                        <div className="flex items-center">
-                            <span className="text-xs font-nunito font-semibold mr-2 w-28">Dificultad:</span>
-                            <div className="flex">
-                                {Array.from({ length: 5 }).map((_, i) => (
-                                <Star key={i} className={`h-4 w-4 ${i < crop.difficulty ? 'fill-yellow-400 text-yellow-500' : 'text-gray-300'}`} />
-                                ))}
+              {displayedCrops.map((crop) => {
+                 const TypeIcon = getCropTypeIcon(crop.plantType);
+                 const difficultyStyles = getDifficultyStyles(crop.difficulty);
+                 const difficultyText = crop.difficulty <= 2 ? 'Fácil' : crop.difficulty <=4 ? 'Media' : 'Difícil';
+                 return (
+                    <Card key={crop.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+                        <CardHeader>
+                            <div className="flex items-center gap-4">
+                                <div className={cn("p-3 rounded-full", difficultyStyles.iconBg)}>
+                                    <TypeIcon className={cn("h-6 w-6", difficultyStyles.iconText)} />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-xl font-nunito font-bold">{crop.name}</CardTitle>
+                                    <Badge variant="outline" className={cn("mt-1 w-fit font-nunito", difficultyStyles.badge)}>
+                                      Dificultad: {difficultyText}
+                                    </Badge>
+                                </div>
                             </div>
-                        </div>
-                        <Badge variant="outline" className="font-nunito">Precio: {crop.estimatedPrice}</Badge>
-                        <Badge variant="outline" className="font-nunito">Duración: {crop.duration}</Badge>
-                        <Badge variant="outline" className="font-nunito">Espacio: {crop.spaceRequired}</Badge>
-                        <Badge variant="outline" className="font-nunito">Tipo: {crop.plantType}</Badge>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex-col items-start gap-2">
-                     <Button 
-                        onClick={() => handleAddCropToDashboard(crop)} 
-                        disabled={isAddingCrop === crop.id}
-                        className="w-full"
-                      >
-                       <PlusCircle className="mr-2 h-4 w-4" />
-                       {isAddingCrop === crop.id ? 'Añadiendo...' : 'Añadir a mi Dashboard'}
-                     </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+                        </CardHeader>
+                        <CardContent className="flex-grow space-y-3 pt-0">
+                           <Image
+                              src={crop.imageUrl}
+                              alt={crop.name}
+                              width={300}
+                              height={200}
+                              className="w-full h-40 object-cover rounded-md"
+                              data-ai-hint={crop.dataAiHint}
+                            />
+                           <p className="text-sm text-muted-foreground pt-2">{crop.description}</p>
+                           <div className="flex flex-wrap gap-2 pt-2 border-t">
+                                <Badge variant="outline" className="font-nunito">Precio: {crop.estimatedPrice}</Badge>
+                                <Badge variant="outline" className="font-nunito">Duración: {crop.duration}</Badge>
+                                <Badge variant="outline" className="font-nunito">Espacio: {crop.spaceRequired}</Badge>
+                                <Badge variant="outline" className="font-nunito">Tipo: {crop.plantType}</Badge>
+                           </div>
+                        </CardContent>
+                        <CardFooter>
+                           <Button 
+                              onClick={() => handleAddCropToDashboard(crop)} 
+                              disabled={isAddingCrop === crop.id}
+                              className="w-full"
+                            >
+                             <PlusCircle className="mr-2 h-4 w-4" />
+                             {isAddingCrop === crop.id ? 'Añadiendo...' : 'Añadir a mi Dashboard'}
+                           </Button>
+                        </CardFooter>
+                    </Card>
+                 );
+              })}
             </div>
           ) : (
              <Alert variant="default" className="mt-4">
@@ -476,5 +523,7 @@ export default function CultivosPage() {
     </div>
   );
 }
+
+    
 
     
