@@ -4,7 +4,7 @@
 import { ProtectedRoute, useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Leaf, CalendarDays, Droplets, Sun, Wind, BookOpen, Sparkles, MessageSquarePlus, AlertCircle, Trash2, LocateFixed, Bell, CheckCheck, Weight } from 'lucide-react';
+import { PlusCircle, Leaf, CalendarDays, Droplets, Sun, Wind, BookOpen, Sparkles, MessageSquarePlus, AlertCircle, Trash2, LocateFixed, Bell, CheckCheck, Weight, CloudRain } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { fetchWeatherForecast } from '@/services/weatherService';
-import { getWeatherDescription, getWeatherIcon, type WeatherData } from '@/lib/weather-utils';
+import { getWeatherDescription, getWeatherIcon, type WeatherData, willItRainSoon } from '@/lib/weather-utils';
 import type { UserCrop, UserProfile } from '@/models/crop-model';
 
 
@@ -53,7 +53,7 @@ const ALERT_ICONS: { [key: string]: React.ElementType } = {
     riego: Droplets,
     abono: Sparkles,
     cosecha: Leaf,
-    info: AlertCircle
+    info: CloudRain
 }
 
 const recommendedArticles = [
@@ -93,6 +93,7 @@ function getTaskBadgeVariant(days: number) {
 }
 
 function WeatherWidget() {
+  const { user } = useAuth();
   const [location, setLocation] = useState<{ lat: number, lon: number } | null>(null);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
@@ -115,8 +116,27 @@ function WeatherWidget() {
     );
   }, []);
 
+  const createRainAlert = async () => {
+      if (!user) return;
+      const alertsCollectionRef = collection(db, 'usuarios', user.uid, 'alertas');
+      const rainAlertId = 'rain_alert_today';
+      const rainAlertRef = doc(alertsCollectionRef, rainAlertId);
+
+      const rainAlertDoc = await getDoc(rainAlertRef);
+      if (!rainAlertDoc.exists()) {
+          await setDoc(rainAlertRef, {
+              cropId: 'general',
+              cropName: 'Clima',
+              message: "¡Lluvia a la vista! Considera no regar tus cultivos hoy.",
+              type: 'info',
+              date: serverTimestamp(),
+              isRead: false,
+          });
+      }
+  };
+
   useEffect(() => {
-    if (location) {
+    if (location && user) {
       fetchWeatherForecast(location.lat, location.lon)
         .then(async data => {
           setWeather(data);
@@ -132,6 +152,9 @@ function WeatherWidget() {
               setWeatherIcon(() => icon);
             }
           }
+           if (willItRainSoon(data.hourly, 40)) { // 40% threshold for rain probability
+                createRainAlert();
+           }
           setStatus('success');
         })
         .catch(err => {
@@ -140,7 +163,7 @@ function WeatherWidget() {
           console.error(err);
         });
     }
-  }, [location]);
+  }, [location, user]);
 
   const renderContent = () => {
     if (status === 'pending') {
@@ -231,32 +254,46 @@ function DashboardContent() {
     // Simulates a daily check for upcoming tasks and generates alerts
     const checkForUpcomingTasks = async (crops: UserCrop[]) => {
         if (!user) return;
-        const batch = writeBatch(db);
-        const alertsCollectionRef = collection(db, 'usuarios', user.uid, 'alertas');
 
-        for (const crop of crops) {
-            if (crop.nextTask.dueInDays <= 1) { // Alert for tasks due today or overdue
-                const taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}`;
-                const alertType = crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : 'abono';
-                
-                // Check if an active alert for this specific task already exists
-                const q = query(alertsCollectionRef, where("cropId", "==", crop.id), where("type", "==", alertType), where("isRead", "==", false));
-                const existingAlerts = await getDocs(q);
+        try {
+            const batch = writeBatch(db);
+            const alertsCollectionRef = collection(db, 'usuarios', user.uid, 'alertas');
 
-                if (existingAlerts.empty) {
-                    const newAlertRef = doc(alertsCollectionRef);
-                    batch.set(newAlertRef, {
-                        cropId: crop.id,
-                        cropName: crop.nombre_cultivo_personal,
-                        message: `Es hora de "${crop.nextTask.name}" tu cultivo de ${crop.nombre_cultivo_personal}.`,
-                        type: alertType,
-                        date: serverTimestamp(),
-                        isRead: false,
-                    });
+            for (const crop of crops) {
+                let alertType: UserAlert['type'] | null = null;
+                let message = '';
+                let taskId = '';
+
+                if (crop.progress >= 100) {
+                    alertType = 'cosecha';
+                    message = `¡Tu cultivo de ${crop.nombre_cultivo_personal} está listo para cosechar!`;
+                    taskId = `${crop.id}_harvest`;
+                } else if (crop.nextTask && crop.nextTask.dueInDays <= 1) {
+                    alertType = crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : 'abono';
+                    message = `Es hora de "${crop.nextTask.name}" tu cultivo de ${crop.nombre_cultivo_personal}.`;
+                    taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}`;
+                }
+
+                if (alertType && taskId) {
+                    const alertDocRef = doc(alertsCollectionRef, taskId);
+                    const alertDoc = await getDoc(alertDocRef);
+
+                    if (!alertDoc.exists()) {
+                        batch.set(alertDocRef, {
+                            cropId: crop.id,
+                            cropName: crop.nombre_cultivo_personal,
+                            message: message,
+                            type: alertType,
+                            date: serverTimestamp(),
+                            isRead: false,
+                        });
+                    }
                 }
             }
+            await batch.commit();
+        } catch (error) {
+            console.error("Error al verificar tareas y generar alertas:", error);
         }
-        await batch.commit();
     };
 
 
@@ -309,7 +346,7 @@ function DashboardContent() {
     });
     
     // Listener for alerts
-    const alertsQuery = query(collection(db, 'usuarios', user.uid, 'alertas'));
+    const alertsQuery = query(collection(db, 'usuarios', user.uid, 'alertas'), where("isRead", "==", false), orderBy("date", "desc"));
     const unsubscribeAlerts = onSnapshot(alertsQuery, (snapshot) => {
         const alertsData = snapshot.docs.map(doc => ({
             id: doc.id,
@@ -317,7 +354,7 @@ function DashboardContent() {
             icon: ALERT_ICONS[doc.data().type] || Leaf
         } as UserAlert));
         
-        setAlerts(alertsData.filter(a => !a.isRead));
+        setAlerts(alertsData);
         setIsAlertsLoading(false);
     });
 
@@ -820,11 +857,3 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
-
-    
-
-    
-
-
-
-
