@@ -346,15 +346,17 @@ function DashboardContent() {
     });
     
     // Listener for alerts
-    const alertsQuery = query(collection(db, 'usuarios', user.uid, 'alertas'), where("isRead", "==", false), orderBy("date", "desc"));
+    const alertsQuery = query(collection(db, 'usuarios', user.uid, 'alertas'), orderBy("date", "desc"));
     const unsubscribeAlerts = onSnapshot(alertsQuery, (snapshot) => {
-        const alertsData = snapshot.docs.map(doc => ({
+        const allAlerts = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
             icon: ALERT_ICONS[doc.data().type] || Leaf
         } as UserAlert));
         
-        setAlerts(alertsData);
+        const unreadAlerts = allAlerts.filter(alert => !alert.isRead);
+        
+        setAlerts(unreadAlerts);
         setIsAlertsLoading(false);
     });
 
@@ -467,12 +469,9 @@ function DashboardContent() {
     .filter(crop => crop.fecha_plantacion && crop.progress < 100) // Filter out crops ready for harvest
     .map(crop => {
         const plantedDate = new Date(crop.fecha_plantacion.seconds * 1000);
-        // Calculate the next task date based on the *actual planting date*
-        const daysSincePlantedForTask = differenceInDays(new Date(), plantedDate);
-        const taskDate = addDays(new Date(), crop.nextTask.dueInDays - daysSincePlantedForTask);
         
         return {
-            date: addDays(plantedDate, crop.daysToHarvest - (crop.daysToHarvest - differenceInDays(new Date(), plantedDate)) + crop.nextTask.dueInDays),
+            date: addDays(plantedDate, crop.nextTask.dueInDays),
             description: `${crop.nextTask.name} ${crop.nombre_cultivo_personal}`,
             type: crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : crop.nextTask.name.toLowerCase().includes('abonar') ? 'abono' : 'cosecha'
         };
