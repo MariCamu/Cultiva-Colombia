@@ -465,25 +465,28 @@ function DashboardContent() {
     }
   };
 
-  const simulatedTasks = userCrops
-    .filter(crop => crop.fecha_plantacion && crop.progress < 100) // Filter out crops ready for harvest
+  const allSimulatedTasks = userCrops
+    .filter(crop => crop.fecha_plantacion && crop.progress < 100)
     .map(crop => {
         const plantedDate = new Date(crop.fecha_plantacion.seconds * 1000);
-        
         return {
             date: addDays(plantedDate, crop.nextTask.dueInDays),
             description: `${crop.nextTask.name} ${crop.nombre_cultivo_personal}`,
             type: crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : crop.nextTask.name.toLowerCase().includes('abonar') ? 'abono' : 'cosecha'
         };
-    })
+    });
+
+  const upcomingTasks = allSimulatedTasks
+    .filter(task => !isPast(task.date) || isToday(task.date))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
+
 
   const plantingDates = userCrops.filter(c => c.fecha_plantacion).map(c => new Date(c.fecha_plantacion.seconds * 1000));
 
   const calendarModifiers = {
     siembra: plantingDates,
-    riego: simulatedTasks.filter(t => t.type === 'riego').map(t => t.date),
-    abono: simulatedTasks.filter(t => t.type === 'abono').map(t => t.date),
+    riego: allSimulatedTasks.filter(t => t.type === 'riego').map(t => t.date),
+    abono: allSimulatedTasks.filter(t => t.type === 'abono').map(t => t.date),
     cosecha: userCrops
         .filter(c => c.progress >= 100)
         .map(c => addDays(new Date(c.fecha_plantacion.seconds * 1000), c.daysToHarvest))
@@ -778,7 +781,7 @@ function DashboardContent() {
               <div className="border-t pt-4">
                 <h4 className="font-nunito font-semibold text-sm mb-2">Próximas Tareas:</h4>
                 <div className="space-y-3 mt-2">
-                  {simulatedTasks.slice(0, 5).map((task, i) => (
+                  {upcomingTasks.slice(0, 5).map((task, i) => (
                     <div key={i} className="flex items-start gap-3 text-sm">
                       <div className={`mt-1 w-3 h-3 rounded-full flex-shrink-0 ${
                         task.type === 'riego' ? 'bg-blue-400' :
@@ -791,7 +794,7 @@ function DashboardContent() {
                       </div>
                     </div>
                   ))}
-                  {simulatedTasks.length === 0 && <p className="text-sm text-muted-foreground">¡Sin tareas próximas!</p>}
+                  {upcomingTasks.length === 0 && <p className="text-sm text-muted-foreground">¡Sin tareas próximas!</p>}
                 </div>
               </div>
             </CardContent>
@@ -862,3 +865,4 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
+
