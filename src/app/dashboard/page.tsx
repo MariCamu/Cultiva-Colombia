@@ -21,7 +21,7 @@ import { addDays, format, isToday, isTomorrow, differenceInDays, startOfDay, isP
 import { es } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc, type Timestamp, addDoc, serverTimestamp, where, getDocs, updateDoc, writeBatch, getDoc, runTransaction, increment } from 'firebase/firestore';
+import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc, type Timestamp, addDoc, serverTimestamp, where, getDocs, updateDoc, writeBatch, getDoc, runTransaction, increment, orderBy, setDoc } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -119,7 +119,7 @@ function WeatherWidget() {
   const createRainAlert = async () => {
       if (!user) return;
       const alertsCollectionRef = collection(db, 'usuarios', user.uid, 'alertas');
-      const rainAlertId = 'rain_alert_today';
+      const rainAlertId = `rain_alert_${new Date().toISOString().split('T')[0]}`; // Daily unique ID
       const rainAlertRef = doc(alertsCollectionRef, rainAlertId);
 
       const rainAlertDoc = await getDoc(rainAlertRef);
@@ -271,7 +271,7 @@ function DashboardContent() {
                 } else if (crop.nextTask && crop.nextTask.dueInDays <= 1) {
                     alertType = crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : 'abono';
                     message = `Es hora de "${crop.nextTask.name}" tu cultivo de ${crop.nombre_cultivo_personal}.`;
-                    taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}`;
+                    taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}_${new Date().toISOString().split('T')[0]}`;
                 }
 
                 if (alertType && taskId) {
@@ -466,12 +466,16 @@ function DashboardContent() {
   const simulatedTasks = userCrops
     .filter(crop => crop.fecha_plantacion && crop.progress < 100) // Filter out crops ready for harvest
     .map(crop => {
-      const plantedDate = new Date(crop.fecha_plantacion.seconds * 1000);
-      return {
-        date: addDays(plantedDate, crop.daysToHarvest - (crop.daysToHarvest - differenceInDays(new Date(), plantedDate)) + crop.nextTask.dueInDays),
-        description: `${crop.nextTask.name} ${crop.nombre_cultivo_personal}`,
-        type: crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : crop.nextTask.name.toLowerCase().includes('abonar') ? 'abono' : 'cosecha'
-      };
+        const plantedDate = new Date(crop.fecha_plantacion.seconds * 1000);
+        // Calculate the next task date based on the *actual planting date*
+        const daysSincePlantedForTask = differenceInDays(new Date(), plantedDate);
+        const taskDate = addDays(new Date(), crop.nextTask.dueInDays - daysSincePlantedForTask);
+        
+        return {
+            date: addDays(plantedDate, crop.daysToHarvest - (crop.daysToHarvest - differenceInDays(new Date(), plantedDate)) + crop.nextTask.dueInDays),
+            description: `${crop.nextTask.name} ${crop.nombre_cultivo_personal}`,
+            type: crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : crop.nextTask.name.toLowerCase().includes('abonar') ? 'abono' : 'cosecha'
+        };
     })
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -481,7 +485,9 @@ function DashboardContent() {
     siembra: plantingDates,
     riego: simulatedTasks.filter(t => t.type === 'riego').map(t => t.date),
     abono: simulatedTasks.filter(t => t.type === 'abono').map(t => t.date),
-    cosecha: simulatedTasks.filter(t => t.type === 'cosecha').map(t => t.date)
+    cosecha: userCrops
+        .filter(c => c.progress >= 100)
+        .map(c => addDays(new Date(c.fecha_plantacion.seconds * 1000), c.daysToHarvest))
   };
 
   const calendarModifierStyles = {
