@@ -165,7 +165,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </p>
             <p className="mt-1">
                 Imágenes de cultivos por <a href="https://www.freepik.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Freepik</a>. 
-                Imagen de Árbol de Pan por <a href="https://pixabay.com/es/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Pixabay/PublicDomainPictures</a>.
+                Orégano por Helga (<a href="https://pixabay.com/es/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Pixabay</a>), 
+                Hierbabuena por R. E. Beck (<a href="https://pixabay.com/es/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Pixabay</a>), 
+                Árbol de Pan por PublicDomainPictures (<a href="https://pixabay.com/es/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Pixabay</a>).
             </p>
         </div>
       </footer>
