@@ -9,12 +9,12 @@ import Image from "next/image";
 
 const popularCrops = [
   { 
-    name: "Café", 
-    imgSrc: "https://placehold.co/300x200.png", // Usar imagen real si se tiene
-    imgAlt: "Planta de café", 
-    hint: "coffee beans", 
-    href: "/cultivos?q=Café",
-    tags: ["Región: Andina", "Dificultad: Difícil", "Patrimonial"] 
+    name: "Fríjol", 
+    imgSrc: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Ffrijol.jpg?alt=media&token=9af96b87-5d6c-40af-af29-0a4087544269",
+    imgAlt: "Planta de fríjol", 
+    hint: "bean plant", 
+    href: "/cultivos?q=Fríjol",
+    tags: ["Región: Andina", "Dificultad: Fácil", "Pancoger"] 
   },
   { 
     name: "Papa", 
