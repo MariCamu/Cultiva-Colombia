@@ -269,6 +269,37 @@ export default function CultivosPage() {
       }
   }
 
+    const handleFilterInteraction = () => {
+        if (!userHasInteracted) {
+            setUserHasInteracted(true);
+        }
+        const newParams = new URLSearchParams(searchParams.toString());
+        newParams.delete('q'); // Remove search query when a filter is used
+        router.replace(`/cultivos?${newParams.toString()}`, { scroll: false });
+    };
+
+    const updateFilterState = (setter: React.Dispatch<React.SetStateAction<string | null>>, value: string) => {
+        handleFilterInteraction();
+        setter(value === 'all' ? null : value);
+    };
+
+    const handleRegionChange = (value: string) => {
+        setUserHasInteracted(true);
+        const newRegionSlug = value === 'all' ? null : value;
+        setActiveRegionSlug(newRegionSlug);
+        const regionName = newRegionSlug ? regionOptions.find(opt => opt.value === newRegionSlug)?.label || null : 'Todas las Regiones';
+        setActiveRegionName(regionName);
+        
+        const newParams = new URLSearchParams(searchParams.toString());
+        newParams.delete('q'); // Remove search query on region change
+        if (newRegionSlug) {
+            newParams.set('region', newRegionSlug);
+        } else {
+            newParams.delete('region');
+        }
+        router.push(`/cultivos?${newParams.toString()}`);
+    };
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-nunito font-bold tracking-tight text-foreground sm:text-4xl">
@@ -304,21 +335,7 @@ export default function CultivosPage() {
             <Label htmlFor="manualRegionSelect" className="text-sm font-nunito font-semibold">Región</Label>
             <Select 
               value={activeRegionSlug || 'all'} 
-              onValueChange={(value) => {
-                setUserHasInteracted(true);
-                const newRegionSlug = value === 'all' ? null : value;
-                setActiveRegionSlug(newRegionSlug);
-                const regionName = newRegionSlug ? regionOptions.find(opt => opt.value === newRegionSlug)?.label || null : 'Todas las Regiones';
-                setActiveRegionName(regionName);
-                
-                const newParams = new URLSearchParams(searchParams.toString());
-                if (newRegionSlug) {
-                  newParams.set('region', newRegionSlug);
-                } else {
-                  newParams.delete('region');
-                }
-                router.push(`/cultivos?${newParams.toString()}`);
-              }}
+              onValueChange={handleRegionChange}
             >
               <SelectTrigger id="manualRegionSelect" className="font-nunito">
                 <SelectValue placeholder="Seleccionar Región" />
@@ -331,7 +348,7 @@ export default function CultivosPage() {
           </div>
           <div>
             <Label htmlFor="priceSelect" className="text-sm font-nunito font-semibold">Precio Estimado</Label>
-            <Select value={selectedPrice || 'all'} onValueChange={(value) => { setUserHasInteracted(true); setSelectedPrice(value === 'all' ? null : value); }}>
+            <Select value={selectedPrice || 'all'} onValueChange={(v) => updateFilterState(setSelectedPrice, v)}>
               <SelectTrigger id="priceSelect" className="font-nunito"><SelectValue placeholder="Todos los Precios" /></SelectTrigger>
               <SelectContent>
                 {priceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
@@ -340,7 +357,7 @@ export default function CultivosPage() {
           </div>
           <div>
             <Label htmlFor="durationSelect" className="text-sm font-nunito font-semibold">Duración</Label>
-            <Select value={selectedDuration || 'all'} onValueChange={(value) => { setUserHasInteracted(true); setSelectedDuration(value === 'all' ? null : value); }}>
+            <Select value={selectedDuration || 'all'} onValueChange={(v) => updateFilterState(setSelectedDuration, v)}>
               <SelectTrigger id="durationSelect" className="font-nunito"><SelectValue placeholder="Todas las Duraciones" /></SelectTrigger>
               <SelectContent>
                 {durationOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
@@ -349,7 +366,7 @@ export default function CultivosPage() {
           </div>
           <div>
             <Label htmlFor="spaceSelect" className="text-sm font-nunito font-semibold">Espacio Requerido</Label>
-            <Select value={selectedSpace || 'all'} onValueChange={(value) => { setUserHasInteracted(true); setSelectedSpace(value === 'all' ? null : value); }}>
+            <Select value={selectedSpace || 'all'} onValueChange={(v) => updateFilterState(setSelectedSpace, v)}>
               <SelectTrigger id="spaceSelect" className="font-nunito"><SelectValue placeholder="Todos los Espacios" /></SelectTrigger>
               <SelectContent>
                 {spaceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
@@ -360,7 +377,7 @@ export default function CultivosPage() {
             <Label htmlFor="plantTypeSelect" className="text-sm font-nunito font-semibold">Tipo de Planta</Label>
             <Select 
               value={selectedPlantType || 'all'} 
-              onValueChange={(value) => { setUserHasInteracted(true); setSelectedPlantType(value === 'all' ? null : value); }}
+              onValueChange={(v) => updateFilterState(setSelectedPlantType, v)}
             >
               <SelectTrigger id="plantTypeSelect" className="font-nunito"><SelectValue placeholder="Todos los Tipos" /></SelectTrigger>
               <SelectContent>
@@ -370,7 +387,7 @@ export default function CultivosPage() {
           </div>
           <div>
             <Label htmlFor="difficultySelect" className="text-sm font-nunito font-semibold">Dificultad</Label>
-            <Select value={selectedDifficulty || 'all'} onValueChange={(value) => { setUserHasInteracted(true); setSelectedDifficulty(value === 'all' ? null : value); }}>
+            <Select value={selectedDifficulty || 'all'} onValueChange={(v) => updateFilterState(setSelectedDifficulty, v)}>
               <SelectTrigger id="difficultySelect" className="font-nunito"><SelectValue placeholder="Todas las Dificultades" /></SelectTrigger>
               <SelectContent>
                 {difficultyOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
