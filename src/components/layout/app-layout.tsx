@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Search, Bot, LogOut, LayoutDashboard, UserPlus, LogIn } from 'lucide-react'; 
+import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Search, Bot, LogOut, LayoutDashboard, UserPlus, LogIn, BookText } from 'lucide-react'; 
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -23,10 +23,11 @@ import { ThemeToggle } from './theme-toggle';
 
 const navItems = [
   { href: '/', label: 'Inicio', icon: Home, protected: false },
-  { href: '/mapa', label: 'Mapa Interactivo', icon: Map, protected: false },
+  { href: '/mapa', label: 'Mapa', icon: Map, protected: false },
   { href: '/cultivos', label: 'Cultivos', icon: Leaf, protected: false },
-  { href: '/guias', label: 'Guías Educativas', icon: BookOpen, protected: false },
-  { href: '/test', label: 'Test Interactivo', icon: Lightbulb, protected: false },
+  { href: '/guias', label: 'Guías', icon: BookOpen, protected: false },
+  { href: '/glosario', label: 'Glosario', icon: BookText, protected: false },
+  { href: '/test', label: 'Test', icon: Lightbulb, protected: false },
   { href: '/deteccion-ia', label: 'Detección IA', icon: Bot, protected: false },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, protected: true },
 ];
