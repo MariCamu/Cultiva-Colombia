@@ -87,21 +87,19 @@ interface Crop {
 }
 
 const mapCropsData: Crop[] = [
-    { id: '1', name: 'Lechuga (Andina)', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta pequeña', position: [4.6, -74.08], icon: LeafIcon, regionSlugs: ['andina'] },
-    { id: '2', name: 'Fríjol (Andina)', difficulty: 'easy', type: 'Leguminosa', space: 'Maceta grande', position: [4.8, -75.7], icon: LeafIcon, regionSlugs: ['andina'] },
-    { id: '3', name: 'Maíz (Valle del Cauca)', difficulty: 'medium', type: 'Grano', space: 'Jardín', position: [3.4, -76.5], icon: CornIcon, regionSlugs: ['caribe', 'andina'] },
-    { id: '4', name: 'Papa (Boyacá)', difficulty: 'easy', type: 'Tubérculo', space: 'Maceta grande', position: [5.5, -73.3], icon: LeafIcon, regionSlugs: ['andina'] },
-    { id: '5', name: 'Cilantro (Caribe)', difficulty: 'easy', type: 'Aromática', space: 'Maceta pequeña', position: [10.9, -74.7], icon: LeafIcon, regionSlugs: ['caribe'] },
-    { id: '6', name: 'Mango (Caribe)', difficulty: 'medium', type: 'Fruta', space: 'Jardín', position: [11.0, -74.2], icon: LeafIcon, regionSlugs: ['caribe'] },
-    { id: '7', name: 'Arroz (Orinoquía)', difficulty: 'medium', type: 'Grano', space: 'Jardín', position: [4.5, -72.0], icon: CornIcon, regionSlugs: ['orinoquia'] },
-    { id: '8', name: 'Ñame (Pacífica)', difficulty: 'hard', type: 'Tubérculo', space: 'Jardín', position: [3.8, -77.0], icon: LeafIcon, regionSlugs: ['pacifica'] },
-    { id: '9', name: 'Yuca (Amazonía)', difficulty: 'easy', type: 'Tubérculo', space: 'Jardín', position: [0.0, -70.0], icon: LeafIcon, regionSlugs: ['amazonia'] },
-    { id: '10', name: 'Orégano (General)', difficulty: 'easy', type: 'Aromática', space: 'Maceta pequeña', position: [6.2, -75.5], icon: LeafIcon, regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'] },
-    { id: '11', name: 'Hierbabuena (General)', difficulty: 'easy', type: 'Aromática', space: 'Maceta pequeña', position: [1.2, -77.2], icon: LeafIcon, regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'] },
-    { id: '12', name: 'Guayaba (Andina)', difficulty: 'medium', type: 'Fruta', space: 'Jardín', position: [2.9, -75.2], icon: LeafIcon, regionSlugs: ['andina', 'caribe'] },
-    { id: '13', name: 'Tomate Cherry (General)', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta grande', position: [7.8, -72.5], icon: LeafIcon, regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'] },
-    { id: '14', name: 'Maracuyá (Pacífica)', difficulty: 'hard', type: 'Fruta', space: 'Jardín', position: [4.9, -76.6], icon: LeafIcon, regionSlugs: ['pacifica', 'andina', 'caribe'] },
-    { id: '15', name: 'Auyama (Caribe)', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta grande', position: [9.3, -75.4], icon: LeafIcon, regionSlugs: ['caribe', 'andina'] },
+    { id: 'frijol_andino', name: 'Fríjol', difficulty: 'easy', type: 'Leguminosa', space: 'Maceta grande', position: [4.8, -75.7], icon: LeafIcon, regionSlugs: ['andina'] },
+    { id: 'maiz_caribe', name: 'Maíz', difficulty: 'easy', type: 'Grano', space: 'Jardín', position: [3.4, -76.5], icon: CornIcon, regionSlugs: ['caribe', 'andina'] },
+    { id: 'papa_andina', name: 'Papa', difficulty: 'easy', type: 'Tubérculo', space: 'Maceta grande', position: [5.5, -73.3], icon: LeafIcon, regionSlugs: ['andina'] },
+    { id: 'mango_caribe', name: 'Mango', difficulty: 'medium', type: 'Fruta', space: 'Jardín', position: [11.0, -74.2], icon: LeafIcon, regionSlugs: ['caribe'] },
+    { id: 'arroz_orinoquia', name: 'Arroz', difficulty: 'medium', type: 'Grano', space: 'Jardín', position: [4.5, -72.0], icon: CornIcon, regionSlugs: ['orinoquia'] },
+    { id: 'name_pacifico', name: 'Ñame', difficulty: 'hard', type: 'Tubérculo', space: 'Jardín', position: [3.8, -77.0], icon: LeafIcon, regionSlugs: ['pacifica'] },
+    { id: 'yuca_amazonia', name: 'Yuca', difficulty: 'easy', type: 'Tubérculo', space: 'Jardín', position: [0.0, -70.0], icon: LeafIcon, regionSlugs: ['amazonia'] },
+    { id: 'oregano', name: 'Orégano', difficulty: 'easy', type: 'Aromática', space: 'Maceta pequeña', position: [6.2, -75.5], icon: LeafIcon, regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'] },
+    { id: 'hierbabuena', name: 'Hierbabuena', difficulty: 'easy', type: 'Aromática', space: 'Maceta pequeña', position: [1.2, -77.2], icon: LeafIcon, regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'] },
+    { id: 'guayaba', name: 'Guayaba', difficulty: 'medium', type: 'Fruta', space: 'Jardín', position: [2.9, -75.2], icon: LeafIcon, regionSlugs: ['andina', 'caribe'] },
+    { id: 'tomate_cherry', name: 'Tomate cherry', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta grande', position: [7.8, -72.5], icon: LeafIcon, regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'] },
+    { id: 'maracuya', name: 'Maracuyá', difficulty: 'hard', type: 'Fruta', space: 'Jardín', position: [4.9, -76.6], icon: LeafIcon, regionSlugs: ['pacifica', 'andina', 'caribe'] },
+    { id: 'auyama', name: 'Auyama', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta grande', position: [9.3, -75.4], icon: LeafIcon, regionSlugs: ['caribe', 'andina'] },
 ];
 
 
@@ -239,7 +237,7 @@ export function InteractiveMap() {
                                         <div>Tipo: {crop.type}</div>
                                         <div className="mt-2">
                                             <Button asChild variant="link" size="sm" className="p-0 h-auto font-semibold">
-                                                <Link href={`/cultivos?q=${encodeURIComponent(crop.name.split(' (')[0])}`}>
+                                                <Link href={`/cultivos?q=${encodeURIComponent(crop.name)}`}>
                                                     Ver ficha
                                                 </Link>
                                             </Button>
