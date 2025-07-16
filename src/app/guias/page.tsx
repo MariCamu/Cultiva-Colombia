@@ -76,7 +76,7 @@ export default function GuiasPage() {
       <div className="grid md:grid-cols-2 gap-8">
         <Card className="w-full shadow-lg hover:shadow-xl transition-shadow">
           <Image
-            src="https://placehold.co/600x300.png"
+            src="https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/guias_cultivo.jpg?alt=media&token=e28d4ed5-acba-45a9-8cb6-f8aff915b60e"
             alt="Guías de cultivo"
             width={600}
             height={300}
@@ -108,7 +108,7 @@ export default function GuiasPage() {
 
         <Card className="w-full shadow-lg hover:shadow-xl transition-shadow bg-accent/10 border-accent/30">
            <Image
-            src="https://placehold.co/600x300.png"
+            src="https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/guias_colegio.jpg?alt=media&token=918bf4d2-4f63-49d2-9e0d-d3e7e8a9413a"
             alt="Actividades escolares"
             width={600}
             height={300}

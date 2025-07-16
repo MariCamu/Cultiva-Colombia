@@ -155,9 +155,20 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+      <main className="flex-grow flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         {children}
       </main>
+      <footer className="border-t bg-background/95">
+        <div className="container mx-auto px-6 py-4 text-center text-xs text-muted-foreground">
+            <p>
+                © {new Date().getFullYear()} Cultiva Colombia. Todos los derechos reservados.
+            </p>
+            <p className="mt-1">
+                Imágenes de cultivos por <a href="https://www.freepik.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Freepik</a>. 
+                Imagen de Árbol de Pan por <a href="https://pixabay.com/es/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Pixabay/PublicDomainPictures</a>.
+            </p>
+        </div>
+      </footer>
       <Toaster />
     </div>
   );

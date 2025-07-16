@@ -10,27 +10,27 @@ import Image from "next/image";
 const popularCrops = [
   { 
     name: "Café", 
-    imgSrc: "https://placehold.co/300x200.png", 
+    imgSrc: "https://placehold.co/300x200.png", // Usar imagen real si se tiene
     imgAlt: "Planta de café", 
     hint: "coffee beans", 
-    href: "/cultivos",
-    tags: ["Región: Andina", "Dificultad: Difícil", "Tipo: Frutal"] 
+    href: "/cultivos?q=Café",
+    tags: ["Región: Andina", "Dificultad: Difícil", "Patrimonial"] 
   },
   { 
     name: "Papa", 
-    imgSrc: "https://placehold.co/300x200.png", 
+    imgSrc: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fpapa.jpg?alt=media&token=9615f312-8217-47e2-8ea3-ae3fa80494c5", 
     imgAlt: "Cultivo de papa", 
     hint: "potato harvest", 
-    href: "/cultivos",
-    tags: ["Región: Andina", "Dificultad: Fácil", "Tipo: Tubérculo"]
+    href: "/cultivos?q=Papa",
+    tags: ["Región: Andina", "Dificultad: Fácil", "Pancoger"]
   },
   { 
     name: "Maíz", 
-    imgSrc: "https://placehold.co/300x200.png", 
+    imgSrc: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fmaiz.jpg?alt=media&token=b2e64dac-2b21-4ddc-b54d-4fa2f79a681a", 
     imgAlt: "Planta de maíz", 
     hint: "corn field", 
-    href: "/cultivos",
-    tags: ["Región: Varias", "Dificultad: Fácil", "Tipo: Cereal"]
+    href: "/cultivos?q=Maíz",
+    tags: ["Región: Caribe", "Dificultad: Fácil", "Patrimonial"]
   },
 ];
 
@@ -66,7 +66,7 @@ export default function HomePage() {
     <div className="space-y-10">
       <section 
         className="relative bg-cover bg-center py-20 md:py-28" 
-        style={{ backgroundImage: "url('https://placehold.co/1200x600.png')" }}
+        style={{ backgroundImage: "url('https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/vineyard-france.jpg?alt=media&token=9474ac58-bbb2-48bd-a1ff-925ef1b25805')" }}
         data-ai-hint="farming landscape"
       >
         <div className="absolute inset-0 bg-black/40"></div>
@@ -153,7 +153,7 @@ export default function HomePage() {
         </div>
         <div className="rounded-lg overflow-hidden shadow-xl aspect-video">
           <Image
-            src="https://placehold.co/600x400.png"
+            src="https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/mapa_pag_principal.jpg?alt=media&token=2d87fac5-0ef7-4054-b75c-ed63a3cc38b0"
             alt="Agricultura colombiana"
             width={600}
             height={400}
