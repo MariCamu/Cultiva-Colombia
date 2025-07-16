@@ -4,7 +4,7 @@
 import { useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -182,7 +182,7 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
               onChange={(e) => setInitialNotes(e.target.value)}
             />
           </div>
-          <div className="flex justify-end gap-2 pt-4">
+          <DialogFooter className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isSaving}>
               Cancelar
             </Button>
@@ -190,11 +190,9 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSaving ? 'Añadiendo...' : 'Añadir a Mi Dashboard'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
 }
-
-    
