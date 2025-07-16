@@ -2,8 +2,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, orderBy, query as firestoreQuery, doc, setDoc, writeBatch } from 'firebase/firestore';
 import type { GlossaryTerm } from '@/models/glossary-model';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,61 +21,19 @@ const exampleTerms: Omit<GlossaryTerm, 'id'>[] = [
     { termino: "Polinización", definicion: "Transferencia de polen que permite la fecundación y la producción de frutos y semillas. Puede ser realizada por el viento, el agua o animales como abejas y pájaros.", categoria: "Conceptos Básicos", icono_referencia: "🐝", orden_alfabetico: "P", palabras_clave: ["abejas", "reproducción", "flores"] }
 ];
 
-// Función para poblar la base de datos con datos de ejemplo (ejecutar solo una vez si es necesario)
-async function populateGlossary() {
-    console.log("Checking if glossary needs population...");
-    const glossaryCollectionRef = collection(db, 'glosario_terminos');
-    const snapshot = await getDocs(glossaryCollectionRef);
-
-    if (snapshot.empty) {
-        console.log("Glossary is empty. Populating with example terms...");
-        const batch = writeBatch(db);
-        exampleTerms.forEach((termData) => {
-            const docRef = doc(glossaryCollectionRef); // Firestore genera un ID automático
-            batch.set(docRef, termData);
-        });
-        await batch.commit();
-        console.log("Glossary populated successfully!");
-        return true; // Indica que se ha poblado
-    }
-    console.log("Glossary already has data. No population needed.");
-    return false; // No se necesitó poblar
-}
+// Add a unique id to each term for React keys
+const glossaryData: GlossaryTerm[] = exampleTerms.map((term, index) => ({
+    ...term,
+    id: `glossary-term-${index}`
+}));
 
 
 export default function GlosarioPage() {
-    const [terms, setTerms] = useState<GlossaryTerm[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [terms] = useState<GlossaryTerm[]>(glossaryData);
+    const [isLoading, setIsLoading] = useState(false); // Can be removed or kept for optimistic UI
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
-
-    useEffect(() => {
-        const fetchTerms = async () => {
-            setIsLoading(true);
-            try {
-                // Primero, intentar poblar la base de datos si está vacía
-                await populateGlossary();
-
-                // Luego, obtener los términos
-                const glossaryCollectionRef = collection(db, 'glosario_terminos');
-                const q = firestoreQuery(glossaryCollectionRef, orderBy('orden_alfabetico'), orderBy('termino'));
-                const querySnapshot = await getDocs(q);
-                const termsData = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                } as GlossaryTerm));
-                setTerms(termsData);
-            } catch (err: any) {
-                console.error("Error fetching glossary:", err);
-                setError("No se pudieron cargar los términos del glosario. Inténtalo de nuevo más tarde.");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchTerms();
-    }, []);
 
     const categories = useMemo(() => {
         const uniqueCategories = [...new Set(terms.map(term => term.categoria))];
@@ -92,7 +48,7 @@ export default function GlosarioPage() {
                 term.definicion.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 term.palabras_clave?.some(key => key.toLowerCase().includes(searchQuery.toLowerCase()));
             return matchesCategory && matchesSearch;
-        });
+        }).sort((a, b) => a.termino.localeCompare(b.termino));
     }, [terms, searchQuery, selectedCategory]);
 
     const groupedTerms = useMemo(() => {
