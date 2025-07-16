@@ -13,6 +13,10 @@ export interface SampleCrop {
   difficulty: 1 | 2 | 3 | 4 | 5;
   daysToHarvest: number;
   lifeCycle?: { name: string }[];
+  pancoger: boolean;
+  patrimonial: boolean;
+  sembrable_en_casa: 'sí' | 'no' | 'parcialmente';
+  educativo: 'sí' | 'no' | 'parcialmente';
 }
 
 import type { Timestamp } from 'firebase/firestore';
