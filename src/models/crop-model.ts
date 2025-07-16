@@ -3,7 +3,7 @@ export interface SampleCrop {
   id: string;
   name: string;
   description: string;
-  regionSlug: string;
+  regionSlugs: string[];
   imageUrl: string;
   dataAiHint: string;
   estimatedPrice: 'Precio bajo' | 'Precio moderado' | 'Precio alto';
