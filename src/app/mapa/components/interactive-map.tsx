@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from '@/lib/utils';
 import { getUserLocation } from '@/app/mapa/utils/geolocation';
+import Link from 'next/link';
 
 // --- NUEVA IMPORTACIÓN DINÁMICA DE COMPONENTES DE REACT-LEAFLET ---
 import dynamic from 'next/dynamic';
@@ -236,6 +237,13 @@ export function InteractiveMap() {
                                         <div className="font-nunito font-bold">{crop.name}</div>
                                         <div>Dificultad: {crop.difficulty}</div>
                                         <div>Tipo: {crop.type}</div>
+                                        <div className="mt-2">
+                                            <Button asChild variant="link" size="sm" className="p-0 h-auto font-semibold">
+                                                <Link href={`/cultivos?q=${encodeURIComponent(crop.name.split(' (')[0])}`}>
+                                                    Ver ficha
+                                                </Link>
+                                            </Button>
+                                        </div>
                                     </DynamicPopup>
                                 </DynamicMarker>
                             ))}
