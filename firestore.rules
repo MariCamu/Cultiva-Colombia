@@ -4,21 +4,37 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow users to read and write only their own documents in the 'usuarios' collection.
+    // Regla para la colección del glosario
+    // Permite que cualquier usuario (autenticado o no) pueda leer los términos.
+    // Nadie puede escribir, solo se actualiza desde la consola de Firebase o por un admin.
+    match /glosario_terminos/{termId} {
+      allow read: if true;
+      allow write: if false; // Protege contra escritura no autorizada
+    }
+
+    // Reglas para los datos de los usuarios
     match /usuarios/{userId} {
+      // Un usuario solo puede leer y escribir en su propio documento.
+      // `write` incluye create, update, delete.
       allow read, write: if request.auth != null && request.auth.uid == userId;
 
-      // Allow users to manage their own subcollections (crops, alerts, etc.)
-      match /{subcollection}/{docId=**} {
+      // Reglas para la subcolección de cultivos de un usuario
+      match /cultivos_del_usuario/{cropId} {
+        // Un usuario solo puede gestionar (leer, escribir) sus propios cultivos.
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+
+        // Reglas para el diario de cada cultivo
+        match /diario/{logId} {
+          // Un usuario solo puede gestionar las entradas de su propio diario.
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+      
+      // Reglas para las alertas de un usuario
+      match /alertas/{alertId} {
+        // Un usuario solo puede gestionar sus propias alertas.
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
-    
-    // Public collections (if any) can be defined here.
-    // For example, to make 'fichas_tecnicas_cultivos' readable by anyone:
-    // match /fichas_tecnicas_cultivos/{fichaId} {
-    //   allow read: if true;
-    //   allow write: if false; // Or based on admin roles
-    // }
   }
 }
