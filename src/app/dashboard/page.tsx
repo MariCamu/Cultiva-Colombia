@@ -272,19 +272,19 @@ function DashboardContent() {
                 
                 const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
                 const today = startOfDay(new Date());
+                const daysSincePlanted = differenceInDays(today, plantedDate);
                 
                 const harvestDate = addDays(plantedDate, crop.daysToHarvest);
                 const isReadyForHarvest = crop.daysToHarvest > 0 && today >= harvestDate;
 
-                const nextTaskDate = crop.nextTask ? addDays(plantedDate, crop.nextTask.dueInDays) : null;
-                const isTaskDue = nextTaskDate && today >= nextTaskDate;
-
+                const nextTaskIsDue = crop.nextTask && crop.nextTask.dueInDays <= daysSincePlanted;
+                
                 if (isReadyForHarvest) {
                     alertType = 'cosecha';
                     message = `¡Tu cultivo de ${crop.nombre_cultivo_personal} está listo para cosechar!`;
                     taskId = `${crop.id}_harvest`;
                 } 
-                else if (isTaskDue) {
+                else if (nextTaskIsDue) {
                     alertType = crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : 'abono';
                     message = `Es hora de "${crop.nextTask.name}" tu cultivo de ${crop.nombre_cultivo_personal}.`;
                     taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}_${crop.nextTask.dueInDays}`;
@@ -509,9 +509,10 @@ function DashboardContent() {
 
         let currentWaterDay = crop.nextTask.dueInDays;
         for (let i = 0; i < 2; i++) {
+            const waterDate = addDays(plantedDate, currentWaterDay);
             if (currentWaterDay < crop.daysToHarvest) {
                  tasks.push({
-                    date: addDays(plantedDate, currentWaterDay),
+                    date: waterDate,
                     description: `Regar ${crop.nombre_cultivo_personal}`,
                     type: 'riego'
                 });
