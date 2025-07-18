@@ -276,19 +276,19 @@ function DashboardContent() {
                 
                 const harvestDate = addDays(plantedDate, crop.daysToHarvest);
                 const isReadyForHarvest = crop.daysToHarvest > 0 && today >= harvestDate;
-
-                const nextTaskIsDue = crop.nextTask && crop.nextTask.dueInDays <= daysSincePlanted;
                 
+                const isNextTaskDue = crop.nextTask && crop.nextTask.dueInDays <= daysSincePlanted;
+
                 if (isReadyForHarvest) {
                     alertType = 'cosecha';
                     message = `¡Tu cultivo de ${crop.nombre_cultivo_personal} está listo para cosechar!`;
-                    taskId = `${crop.id}_harvest`;
-                } 
-                else if (nextTaskIsDue) {
+                    taskId = `${crop.id}_harvest_${format(harvestDate, 'yyyy-MM-dd')}`;
+                } else if (isNextTaskDue) {
                     alertType = crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : 'abono';
                     message = `Es hora de "${crop.nextTask.name}" tu cultivo de ${crop.nombre_cultivo_personal}.`;
                     taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}_${crop.nextTask.dueInDays}`;
                 }
+
 
                 if (alertType && taskId) {
                     const alertDocRef = doc(alertsCollectionRef, taskId);
@@ -498,31 +498,36 @@ function DashboardContent() {
   const allSimulatedTasks: SimulatedTask[] = userCrops
     .flatMap(crop => {
         if (!crop.fecha_plantacion) return [];
-        const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
+        
         const tasks: SimulatedTask[] = [];
+        const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
 
+        // 1. Add planting task
         tasks.push({
             date: plantedDate,
             description: `Siembra de ${crop.nombre_cultivo_personal}`,
             type: 'siembra'
         });
 
-        let currentWaterDay = crop.nextTask.dueInDays;
+        // 2. Add next 2 watering tasks
+        let nextWaterDay = crop.nextTask.dueInDays;
         for (let i = 0; i < 2; i++) {
-            const waterDate = addDays(plantedDate, currentWaterDay);
-            if (currentWaterDay < crop.daysToHarvest) {
-                 tasks.push({
+             const waterDate = addDays(plantedDate, nextWaterDay);
+             if (nextWaterDay < crop.daysToHarvest) {
+                tasks.push({
                     date: waterDate,
                     description: `Regar ${crop.nombre_cultivo_personal}`,
                     type: 'riego'
                 });
-                currentWaterDay += 2; 
-            }
+                nextWaterDay += 2; // Assuming watering is every 2 days for this simulation
+             }
         }
-
+        
+        // 3. Add harvest task
         if (crop.daysToHarvest > 0) {
+             const harvestDate = addDays(plantedDate, crop.daysToHarvest);
              tasks.push({
-                date: addDays(plantedDate, crop.daysToHarvest),
+                date: harvestDate,
                 description: `Cosechar ${crop.nombre_cultivo_personal}`,
                 type: 'cosecha'
             });
@@ -872,7 +877,8 @@ function DashboardContent() {
                         <div className={`mt-1 w-3 h-3 rounded-full flex-shrink-0 ${
                           task.type === 'riego' ? 'bg-blue-400' :
                           task.type === 'abono' ? 'bg-yellow-400' :
-                          task.type === 'cosecha' ? 'bg-red-400' : 'bg-gray-400'
+                          task.type === 'cosecha' ? 'bg-red-400' :
+                          task.type === 'siembra' ? 'bg-green-400' : 'bg-gray-400'
                         }`}></div>
                         <div className="flex-1">
                           <p className="font-nunito font-semibold">{task.description}</p>
