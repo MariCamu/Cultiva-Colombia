@@ -17,7 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { CropDetailDialog } from './components/crop-detail-dialog';
-import { addDays, format, isToday, isTomorrow, differenceInDays, startOfDay, isPast } from 'date-fns';
+import { addDays, format, isToday, isTomorrow, differenceInDays, startOfDay, isPast, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { db } from '@/lib/firebase';
@@ -87,7 +87,7 @@ const formatHarvestTime = (days: number, progress: number) => {
 
 
 function getTaskBadgeVariant(days: number) {
-  if (days <= 1) return 'destructive';
+  if (days <= 0) return 'destructive';
   if (days <= 3) return 'secondary';
   return 'outline';
 }
@@ -249,6 +249,7 @@ function DashboardContent() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<CropDiseaseRemedySuggestionsOutput | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | undefined>(new Date());
 
 
     // Simulates a daily check for upcoming tasks and generates alerts
@@ -263,15 +264,19 @@ function DashboardContent() {
                 let alertType: UserAlert['type'] | null = null;
                 let message = '';
                 let taskId = '';
+                
+                const plantedDate = new Date(crop.fecha_plantacion.seconds * 1000);
+                const daysSincePlanted = differenceInDays(new Date(), plantedDate);
+                const progress = crop.daysToHarvest > 0 ? Math.min(Math.round((daysSincePlanted / crop.daysToHarvest) * 100), 100) : 0;
 
-                if (crop.progress >= 100) {
+                if (progress >= 100) {
                     alertType = 'cosecha';
                     message = `¡Tu cultivo de ${crop.nombre_cultivo_personal} está listo para cosechar!`;
-                    taskId = `${crop.id}_harvest`;
-                } else if (crop.nextTask && crop.nextTask.dueInDays <= 1) {
+                    taskId = `${crop.id}_harvest`; // Permanent until harvested
+                } else if (crop.nextTask && crop.nextTask.dueInDays <= daysSincePlanted) {
                     alertType = crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : 'abono';
                     message = `Es hora de "${crop.nextTask.name}" tu cultivo de ${crop.nombre_cultivo_personal}.`;
-                    taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}_${new Date().toISOString().split('T')[0]}`;
+                    taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}_${crop.nextTask.dueInDays}`;
                 }
 
                 if (alertType && taskId) {
@@ -318,7 +323,7 @@ function DashboardContent() {
     const unsubscribeCrops = onSnapshot(userCropsQuery, (snapshot) => {
       const cropsData = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
         const data = doc.data();
-        if (!data.fecha_plantacion || typeof data.daysToHarvest !== 'number') {
+        if (!data.fecha_plantacion || typeof data.daysToHarvest !== 'number' || !data.nextTask) {
             return null;
         }
 
@@ -357,6 +362,9 @@ function DashboardContent() {
         const unreadAlerts = allAlerts.filter(alert => !alert.isRead);
         
         setAlerts(unreadAlerts);
+        setIsAlertsLoading(false);
+    }, (error) => {
+        console.error("Error fetching alerts:", error)
         setIsAlertsLoading(false);
     });
 
@@ -429,12 +437,28 @@ function DashboardContent() {
     }
   };
 
-  const handleDismissAlert = async (alertId: string) => {
+  const handleDismissAlert = async (alert: UserAlert) => {
       if (!user) return;
-      const alertRef = doc(db, 'usuarios', user.uid, 'alertas', alertId);
+      const alertRef = doc(db, 'usuarios', user.uid, 'alertas', alert.id);
       try {
-          await updateDoc(alertRef, { isRead: true });
-          toast({ title: "Alerta atendida", description: "¡Buen trabajo!"});
+        const batch = writeBatch(db);
+        batch.update(alertRef, { isRead: true });
+
+        // If it's a watering task, schedule the next one.
+        if (alert.type === 'riego') {
+            const cropRef = doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', alert.cropId);
+            const cropToUpdate = userCrops.find(c => c.id === alert.cropId);
+            if (cropToUpdate) {
+                // Let's assume watering is every 2 days for this example
+                const nextDueInDays = cropToUpdate.nextTask.dueInDays + 2; 
+                 batch.update(cropRef, {
+                    'nextTask.dueInDays': nextDueInDays
+                });
+            }
+        }
+
+        await batch.commit();
+        toast({ title: "Alerta atendida", description: "¡Buen trabajo!"});
       } catch (error) {
           console.error("Error dismissing alert:", error);
           toast({ title: "Error", description: "No se pudo marcar la alerta.", variant: "destructive" });
@@ -466,14 +490,29 @@ function DashboardContent() {
   };
 
   const allSimulatedTasks = userCrops
-    .filter(crop => crop.fecha_plantacion && crop.progress < 100)
-    .map(crop => {
+    .flatMap(crop => {
+        if (!crop.fecha_plantacion) return [];
         const plantedDate = new Date(crop.fecha_plantacion.seconds * 1000);
-        return {
-            date: addDays(plantedDate, crop.nextTask.dueInDays),
-            description: `${crop.nextTask.name} ${crop.nombre_cultivo_personal}`,
-            type: crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : crop.nextTask.name.toLowerCase().includes('abonar') ? 'abono' : 'cosecha'
-        };
+        const tasks = [];
+        // Riego tasks
+        let currentWaterDay = crop.nextTask.dueInDays;
+        while(currentWaterDay < crop.daysToHarvest) {
+            tasks.push({
+                date: addDays(plantedDate, currentWaterDay),
+                description: `Regar ${crop.nombre_cultivo_personal}`,
+                type: 'riego'
+            });
+            currentWaterDay += 2; // Assuming watering every 2 days
+        }
+        // Harvest task
+        if (crop.daysToHarvest > 0) {
+             tasks.push({
+                date: addDays(plantedDate, crop.daysToHarvest),
+                description: `Cosechar ${crop.nombre_cultivo_personal}`,
+                type: 'cosecha'
+            });
+        }
+        return tasks;
     });
 
   const upcomingTasks = allSimulatedTasks
@@ -487,9 +526,7 @@ function DashboardContent() {
     siembra: plantingDates,
     riego: allSimulatedTasks.filter(t => t.type === 'riego').map(t => t.date),
     abono: allSimulatedTasks.filter(t => t.type === 'abono').map(t => t.date),
-    cosecha: userCrops
-        .filter(c => c.progress >= 100)
-        .map(c => addDays(new Date(c.fecha_plantacion.seconds * 1000), c.daysToHarvest))
+    cosecha: allSimulatedTasks.filter(t => t.type === 'cosecha').map(t => t.date)
   };
 
   const calendarModifierStyles = {
@@ -512,6 +549,13 @@ function DashboardContent() {
       index % 2 === 1 ? <strong key={index}>{part}</strong> : part
     );
   };
+  
+  const tasksForSelectedDate = selectedCalendarDate 
+    ? allSimulatedTasks
+        .filter(task => isSameDay(task.date, selectedCalendarDate))
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
+    : [];
+
 
   return (
     <>
@@ -549,6 +593,10 @@ function DashboardContent() {
                 userCrops.map(crop => {
                   const NextTaskIcon = ICONS[crop.nextTask.iconName] || Leaf;
                   const isReadyForHarvest = crop.progress >= 100;
+                  const plantedDate = new Date(crop.fecha_plantacion.seconds * 1000);
+                  const daysSincePlanted = differenceInDays(new Date(), plantedDate);
+                  const daysUntilNextTask = crop.nextTask.dueInDays - daysSincePlanted;
+
                   return (
                     <Card key={crop.id} className="grid md:grid-cols-3 gap-4 p-4 items-center bg-card/50">
                       <div className="md:col-span-1">
@@ -570,8 +618,8 @@ function DashboardContent() {
                               )}
                             </div>
                             {!isReadyForHarvest && 
-                                <Badge variant={getTaskBadgeVariant(crop.nextTask.dueInDays)}>
-                                  {crop.nextTask.dueInDays === 0 ? 'Hoy' : `En ${crop.nextTask.dueInDays} días`}
+                                <Badge variant={getTaskBadgeVariant(daysUntilNextTask)}>
+                                  {daysUntilNextTask <= 0 ? 'Hoy' : `En ${daysUntilNextTask} días`}
                                 </Badge>
                             }
                         </div>
@@ -668,9 +716,9 @@ function DashboardContent() {
                                    {alert.date ? format(new Date(alert.date.seconds * 1000), 'PPp', { locale: es }) : 'Ahora'}
                                 </p>
                            </div>
-                           <Button size="sm" variant="outline" onClick={() => handleDismissAlert(alert.id)}>
+                           <Button size="sm" variant="outline" onClick={() => handleDismissAlert(alert)}>
                                <CheckCheck className="mr-2 h-4 w-4" />
-                               Marcar como Leída
+                               Marcar como Hecha
                            </Button>
                         </div>
                     )
@@ -761,7 +809,8 @@ function DashboardContent() {
                 <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-x-6 gap-y-4 items-start p-2">
                     <Calendar
                         mode="single"
-                        selected={startOfDay(new Date())}
+                        selected={selectedCalendarDate}
+                        onSelect={setSelectedCalendarDate}
                         modifiers={calendarModifiers}
                         modifiersStyles={calendarModifierStyles}
                         className="p-0"
@@ -778,25 +827,49 @@ function DashboardContent() {
                     </div>
                 </div>
               
-              <div className="border-t pt-4">
-                <h4 className="font-nunito font-semibold text-sm mb-2">Próximas Tareas:</h4>
-                <div className="space-y-3 mt-2">
-                  {upcomingTasks.slice(0, 5).map((task, i) => (
-                    <div key={i} className="flex items-start gap-3 text-sm">
-                      <div className={`mt-1 w-3 h-3 rounded-full flex-shrink-0 ${
-                        task.type === 'riego' ? 'bg-blue-400' :
-                        task.type === 'abono' ? 'bg-yellow-400' :
-                        task.type === 'cosecha' ? 'bg-red-400' : 'bg-gray-400'
-                      }`}></div>
-                      <div className="flex-1">
-                        <p className="font-nunito font-semibold">{task.description}</p>
-                        <p className="text-xs text-muted-foreground">{formatRelativeDate(task.date)}</p>
-                      </div>
-                    </div>
-                  ))}
-                  {upcomingTasks.length === 0 && <p className="text-sm text-muted-foreground">¡Sin tareas próximas!</p>}
+                <div className="border-t pt-4">
+                  <h4 className="font-nunito font-semibold text-sm mb-2">
+                      Tareas para: {selectedCalendarDate ? format(selectedCalendarDate, 'EEEE d MMM', { locale: es }) : 'Selecciona una fecha'}
+                  </h4>
+                  <div className="space-y-3 mt-2">
+                    {tasksForSelectedDate.length > 0 ? (
+                        tasksForSelectedDate.map((task, i) => (
+                          <div key={i} className="flex items-start gap-3 text-sm">
+                            <div className={`mt-1 w-3 h-3 rounded-full flex-shrink-0 ${
+                              task.type === 'riego' ? 'bg-blue-400' :
+                              task.type === 'abono' ? 'bg-yellow-400' :
+                              task.type === 'cosecha' ? 'bg-red-400' : 'bg-gray-400'
+                            }`}></div>
+                            <div className="flex-1">
+                              <p className="font-nunito font-semibold">{task.description}</p>
+                            </div>
+                          </div>
+                        ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No hay tareas programadas para este día.</p>
+                    )}
+                  </div>
                 </div>
-              </div>
+
+                <div className="border-t pt-4">
+                  <h4 className="font-nunito font-semibold text-sm mb-2">Próximas Tareas (5 siguientes):</h4>
+                  <div className="space-y-3 mt-2">
+                    {upcomingTasks.slice(0, 5).map((task, i) => (
+                      <div key={i} className="flex items-start gap-3 text-sm">
+                        <div className={`mt-1 w-3 h-3 rounded-full flex-shrink-0 ${
+                          task.type === 'riego' ? 'bg-blue-400' :
+                          task.type === 'abono' ? 'bg-yellow-400' :
+                          task.type === 'cosecha' ? 'bg-red-400' : 'bg-gray-400'
+                        }`}></div>
+                        <div className="flex-1">
+                          <p className="font-nunito font-semibold">{task.description}</p>
+                          <p className="text-xs text-muted-foreground">{formatRelativeDate(task.date)}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {upcomingTasks.length === 0 && <p className="text-sm text-muted-foreground">¡Sin tareas próximas!</p>}
+                  </div>
+                </div>
             </CardContent>
           </Card>
 
@@ -865,4 +938,3 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
-
