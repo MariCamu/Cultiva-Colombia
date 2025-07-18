@@ -264,45 +264,43 @@ function DashboardContent() {
         try {
             const batch = writeBatch(db);
             const alertsCollectionRef = collection(db, 'usuarios', user.uid, 'alertas');
+            const today = startOfDay(new Date());
 
             for (const crop of crops) {
-                let alertType: UserAlert['type'] | null = null;
-                let message = '';
-                let taskId = '';
-                
                 const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
-                const today = startOfDay(new Date());
-                const daysSincePlanted = differenceInDays(today, plantedDate);
                 
-                const harvestDate = addDays(plantedDate, crop.daysToHarvest);
-                const isReadyForHarvest = crop.daysToHarvest > 0 && today >= harvestDate;
-                
-                const isNextTaskDue = crop.nextTask && crop.nextTask.dueInDays <= daysSincePlanted;
-
-                if (isReadyForHarvest) {
-                    alertType = 'cosecha';
-                    message = `¡Tu cultivo de ${crop.nombre_cultivo_personal} está listo para cosechar!`;
-                    taskId = `${crop.id}_harvest_${format(harvestDate, 'yyyy-MM-dd')}`;
-                } else if (isNextTaskDue) {
-                    alertType = crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : 'abono';
-                    message = `Es hora de "${crop.nextTask.name}" tu cultivo de ${crop.nombre_cultivo_personal}.`;
-                    taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}_${crop.nextTask.dueInDays}`;
+                // Check for harvest
+                if (crop.daysToHarvest > 0) {
+                    const harvestDate = addDays(plantedDate, crop.daysToHarvest);
+                    if (today >= harvestDate) {
+                        const taskId = `${crop.id}_harvest_${format(harvestDate, 'yyyy-MM-dd')}`;
+                        const alertDocRef = doc(alertsCollectionRef, taskId);
+                        const alertDoc = await getDoc(alertDocRef);
+                        if (!alertDoc.exists()) {
+                            batch.set(alertDocRef, {
+                                cropId: crop.id, cropName: crop.nombre_cultivo_personal,
+                                message: `¡Tu cultivo de ${crop.nombre_cultivo_personal} está listo para cosechar!`,
+                                type: 'cosecha', date: serverTimestamp(), isRead: false,
+                            });
+                        }
+                    }
                 }
 
-
-                if (alertType && taskId) {
-                    const alertDocRef = doc(alertsCollectionRef, taskId);
-                    const alertDoc = await getDoc(alertDocRef);
-                    
-                    if (!alertDoc.exists()) {
-                        batch.set(alertDocRef, {
-                            cropId: crop.id,
-                            cropName: crop.nombre_cultivo_personal,
-                            message: message,
-                            type: alertType,
-                            date: serverTimestamp(),
-                            isRead: false,
-                        });
+                // Check for next task (riego/abono)
+                if (crop.nextTask) {
+                    const nextTaskDate = addDays(plantedDate, crop.nextTask.dueInDays);
+                    if (today >= nextTaskDate) {
+                        const taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}_${crop.nextTask.dueInDays}`;
+                        const alertDocRef = doc(alertsCollectionRef, taskId);
+                        const alertDoc = await getDoc(alertDocRef);
+                        if (!alertDoc.exists()) {
+                             const alertType = crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : 'abono';
+                             batch.set(alertDocRef, {
+                                cropId: crop.id, cropName: crop.nombre_cultivo_personal,
+                                message: `Es hora de "${crop.nextTask.name}" tu cultivo de ${crop.nombre_cultivo_personal}.`,
+                                type: alertType, date: serverTimestamp(), isRead: false,
+                            });
+                        }
                     }
                 }
             }
@@ -502,28 +500,25 @@ function DashboardContent() {
         const tasks: SimulatedTask[] = [];
         const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
 
-        // 1. Add planting task
         tasks.push({
             date: plantedDate,
             description: `Siembra de ${crop.nombre_cultivo_personal}`,
             type: 'siembra'
         });
 
-        // 2. Add next 2 watering tasks
-        let nextWaterDay = crop.nextTask.dueInDays;
+        // Generate next 2 watering tasks
+        let currentDueDay = crop.nextTask.dueInDays;
         for (let i = 0; i < 2; i++) {
-             const waterDate = addDays(plantedDate, nextWaterDay);
-             if (nextWaterDay < crop.daysToHarvest) {
+            if (currentDueDay < crop.daysToHarvest) {
                 tasks.push({
-                    date: waterDate,
+                    date: addDays(plantedDate, currentDueDay),
                     description: `Regar ${crop.nombre_cultivo_personal}`,
                     type: 'riego'
                 });
-                nextWaterDay += 2; // Assuming watering is every 2 days for this simulation
-             }
+                currentDueDay += 2; // Assuming watering is every 2 days for this simulation
+            }
         }
         
-        // 3. Add harvest task
         if (crop.daysToHarvest > 0) {
              const harvestDate = addDays(plantedDate, crop.daysToHarvest);
              tasks.push({
@@ -536,7 +531,11 @@ function DashboardContent() {
     });
 
   const upcomingTasks = allSimulatedTasks
-    .filter(task => !isPast(task.date) || isToday(task.date))
+    .filter(task => {
+        const today = startOfDay(new Date());
+        const thirtyDaysFromNow = addDays(today, 30);
+        return (isToday(task.date) || task.date > today) && task.date <= thirtyDaysFromNow;
+    })
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 
   const calendarModifiers = {
@@ -870,7 +869,7 @@ function DashboardContent() {
                 </div>
 
                 <div className="border-t pt-4">
-                  <h4 className="font-nunito font-semibold text-sm mb-2">Próximas Tareas (5 siguientes):</h4>
+                  <h4 className="font-nunito font-semibold text-sm mb-2">Próximas Tareas (en 30 días):</h4>
                   <div className="space-y-3 mt-2">
                     {upcomingTasks.slice(0, 5).map((task, i) => (
                       <div key={i} className="flex items-start gap-3 text-sm">
@@ -886,7 +885,7 @@ function DashboardContent() {
                         </div>
                       </div>
                     ))}
-                    {upcomingTasks.length === 0 && <p className="text-sm text-muted-foreground">¡Sin tareas próximas!</p>}
+                    {upcomingTasks.length === 0 && <p className="text-sm text-muted-foreground">¡Sin tareas próximas en los siguientes 30 días!</p>}
                   </div>
                 </div>
             </CardContent>
