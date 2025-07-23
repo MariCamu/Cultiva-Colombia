@@ -66,7 +66,7 @@ export default function GlosarioPage() {
         <div className="space-y-8">
             <div className="text-center">
                 <h1 className="text-3xl font-nunito font-bold tracking-tight text-foreground sm:text-4xl">
-                    Glosario Agropecuario: ¡Aprende los Términos Clave! 📚
+                    Glosario: ¡Aprende los Términos Clave! 📚
                 </h1>
                 <p className="mt-2 max-w-2xl mx-auto text-lg text-muted-foreground">
                     Descubre el significado de las palabras esenciales para convertirte en un experto agricultor.
