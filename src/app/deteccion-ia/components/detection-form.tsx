@@ -91,27 +91,47 @@ export function DetectionForm() {
     }
   };
 
+  const processFile = (file: File | null) => {
+    if (!file) {
+      setFile(null);
+      return;
+    }
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Tipo de archivo no permitido. Sube PNG, JPG o WEBP.');
+      setFile(null);
+      return;
+    }
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      setError('El archivo es demasiado grande. Máximo 5MB.');
+      setFile(null);
+      return;
+    }
+    setFile(file);
+    setError(null);
+    setAnalysisResult(null);
+    setRemedySuggestions(null);
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
-      if (!allowedTypes.includes(selectedFile.type)) {
-        setError('Tipo de archivo no permitido. Sube PNG, JPG o WEBP.');
-        setFile(null);
-        return;
-      }
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (selectedFile.size > maxSize) {
-        setError('El archivo es demasiado grande. Máximo 5MB.');
-        setFile(null);
-        return;
-      }
-      setFile(selectedFile);
-      setError(null);
-      setAnalysisResult(null);
-      setRemedySuggestions(null);
-    } else {
-      setFile(null);
+    processFile(selectedFile || null);
+  };
+  
+  const handlePaste = (event: React.ClipboardEvent) => {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if (file) {
+                processFile(file);
+                event.preventDefault(); // Prevent pasting the image into any other element
+                break; // Stop after finding the first image
+            }
+        }
     }
   };
   
@@ -127,14 +147,14 @@ export function DetectionForm() {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-xl bg-card">
+    <Card className="w-full max-w-2xl mx-auto shadow-xl bg-card" onPaste={handlePaste}>
       <CardHeader>
         <CardTitle className="text-2xl flex items-center gap-2">
             <Microscope className="h-7 w-7 text-primary" />
             Análisis IA de Plantas
         </CardTitle>
         <CardDescription>
-          Sube una imagen de tu planta para identificarla y conocer su estado de salud.
+          Sube, arrastra o pega una imagen de tu planta para identificarla y conocer su estado de salud.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -152,6 +172,7 @@ export function DetectionForm() {
               className="file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 file:border-0 file:rounded-md file:px-3 file:py-1.5"
               disabled={isLoading}
             />
+            <p className="text-xs text-center text-muted-foreground mt-2">O arrastra y suelta la imagen aquí, o pégala desde el portapapeles.</p>
           </div>
 
           {previewUrl && (
