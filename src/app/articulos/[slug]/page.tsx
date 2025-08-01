@@ -1,4 +1,7 @@
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import type { Article } from '@/models/article-model';
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
@@ -8,21 +11,12 @@ import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ArticlePageProps {
   params: {
     slug: string;
   };
-}
-
-// This function tells Next.js which paths to pre-render
-export async function generateStaticParams() {
-  const articlesCollectionRef = collection(db, 'articulos');
-  const querySnapshot = await getDocs(articlesCollectionRef);
-  
-  return querySnapshot.docs.map(doc => ({
-    slug: doc.data().slug,
-  }));
 }
 
 async function getArticle(slug: string): Promise<Article | null> {
@@ -50,11 +44,43 @@ async function getArticle(slug: string): Promise<Article | null> {
   };
 }
 
-export default async function ArticlePage({ params }: ArticlePageProps) {
-  const article = await getArticle(params.slug);
+export default function ArticlePage({ params }: ArticlePageProps) {
+  const [article, setArticle] = useState<Article | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchArticle = async () => {
+      setIsLoading(true);
+      const fetchedArticle = await getArticle(params.slug);
+      if (!fetchedArticle) {
+        notFound();
+      } else {
+        setArticle(fetchedArticle);
+      }
+      setIsLoading(false);
+    };
+
+    fetchArticle();
+  }, [params.slug]);
+
+  if (isLoading) {
+    return (
+        <article className="max-w-4xl mx-auto">
+            <Skeleton className="h-8 w-48 mb-4" />
+            <Skeleton className="h-12 w-3/4 mb-6" />
+            <Skeleton className="h-6 w-full mb-8" />
+            <Skeleton className="w-full h-[500px] rounded-xl mb-8" />
+            <div className="space-y-4">
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-5/6" />
+                <Skeleton className="h-6 w-full" />
+            </div>
+        </article>
+    );
+  }
 
   if (!article) {
-    notFound();
+    return null; // notFound() is called in useEffect, this is for type safety
   }
 
   return (
@@ -99,6 +125,3 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     </article>
   );
 }
-
-// Add a revalidate option to fetch fresh data periodically
-export const revalidate = 60; // Re-generate the page every 60 seconds
