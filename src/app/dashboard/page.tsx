@@ -272,7 +272,7 @@ function DashboardContent() {
                 // Check for harvest
                 if (crop.daysToHarvest > 0) {
                     const harvestDate = addDays(plantedDate, crop.daysToHarvest);
-                    if (today >= harvestDate) {
+                    if (isPast(harvestDate) || isToday(harvestDate)) {
                         const taskId = `${crop.id}_harvest_${format(harvestDate, 'yyyy-MM-dd')}`;
                         const alertDocRef = doc(alertsCollectionRef, taskId);
                         const alertDoc = await getDoc(alertDocRef);
@@ -289,7 +289,7 @@ function DashboardContent() {
                 // Check for next task (riego/abono)
                 if (crop.nextTask) {
                     const nextTaskDate = addDays(plantedDate, crop.nextTask.dueInDays);
-                    if (today >= nextTaskDate) {
+                     if (isPast(nextTaskDate) || isToday(nextTaskDate)) {
                         const taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}_${crop.nextTask.dueInDays}`;
                         const alertDocRef = doc(alertsCollectionRef, taskId);
                         const alertDoc = await getDoc(alertDocRef);
@@ -452,12 +452,21 @@ function DashboardContent() {
         if (alert.type === 'riego') {
             const cropRef = doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', alert.cropId);
             const cropToUpdate = userCrops.find(c => c.id === alert.cropId);
+
             if (cropToUpdate) {
+                // Schedule next watering 2 days from today
                 const plantedDate = startOfDay(new Date(cropToUpdate.fecha_plantacion.seconds * 1000));
                 const daysSincePlanted = differenceInDays(startOfDay(new Date()), plantedDate);
-                const nextDueInDays = daysSincePlanted + 2; // Schedule next watering 2 days from today
-                batch.update(cropRef, {
-                    'nextTask.dueInDays': nextDueInDays
+                const nextDueInDays = daysSincePlanted + 2;
+                batch.update(cropRef, { 'nextTask.dueInDays': nextDueInDays });
+
+                // Add automatic log entry to journal
+                const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', alert.cropId, 'diario');
+                const logDocRef = doc(logCollectionRef); // Create a new doc with a random ID
+                batch.set(logDocRef, {
+                    type: 'water',
+                    content: 'Riego registrado.',
+                    date: serverTimestamp(),
                 });
             }
         }

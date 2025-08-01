@@ -87,7 +87,7 @@ interface Crop {
 }
 
 const mapCropsData: Crop[] = [
-    { id: 'frijol_andino', name: 'Fríjol', difficulty: 'easy', type: 'Leguminosa', space: 'Maceta grande', position: [4.8, -75.7], icon: LeafIcon, regionSlugs: ['andina'] },
+    { id: 'frijol_andino', name: 'Fríjol',difficulty: 'easy', type: 'Leguminosa', space: 'Maceta grande', position: [4.8, -75.7], icon: LeafIcon, regionSlugs: ['andina'] },
     { id: 'maiz_caribe', name: 'Maíz', difficulty: 'easy', type: 'Grano', space: 'Jardín', position: [3.4, -76.5], icon: CornIcon, regionSlugs: ['caribe', 'andina'] },
     { id: 'papa_andina', name: 'Papa', difficulty: 'easy', type: 'Tubérculo', space: 'Maceta grande', position: [5.5, -73.3], icon: LeafIcon, regionSlugs: ['andina'] },
     { id: 'mango_caribe', name: 'Mango', difficulty: 'medium', type: 'Fruta', space: 'Jardín', position: [11.0, -74.2], icon: LeafIcon, regionSlugs: ['caribe'] },
