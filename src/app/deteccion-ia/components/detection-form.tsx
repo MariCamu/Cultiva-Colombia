@@ -4,13 +4,15 @@
 import { useState, type FormEvent, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { analyzePlantImage, type AnalyzePlantImageOutput } from '@/ai/flows/detect-crop-disease';
+import { getCropDiseaseRemedySuggestions, type CropDiseaseRemedySuggestionsOutput } from '@/ai/flows/get-remedy-suggestions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { UploadCloud, AlertCircle, CheckCircle2, List, Sprout, ShieldCheck, ShieldAlert, FlaskConical, FileQuestion, Microscope } from 'lucide-react';
+import { UploadCloud, AlertCircle, CheckCircle2, List, Sprout, ShieldCheck, ShieldAlert, FlaskConical, FileQuestion, Microscope, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const fileToDataUri = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -21,11 +23,20 @@ const fileToDataUri = (file: File): Promise<string> => {
   });
 };
 
+const formatRemedyDescription = (text: string) => {
+    const parts = text.split(/\*\*(.*?)\*\*/g);
+    return parts.map((part, index) =>
+      index % 2 === 1 ? <strong key={index} className="text-primary">{part}</strong> : part
+    );
+};
+
 export function DetectionForm() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGettingRemedies, setIsGettingRemedies] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalyzePlantImageOutput | null>(null);
+  const [remedySuggestions, setRemedySuggestions] = useState<CropDiseaseRemedySuggestionsOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileInputKey, setFileInputKey] = useState<number>(Date.now());
 
@@ -48,11 +59,30 @@ export function DetectionForm() {
     setIsLoading(true);
     setError(null);
     setAnalysisResult(null);
+    setRemedySuggestions(null);
 
     try {
       const photoDataUri = await fileToDataUri(file);
       const result = await analyzePlantImage({ photoDataUri });
       setAnalysisResult(result);
+
+      // If a problem is found, get remedy suggestions
+      if (result.identification.isPlant && result.health && !result.health.isHealthy && result.health.problems && result.health.problems.length > 0) {
+        setIsGettingRemedies(true);
+        try {
+            const remedies = await getCropDiseaseRemedySuggestions({
+                cropName: result.identification.commonName || 'la planta',
+                diseaseName: result.health.problems[0].name
+            });
+            setRemedySuggestions(remedies);
+        } catch (remedyError) {
+            console.error("Error getting remedies:", remedyError);
+            // Non-fatal, we can still show the main diagnosis
+        } finally {
+            setIsGettingRemedies(false);
+        }
+      }
+
     } catch (e) {
       console.error(e);
       setError('Ocurrió un error durante el análisis. Por favor, inténtelo de nuevo.');
@@ -79,6 +109,7 @@ export function DetectionForm() {
       setFile(selectedFile);
       setError(null);
       setAnalysisResult(null);
+      setRemedySuggestions(null);
     } else {
       setFile(null);
     }
@@ -88,8 +119,10 @@ export function DetectionForm() {
     setFile(null);
     setPreviewUrl(null);
     setAnalysisResult(null);
+    setRemedySuggestions(null);
     setError(null);
     setIsLoading(false);
+    setIsGettingRemedies(false);
     setFileInputKey(Date.now()); 
   };
 
@@ -221,7 +254,7 @@ export function DetectionForm() {
                         <div className="mt-4 font-sans">
                             <h4 className="font-nunito font-semibold text-md mb-1 flex items-center gap-2">
                                 <List className="h-5 w-5 text-primary" />
-                                Sugerencias:
+                                Sugerencias Generales:
                             </h4>
                             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground pl-2">
                             {analysisResult.health.suggestions.map((suggestion, index) => (
@@ -235,6 +268,30 @@ export function DetectionForm() {
                          )}
                     </Card>
                   )}
+
+                   {isGettingRemedies && 
+                    <div className="space-y-2 pt-2">
+                      <Skeleton className="h-4 w-1/3" />
+                      <Skeleton className="h-16 w-full" />
+                    </div>
+                   }
+
+                   {remedySuggestions && remedySuggestions.remedySuggestions.length > 0 && (
+                      <Card className="p-4 bg-primary/10 border-primary/20">
+                          <CardTitle className="text-lg mb-2 flex items-center gap-2 font-nunito font-bold text-primary">
+                              <Sparkles className="h-5 w-5" />
+                              Sugerencias de Remedios Recomendados
+                          </CardTitle>
+                          <div className="space-y-3 font-sans text-sm">
+                            {remedySuggestions.remedySuggestions.map((remedy, index) => (
+                              <div key={index}>
+                                <h4 className="font-nunito font-bold text-base">{remedy.title}</h4>
+                                <p className="text-muted-foreground">{formatRemedyDescription(remedy.description)}</p>
+                              </div>
+                            ))}
+                          </div>
+                      </Card>
+                   )}
                 </>
               )}
             </CardContent>
