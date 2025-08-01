@@ -79,8 +79,8 @@ export default function HomePage() {
           </p>
           
           <div className="mt-8 w-full max-w-xl mx-auto">
-            <form action="/cultivos" method="GET" className="flex w-full items-center space-x-2">
-                <div className="relative flex-grow">
+            <form action="/cultivos" method="GET" className="flex flex-col sm:flex-row w-full items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                <div className="relative flex-grow w-full">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
                     type="search"
@@ -92,7 +92,8 @@ export default function HomePage() {
                 <Button 
                   type="submit" 
                   size="lg"
-                  variant="default" // Explicitly primary
+                  variant="default"
+                  className="w-full sm:w-auto"
                 >
                   Explorar Cultivos
                 </Button>

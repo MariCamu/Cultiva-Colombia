@@ -594,9 +594,9 @@ function DashboardContent() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
         
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-6 lg:space-y-8">
           
           <Card className="shadow-lg">
             <CardHeader>
@@ -812,7 +812,7 @@ function DashboardContent() {
 
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-6 lg:space-y-8">
             <Card>
                 <CardHeader>
                     <CardTitle className="text-xl">Resumen Anual</CardTitle>
@@ -831,7 +831,7 @@ function DashboardContent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
-                <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-x-6 gap-y-4 items-start p-2">
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-x-6 gap-y-4 items-start p-2">
                     <Calendar
                         mode="single"
                         selected={selectedCalendarDate}

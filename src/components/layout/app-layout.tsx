@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Search, Bot, LogOut, LayoutDashboard, UserPlus, LogIn, BookText } from 'lucide-react'; 
@@ -15,11 +15,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/auth-context';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { ThemeToggle } from './theme-toggle';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 const navItems = [
   { href: '/', label: 'Inicio', icon: Home, protected: false },
@@ -45,6 +46,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading } = useAuth();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -58,11 +60,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const displayedNavItems = navItems.filter(item => !item.protected || (item.protected && user));
 
   return (
+    <TooltipProvider>
     <div className="flex min-h-screen w-full flex-col">
       <header className="sticky top-0 z-50 flex h-16 items-center border-b bg-background/95 px-4 shadow-sm backdrop-blur-sm md:px-6">
         <div className="flex w-full items-center justify-between gap-4">
           <div className="flex items-center gap-2 sm:gap-4">
-            <Sheet>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="shrink-0 md:hidden text-foreground hover:bg-primary/20">
                   <Menu className="h-5 w-5" />
@@ -79,6 +82,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     <Link
                       key={item.label}
                       href={item.href}
+                      onClick={() => setIsSheetOpen(false)}
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-nunito font-medium transition-all hover:bg-muted hover:text-primary",
                         (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href)))
@@ -91,7 +95,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     </Link>
                   ))}
                    {user && (
-                    <Button variant="ghost" onClick={handleSignOut} className="justify-start gap-3 px-3 py-3 text-base font-nunito font-medium text-muted-foreground hover:bg-muted hover:text-primary">
+                    <Button variant="ghost" onClick={() => { handleSignOut(); setIsSheetOpen(false); }} className="justify-start gap-3 px-3 py-3 text-base font-nunito font-medium text-muted-foreground hover:bg-muted hover:text-primary">
                       <LogOut className="h-5 w-5" />
                       Cerrar Sesión
                     </Button>
@@ -131,25 +135,49 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <ThemeToggle />
             {!loading && (
               user ? (
-                <Button onClick={handleSignOut} variant="outline" size="sm">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Cerrar Sesión
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Button onClick={handleSignOut} variant="outline" size="icon">
+                           <LogOut className="h-4 w-4" />
+                           <span className="sr-only">Cerrar Sesión</span>
+                         </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Cerrar Sesión</p>
+                    </TooltipContent>
+                </Tooltip>
               ) : (
-                <>
-                  <Button asChild variant="ghost" size="sm">
-                    <Link href="/login">
-                      <LogIn className="mr-2 h-4 w-4" />
-                      Iniciar Sesión
-                    </Link>
-                  </Button>
-                  <Button asChild size="sm">
-                    <Link href="/signup">
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Registrarse
-                    </Link>
-                  </Button>
-                </>
+                <div className="flex items-center gap-2">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex">
+                                <Link href="/login">
+                                    <LogIn className="h-5 w-5" />
+                                    <span className="sr-only">Iniciar Sesión</span>
+                                </Link>
+                            </Button>
+                        </TooltipTrigger>
+                         <TooltipContent><p>Iniciar Sesión</p></TooltipContent>
+                    </Tooltip>
+                   <Button asChild size="sm" className="sm:hidden">
+                       <Link href="/login">Entrar</Link>
+                   </Button>
+
+                   <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button asChild size="icon" className="hidden sm:inline-flex">
+                                <Link href="/signup">
+                                <UserPlus className="h-5 w-5" />
+                                <span className="sr-only">Registrarse</span>
+                                </Link>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Registrarse</p></TooltipContent>
+                    </Tooltip>
+                    <Button asChild size="sm" className="hidden sm:inline-flex">
+                       <Link href="/signup">Registrarse</Link>
+                   </Button>
+                </div>
               )
             )}
           </div>
@@ -173,5 +201,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </footer>
       <Toaster />
     </div>
+    </TooltipProvider>
   );
 }
