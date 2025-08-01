@@ -282,7 +282,7 @@ export function DetectionForm() {
                               <Sparkles className="h-5 w-5" />
                               Sugerencias de Remedios Recomendados
                           </CardTitle>
-                          <div className="space-y-3 font-sans text-sm">
+                          <div className="space-y-4 font-sans text-sm">
                             {remedySuggestions.remedySuggestions.map((remedy, index) => (
                               <div key={index}>
                                 <h4 className="font-nunito font-bold text-base">{remedy.title}</h4>
