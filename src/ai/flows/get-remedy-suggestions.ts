@@ -1,4 +1,5 @@
-// 'use server';
+
+'use server';
 
 /**
  * @fileOverview Provides remedy suggestions for crop diseases based on a diagnosis.
@@ -7,8 +8,6 @@
  * - CropDiseaseRemedySuggestionsInput - The input type for the getCropDiseaseRemedySuggestions function.
  * - CropDiseaseRemedySuggestionsOutput - The return type for the getCropDiseaseRemedySuggestions function.
  */
-
-'use server';
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
