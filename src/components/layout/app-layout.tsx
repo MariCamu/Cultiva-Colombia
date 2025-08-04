@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useAuth } from '@/context/auth-context';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { ThemeToggle } from './theme-toggle';
@@ -46,6 +47,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading } = useAuth();
+  const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -146,35 +148,37 @@ export function AppLayout({ children }: { children: ReactNode }) {
                         <p>Cerrar Sesión</p>
                     </TooltipContent>
                 </Tooltip>
+              ) : isMobile ? (
+                  <div className="flex items-center gap-2">
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                              <Button asChild variant="ghost" size="icon">
+                                  <Link href="/login">
+                                      <LogIn className="h-5 w-5" />
+                                      <span className="sr-only">Iniciar Sesión</span>
+                                  </Link>
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Iniciar Sesión</p></TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                              <Button asChild size="icon">
+                                  <Link href="/signup">
+                                  <UserPlus className="h-5 w-5" />
+                                  <span className="sr-only">Registrarse</span>
+                                  </Link>
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Registrarse</p></TooltipContent>
+                      </Tooltip>
+                  </div>
               ) : (
                 <div className="flex items-center gap-2">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex">
-                                <Link href="/login">
-                                    <LogIn className="h-5 w-5" />
-                                    <span className="sr-only">Iniciar Sesión</span>
-                                </Link>
-                            </Button>
-                        </TooltipTrigger>
-                         <TooltipContent><p>Iniciar Sesión</p></TooltipContent>
-                    </Tooltip>
-                   <Button asChild size="sm" className="sm:hidden">
-                       <Link href="/login">Entrar</Link>
+                   <Button asChild size="sm" variant="ghost">
+                       <Link href="/login">Iniciar Sesión</Link>
                    </Button>
-
-                   <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button asChild size="icon" className="hidden sm:inline-flex">
-                                <Link href="/signup">
-                                <UserPlus className="h-5 w-5" />
-                                <span className="sr-only">Registrarse</span>
-                                </Link>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent><p>Registrarse</p></TooltipContent>
-                    </Tooltip>
-                    <Button asChild size="sm" className="hidden sm:inline-flex">
+                   <Button asChild size="sm">
                        <Link href="/signup">Registrarse</Link>
                    </Button>
                 </div>
