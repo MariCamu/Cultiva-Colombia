@@ -268,9 +268,10 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid md:grid-cols-3 gap-6 px-6 pb-6 flex-grow overflow-hidden">
+        <div className="flex-grow grid md:grid-cols-3 gap-6 px-6 pb-6 overflow-hidden">
             {/* Left Column */}
-            <div className="md:col-span-1 flex flex-col gap-6 overflow-y-auto p-1">
+            <ScrollArea className="md:col-span-1 h-full">
+              <div className="flex flex-col gap-6 pr-4">
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
                     <Image
                         src={crop.imageUrl}
@@ -295,7 +296,8 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                         </div>
                     </CardContent>
                 </Card>
-            </div>
+              </div>
+            </ScrollArea>
 
             {/* Right Column */}
             <div className="md:col-span-2 flex flex-col h-full overflow-hidden">
@@ -408,6 +410,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                     </TabsContent>
 
                     <TabsContent value="datasheet" className="flex-grow overflow-auto mt-4">
+                       <ScrollArea className="h-full pr-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-xl">Ficha Técnica (Ejemplo)</CardTitle>
@@ -422,6 +425,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                 <p><strong>Suelo:</strong> Rico en materia orgánica, bien drenado.</p>
                             </CardContent>
                         </Card>
+                       </ScrollArea>
                     </TabsContent>
                 </Tabs>
             </div>

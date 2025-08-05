@@ -623,18 +623,18 @@ function DashboardContent() {
                   const isReadyForHarvest = crop.progress >= 100;
 
                   return (
-                    <Card key={crop.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 items-center bg-card/50">
-                      <div className="md:col-span-1">
+                    <Card key={crop.id} className="flex flex-col md:flex-row gap-4 p-4 items-center bg-card/50">
+                      <div className="w-full md:w-1/3 flex-shrink-0">
                         <Image
                           src={crop.imageUrl}
                           alt={crop.nombre_cultivo_personal}
                           width={400}
                           height={300}
-                          className="rounded-lg object-cover aspect-[4/3]"
+                          className="rounded-lg object-cover aspect-[4/3] w-full"
                           data-ai-hint={crop.dataAiHint}
                         />
                       </div>
-                      <div className="md:col-span-2 space-y-3">
+                      <div className="w-full md:w-2/3 flex flex-col space-y-3">
                         <div className="flex justify-between items-start">
                             <div>
                               <h3 className="font-nunito font-bold text-xl">{crop.nombre_cultivo_personal}</h3>
@@ -652,8 +652,8 @@ function DashboardContent() {
                           <Label className="text-xs font-nunito font-semibold">Progreso a cosecha ({formatHarvestTime(crop.daysToHarvest, crop.progress)})</Label>
                           <Progress value={crop.progress} className="h-3 mt-1" />
                         </div>
-                        <p className="text-sm font-sans italic text-muted-foreground">Última nota: "{crop.lastNote}"</p>
-                        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 pt-2 border-t">
+                        <p className="text-sm font-sans italic text-muted-foreground flex-grow">Última nota: "{crop.lastNote}"</p>
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 pt-2 border-t mt-auto">
                           {isReadyForHarvest ? (
                              <Button onClick={() => setHarvestingCrop(crop)} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold">
                                 <Leaf className="mr-2 h-4 w-4" />

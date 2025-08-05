@@ -8,6 +8,7 @@ import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Search, Bot, LogOut, Layout
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import {
   Sheet,
   SheetContent,
@@ -61,6 +62,63 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const displayedNavItems = navItems.filter(item => !item.protected || (item.protected && user));
 
+  const authButtons = user ? (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="icon" className="h-9 w-9">
+            <LogOut className="h-4 w-4" />
+            <span className="sr-only">Cerrar Sesión</span>
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Estás seguro que quieres cerrar sesión?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Podrás volver a iniciar sesión en cualquier momento.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={handleSignOut}>Cerrar Sesión</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ) : isMobile ? (
+    <div className="flex items-center gap-2">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button asChild variant="ghost" size="icon">
+            <Link href="/login">
+              <LogIn className="h-5 w-5" />
+              <span className="sr-only">Iniciar Sesión</span>
+            </Link>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent><p>Iniciar Sesión</p></TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button asChild size="icon">
+            <Link href="/signup">
+              <UserPlus className="h-5 w-5" />
+              <span className="sr-only">Registrarse</span>
+            </Link>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent><p>Registrarse</p></TooltipContent>
+      </Tooltip>
+    </div>
+  ) : (
+    <div className="flex items-center gap-2">
+      <Button asChild size="sm" variant="ghost">
+        <Link href="/login">Iniciar Sesión</Link>
+      </Button>
+      <Button asChild size="sm">
+        <Link href="/signup">Registrarse</Link>
+      </Button>
+    </div>
+  );
+
   return (
     <TooltipProvider>
     <div className="flex min-h-screen w-full flex-col">
@@ -92,15 +150,28 @@ export function AppLayout({ children }: { children: ReactNode }) {
                           : "text-muted-foreground"
                       )}
                     >
-                      <item.icon className="h-5 w-5" />
+                      <item.icon className="h-6 w-6" />
                       {item.label}
                     </Link>
                   ))}
                    {user && (
-                    <Button variant="ghost" onClick={() => { handleSignOut(); setIsSheetOpen(false); }} className="justify-start gap-3 px-3 py-3 text-base font-nunito font-medium text-muted-foreground hover:bg-muted hover:text-primary">
-                      <LogOut className="h-5 w-5" />
-                      Cerrar Sesión
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button variant="ghost" className="justify-start gap-3 px-3 py-3 text-base font-nunito font-medium text-muted-foreground hover:bg-muted hover:text-primary">
+                           <LogOut className="h-6 w-6" />
+                           Cerrar Sesión
+                         </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Estás seguro que quieres cerrar sesión?</AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => setIsSheetOpen(false)}>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => { handleSignOut(); setIsSheetOpen(false); }}>Cerrar Sesión</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   )}
                 </nav>
               </SheetContent>
@@ -135,55 +206,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            {!loading && (
-              user ? (
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                         <Button onClick={handleSignOut} variant="outline" size="icon">
-                           <LogOut className="h-4 w-4" />
-                           <span className="sr-only">Cerrar Sesión</span>
-                         </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Cerrar Sesión</p>
-                    </TooltipContent>
-                </Tooltip>
-              ) : isMobile ? (
-                  <div className="flex items-center gap-2">
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button asChild variant="ghost" size="icon">
-                                  <Link href="/login">
-                                      <LogIn className="h-5 w-5" />
-                                      <span className="sr-only">Iniciar Sesión</span>
-                                  </Link>
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent><p>Iniciar Sesión</p></TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <Button asChild size="icon">
-                                  <Link href="/signup">
-                                  <UserPlus className="h-5 w-5" />
-                                  <span className="sr-only">Registrarse</span>
-                                  </Link>
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent><p>Registrarse</p></TooltipContent>
-                      </Tooltip>
-                  </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                   <Button asChild size="sm" variant="ghost">
-                       <Link href="/login">Iniciar Sesión</Link>
-                   </Button>
-                   <Button asChild size="sm">
-                       <Link href="/signup">Registrarse</Link>
-                   </Button>
-                </div>
-              )
-            )}
+            {!loading && authButtons}
           </div>
         </div>
       </header>
