@@ -38,7 +38,7 @@ function AppName() {
   return (
     <Link href="/" className="flex items-center gap-2">
       <Leaf className="h-7 w-7 text-primary" />
-      <span className="text-xl font-nunito font-semibold text-foreground">Cultiva Colombia</span>
+      <span className="hidden md:inline text-xl font-nunito font-semibold text-foreground">Cultiva Colombia</span>
     </Link>
   );
 }
@@ -153,7 +153,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2 sm:gap-4">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="shrink-0 sm:hidden text-foreground hover:bg-primary/20">
+                <Button variant="ghost" size="icon" className="shrink-0 md:hidden text-foreground hover:bg-primary/20">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
@@ -187,12 +187,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </SheetContent>
             </Sheet>
             
-            <div className="hidden sm:block">
+            <div className="hidden md:block">
               <AppName />
             </div>
           </div>
 
-          <nav className="hidden sm:flex sm:items-center sm:gap-3 lg:gap-5">
+          <nav className="hidden md:flex md:items-center md:gap-3 lg:gap-5">
             {displayedNavItems.map((item) => (
               <Link
                 key={item.label}
@@ -209,7 +209,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             ))}
           </nav>
 
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <ThemeToggle />
             {!loading && authButtons}
           </div>
