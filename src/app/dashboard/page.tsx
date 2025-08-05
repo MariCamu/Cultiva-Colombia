@@ -731,19 +731,22 @@ function DashboardContent() {
                 {!isAlertsLoading && alerts.map(alert => {
                     const AlertIcon = alert.icon;
                     return(
-                        <div key={alert.id} className="flex items-center gap-4 p-3 rounded-lg bg-background border">
-                           <div className="p-2 bg-primary/10 rounded-full">
-                               <AlertIcon className="h-5 w-5 text-primary" />
+                        <div key={alert.id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-3 rounded-lg bg-background border">
+                           <div className="flex items-start sm:items-center gap-4 flex-grow">
+                               <div className="p-2 bg-primary/10 rounded-full mt-1 sm:mt-0">
+                                   <AlertIcon className="h-5 w-5 text-primary" />
+                               </div>
+                               <div className="flex-grow">
+                                   <p className="font-nunito font-semibold">{alert.message}</p>
+                                   <p className="text-xs text-muted-foreground">
+                                       {alert.date ? format(new Date(alert.date.seconds * 1000), 'PPp', { locale: es }) : 'Ahora'}
+                                    </p>
+                               </div>
                            </div>
-                           <div className="flex-grow">
-                               <p className="font-nunito font-semibold">{alert.message}</p>
-                               <p className="text-xs text-muted-foreground">
-                                   {alert.date ? format(new Date(alert.date.seconds * 1000), 'PPp', { locale: es }) : 'Ahora'}
-                                </p>
-                           </div>
-                           <Button size="sm" variant="outline" onClick={() => handleDismissAlert(alert)}>
+                           <Button size="sm" variant="outline" onClick={() => handleDismissAlert(alert)} className="w-full sm:w-auto self-end sm:self-center">
                                <CheckCheck className="mr-2 h-4 w-4" />
-                               Marcar como Hecha
+                               <span className="sm:hidden">Hecha</span>
+                               <span className="hidden sm:inline">Marcar como Hecha</span>
                            </Button>
                         </div>
                     )
@@ -965,3 +968,5 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
+
+    
