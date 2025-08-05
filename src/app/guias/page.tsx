@@ -1,11 +1,12 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Leaf, School, ChevronDown, ChevronUp } from "lucide-react";
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type SectionType = 'cultivo' | 'escolar' | null;
 
@@ -34,10 +35,25 @@ const actividadesEscolaresSubsections: SubSection[] = [
 
 export default function GuiasPage() {
   const [activeSection, setActiveSection] = useState<SectionType>(null);
+  const isMobile = useIsMobile();
+  const guidesContainerRef = useRef<HTMLDivElement>(null);
 
   const toggleSection = (section: 'cultivo' | 'escolar') => {
-    setActiveSection(prev => prev === section ? null : section);
+    setActiveSection(prev => {
+        const newSection = prev === section ? null : section;
+        // Scroll logic will be in useEffect, depending on newSection
+        return newSection;
+    });
   };
+
+  useEffect(() => {
+    if (activeSection && isMobile && guidesContainerRef.current) {
+        // We use a short timeout to allow the DOM to update and render the section
+        setTimeout(() => {
+            guidesContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    }
+  }, [activeSection, isMobile]);
 
   const renderSubsections = (subsections: SubSection[], sectionTitle: string) => (
     <div className="mt-8">
@@ -117,10 +133,10 @@ export default function GuiasPage() {
           />
           <CardHeader className="items-start gap-4 space-y-0 pt-4">
             <div className="flex items-center gap-3">
-              <div className="bg-accent/10 p-3 rounded-full"> {/* Changed from purple-600/10 to accent/10 */}
-                <School className="h-8 w-8 text-accent" /> {/* Changed from text-purple-600 to text-accent */}
+              <div className="bg-accent/10 p-3 rounded-full">
+                <School className="h-8 w-8 text-accent" />
               </div>
-              <CardTitle className="text-2xl font-nunito font-bold tracking-tight text-accent sm:text-3xl"> {/* Changed from text-purple-700 to text-accent */}
+              <CardTitle className="text-2xl font-nunito font-bold tracking-tight text-accent sm:text-3xl">
                 Actividades Escolares
               </CardTitle>
             </div>
@@ -131,7 +147,7 @@ export default function GuiasPage() {
             </p>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => toggleSection('escolar')} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground w-full"> {/* Changed button colors */}
+            <Button onClick={() => toggleSection('escolar')} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground w-full">
               {activeSection === 'escolar' ? <ChevronUp className="mr-2 h-5 w-5" /> : <ChevronDown className="mr-2 h-5 w-5" />}
               {activeSection === 'escolar' ? 'Ocultar Actividades' : 'Explorar Actividades'}
             </Button>
@@ -139,10 +155,12 @@ export default function GuiasPage() {
         </Card>
       </div>
 
-      {activeSection === 'cultivo' && renderSubsections(guiasCultivoSubsections, "Explora Nuestras Guías de Cultivo")}
-      {activeSection === 'escolar' && renderSubsections(actividadesEscolaresSubsections, "Descubre Actividades Escolares")}
+      <div ref={guidesContainerRef}>
+        {activeSection === 'cultivo' && renderSubsections(guiasCultivoSubsections, "Explora Nuestras Guías de Cultivo")}
+        {activeSection === 'escolar' && renderSubsections(actividadesEscolaresSubsections, "Descubre Actividades Escolares")}
+      </div>
 
-      <Card className="mt-10 bg-card"> {/* Changed from bg-accent/10 to bg-card */}
+      <Card className="mt-10 bg-card">
         <CardHeader>
             <CardTitle className="font-nunito font-bold">Más Contenido Próximamente</CardTitle>
         </CardHeader>
