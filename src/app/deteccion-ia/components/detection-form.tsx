@@ -305,7 +305,7 @@ export function DetectionForm() {
                           </CardTitle>
                           <div className="space-y-4 font-sans text-sm">
                             {remedySuggestions.remedySuggestions.map((remedy, index) => (
-                              <div key={index}>
+                              <div key={index} className="space-y-1">
                                 <h4 className="font-nunito font-bold text-base">{remedy.title}</h4>
                                 <p className="text-muted-foreground">{formatRemedyDescription(remedy.description)}</p>
                               </div>
