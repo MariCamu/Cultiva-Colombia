@@ -9,7 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Calendar } from 'lucide-react';
+import { ArrowLeft, Calendar, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -86,7 +86,14 @@ export default function ArticlePage({ params }: ArticlePageProps) {
   return (
     <article className="max-w-4xl mx-auto">
       <div className="mb-8">
-         <Button asChild variant="ghost" className="mb-4">
+        {/* Breadcrumbs for Desktop/Tablet */}
+        <nav className="hidden md:flex items-center text-sm font-medium text-muted-foreground mb-4">
+            <Link href="/articulos" className="hover:text-primary">Artículos</Link>
+            <ChevronRight className="h-4 w-4 mx-1" />
+            <span className="text-foreground truncate">{article.title}</span>
+        </nav>
+        {/* Back Button for Mobile */}
+         <Button asChild variant="ghost" className="md:hidden mb-4 -ml-4">
            <Link href="/articulos">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Volver a todos los artículos

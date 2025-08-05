@@ -291,7 +291,7 @@ export default function TestPage() {
                     key={option.value}
                     htmlFor={`${currentQuestion.id}-${option.value}`}
                     className={cn(
-                      "flex items-center gap-4 rounded-lg border p-4 cursor-pointer transition-all hover:bg-muted/80",
+                      "flex items-center gap-4 rounded-lg border p-4 cursor-pointer transition-all hover:bg-muted/80 min-h-[44px]",
                       answers[currentQuestion.stateKey] === option.value && "bg-muted border-primary ring-2 ring-primary"
                     )}
                   >
