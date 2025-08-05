@@ -260,7 +260,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-0 flex-shrink-0">
           <DialogTitle className="text-3xl font-nunito font-bold">{crop.nombre_cultivo_personal}</DialogTitle>
           <DialogDescription>
@@ -268,9 +268,9 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid lg:grid-cols-3 gap-8 px-6 pb-6 flex-grow overflow-hidden">
+        <div className="grid md:grid-cols-3 gap-6 px-6 pb-6 flex-grow overflow-hidden">
             {/* Left Column */}
-            <div className="lg:col-span-1 flex flex-col gap-6 overflow-y-auto p-1">
+            <div className="md:col-span-1 flex flex-col gap-6 overflow-y-auto p-1">
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
                     <Image
                         src={crop.imageUrl}
@@ -298,7 +298,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
             </div>
 
             {/* Right Column */}
-            <div className="lg:col-span-2 flex flex-col h-full overflow-hidden">
+            <div className="md:col-span-2 flex flex-col h-full overflow-hidden">
                 <Tabs defaultValue="journal" className="flex flex-col h-full">
                     <TabsList className="w-full flex-shrink-0">
                         <TabsTrigger value="journal" className="flex-1">Diario de Cultivo</TabsTrigger>
@@ -389,15 +389,13 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                             <CardFooter className="flex-col items-start gap-4 border-t pt-4 bg-background/95 flex-shrink-0">
                                 <div className="w-full space-y-2">
                                 <Textarea placeholder="Escribe una nueva nota..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
-                                <div className="flex justify-between items-center">
-                                    <div className="flex gap-2">
-                                        <Button size="sm" variant="outline" onClick={() => addLogEntry('note')} disabled={isAddingNote}><NotebookText className="mr-2 h-4 w-4" />Guardar Nota</Button>
-                                        <Button size="sm" variant="outline" onClick={() => addLogEntry('water')}><Droplet className="mr-2 h-4 w-4" />Registrar Riego</Button>
-                                        <Button size="sm" variant="outline" onClick={() => addLogEntry('fertilize')}><Zap className="mr-2 h-4 w-4" />Abonado</Button>
-                                    </div>
+                                <div className="flex flex-wrap gap-2">
+                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('note')} disabled={isAddingNote}><NotebookText className="mr-2 h-4 w-4" />Guardar Nota</Button>
+                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('water')}><Droplet className="mr-2 h-4 w-4" />Registrar Riego</Button>
+                                    <Button size="sm" variant="outline" onClick={() => addLogEntry('fertilize')}><Zap className="mr-2 h-4 w-4" />Abonado</Button>
                                 </div>
-                                <div className="flex items-center gap-2 pt-2 border-t mt-2">
-                                    <Input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageFileChange} className="text-xs" />
+                                <div className="flex flex-wrap items-center gap-2 pt-2 border-t mt-2">
+                                    <Input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageFileChange} className="text-xs flex-grow" />
                                     {imagePreview && <Image src={imagePreview} alt="Preview" width={40} height={40} className="rounded-md" />}
                                     <Button size="sm" variant="outline" onClick={() => addLogEntry('photo')} disabled={isUploading || !imageFile}>
                                         {isUploading ? 'Añadiendo...' : <Camera className="mr-2 h-4 w-4" />}

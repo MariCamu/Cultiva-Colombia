@@ -623,7 +623,7 @@ function DashboardContent() {
                   const isReadyForHarvest = crop.progress >= 100;
 
                   return (
-                    <Card key={crop.id} className="grid md:grid-cols-3 gap-4 p-4 items-center bg-card/50">
+                    <Card key={crop.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 items-center bg-card/50">
                       <div className="md:col-span-1">
                         <Image
                           src={crop.imageUrl}
@@ -653,7 +653,7 @@ function DashboardContent() {
                           <Progress value={crop.progress} className="h-3 mt-1" />
                         </div>
                         <p className="text-sm font-sans italic text-muted-foreground">Última nota: "{crop.lastNote}"</p>
-                        <div className="flex justify-between items-center pt-2 border-t">
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 pt-2 border-t">
                           {isReadyForHarvest ? (
                              <Button onClick={() => setHarvestingCrop(crop)} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold">
                                 <Leaf className="mr-2 h-4 w-4" />
