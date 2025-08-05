@@ -5,16 +5,17 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider } from '@/components/theme-provider';
 import { cn } from '@/lib/utils';
+import { Toaster } from '@/components/ui/toaster';
 
 const nunito = Nunito({
   subsets: ['latin'],
-  weight: ['400', '600', '700'],
+  weight: ['400', '600', '700', '800'],
   variable: '--font-nunito',
 });
 
 const baloo = Baloo_2({
   subsets: ['latin'],
-  weight: ['400'], // Baloo 2 has various weights, 400 is regular
+  weight: ['400', '700'],
   variable: '--font-baloo',
 });
 
@@ -32,7 +33,7 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <head />
       <body className={cn(
-          "antialiased font-sans",
+          "min-h-screen bg-background font-sans antialiased",
           nunito.variable,
           baloo.variable
         )}>
@@ -44,6 +45,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             <AppLayout>{children}</AppLayout>
+            <Toaster />
           </AuthProvider>
         </ThemeProvider>
       </body>

@@ -4,7 +4,7 @@
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Search, Bot, LogOut, LayoutDashboard, UserPlus, LogIn, BookText } from 'lucide-react'; 
+import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Bot, LogOut, LayoutDashboard, UserPlus, LogIn, BookText } from 'lucide-react'; 
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useAuth } from '@/context/auth-context';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { ThemeToggle } from './theme-toggle';
@@ -48,7 +47,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading } = useAuth();
-  const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -97,7 +95,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const mobileAuthButtons = user ? (
      <AlertDialog>
       <AlertDialogTrigger asChild>
-         <Button variant="ghost" className="justify-start gap-3 px-3 py-3 text-base font-nunito font-medium text-muted-foreground hover:bg-muted hover:text-destructive hover:text-destructive-foreground">
+         <Button variant="ghost" className="justify-start gap-4 p-4 text-base font-nunito font-medium text-muted-foreground hover:text-primary h-auto">
            <LogOut className="h-6 w-6" />
            Cerrar Sesión
          </Button>
@@ -118,7 +116,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           href="/login"
           onClick={() => setIsSheetOpen(false)}
           className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-nunito font-medium transition-all hover:bg-muted hover:text-primary",
+            "flex items-center gap-4 rounded-lg p-4 text-base font-nunito font-medium transition-all hover:bg-muted hover:text-primary",
             "text-muted-foreground"
           )}
         >
@@ -129,8 +127,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
           href="/signup"
           onClick={() => setIsSheetOpen(false)}
           className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-nunito font-medium transition-all hover:bg-muted hover:text-primary",
-            "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+            "flex items-center gap-4 rounded-lg p-4 text-base font-nunito font-medium transition-all",
+            "bg-primary text-primary-foreground hover:bg-primary/90"
           )}
         >
           <UserPlus className="h-6 w-6" />
@@ -153,8 +151,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="flex flex-col p-0">
-                <SheetHeader className="p-4 border-b">
+                <SheetHeader className="p-4 border-b flex flex-row justify-between items-center">
                    <SheetTitle asChild><AppName /></SheetTitle>
+                   <ThemeToggle />
                 </SheetHeader>
                 <nav className="flex-grow grid gap-1 p-4">
                   {displayedNavItems.map((item) => (
@@ -163,7 +162,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                       href={item.href}
                       onClick={() => setIsSheetOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-nunito font-medium transition-all hover:bg-muted hover:text-primary",
+                        "flex items-center gap-4 rounded-lg px-4 py-3 text-base font-nunito font-medium transition-all hover:bg-muted hover:text-primary",
                         (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href)))
                           ? "bg-muted text-primary font-semibold" 
                           : "text-muted-foreground"
@@ -174,20 +173,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     </Link>
                   ))}
                 </nav>
-                 <div className="mt-auto border-t p-4 space-y-2">
+                 <div className="mt-auto border-t p-4 grid gap-2">
                     {!loading && mobileAuthButtons}
-                    <ThemeToggle />
                  </div>
               </SheetContent>
             </Sheet>
             
             <div className="hidden md:block">
               <AppName />
-            </div>
-            <div className="md:hidden">
-               <Link href="/" className="flex items-center">
-                   <Leaf className="h-7 w-7 text-primary" />
-               </Link>
             </div>
           </div>
 
@@ -230,7 +223,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </p>
         </div>
       </footer>
-      <Toaster />
     </div>
     </TooltipProvider>
   );
