@@ -61,26 +61,34 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const displayedNavItems = navItems.filter(item => !item.protected || (item.protected && user));
 
   const authButtons = user ? (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="outline" size="icon" className="h-9 w-9">
-            <LogOut className="h-4 w-4" />
-            <span className="sr-only">Cerrar Sesión</span>
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>¿Estás seguro que quieres cerrar sesión?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Podrás volver a iniciar sesión en cualquier momento.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleSignOut}>Cerrar Sesión</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+                <LogOut className="h-4 w-4" />
+                <span className="sr-only">Cerrar Sesión</span>
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Estás seguro que quieres cerrar sesión?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Podrás volver a iniciar sesión en cualquier momento.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSignOut}>Cerrar Sesión</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Cerrar Sesión</p>
+      </TooltipContent>
+    </Tooltip>
+    
   ) : (
     <div className="flex items-center gap-2">
       <Button asChild size="sm" variant="ghost">
@@ -145,7 +153,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2 sm:gap-4">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="shrink-0 md:hidden text-foreground hover:bg-primary/20">
+                <Button variant="ghost" size="icon" className="shrink-0 sm:hidden text-foreground hover:bg-primary/20">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle navigation menu</span>
                 </Button>
@@ -179,12 +187,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </SheetContent>
             </Sheet>
             
-            <div className="hidden md:block">
+            <div className="hidden sm:block">
               <AppName />
             </div>
           </div>
 
-          <nav className="hidden md:flex md:items-center md:gap-3 lg:gap-5">
+          <nav className="hidden sm:flex sm:items-center sm:gap-3 lg:gap-5">
             {displayedNavItems.map((item) => (
               <Link
                 key={item.label}
@@ -201,7 +209,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2">
             <ThemeToggle />
             {!loading && authButtons}
           </div>
