@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle, Wheat, BookHeart, Building, Home, Sprout } from 'lucide-react';
+import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle, Wheat, BookHeart, Building, Home, Sprout, Search } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { AddCropDialog } from './components/add-crop-dialog';
 import type { SampleCrop } from '@/models/crop-model';
+import { Input } from '@/components/ui/input';
 
 
 const sampleCropsData: SampleCrop[] = [
@@ -66,7 +67,7 @@ function capitalizeFirstLetter(string: string | null | undefined) {
 }
 
 type GeolocationStatus = 'idle' | 'pending' | 'success' | 'error';
-type FilterSource = 'manual' | 'url_or_geo' | 'none';
+type FilterSource = 'manual' | 'url' | 'geo' | 'none';
 
 const regionOptions = regionBoundingBoxes.map(r => ({ value: r.slug, label: r.name }));
 const priceOptions = [
@@ -136,10 +137,10 @@ const getDifficultyStyles = (difficulty: number): { badge: string, iconBg: strin
 
 
 export default function CultivosPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const [geolocationStatus, setGeolocationStatus] = useState<GeolocationStatus>('idle');
   const [geolocationErrorMsg, setGeolocationErrorMsg] = useState<string | null>(null);
@@ -147,27 +148,56 @@ export default function CultivosPage() {
   const [activeRegionSlug, setActiveRegionSlug] = useState<string | null>(searchParams.get('region'));
   const [activeRegionName, setActiveRegionName] = useState<string | null>(null);
 
-  const [selectedPrice, setSelectedPrice] = useState<string | null>(null);
-  const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
-  const [selectedSpace, setSelectedSpace] = useState<string | null>(null);
-  const [selectedPlantType, setSelectedPlantType] = useState<string | null>(null);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [selectedPrice, setSelectedPrice] = useState<string | null>(searchParams.get('price'));
+  const [selectedDuration, setSelectedDuration] = useState<string | null>(searchParams.get('duration'));
+  const [selectedSpace, setSelectedSpace] = useState<string | null>(searchParams.get('space'));
+  const [selectedPlantType, setSelectedPlantType] = useState<string | null>(searchParams.get('plantType'));
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(searchParams.get('difficulty'));
   
   const [filterSource, setFilterSource] = useState<FilterSource>('none');
   const [userHasInteracted, setUserHasInteracted] = useState(false);
 
+  // Update URL from state changes
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    
+    // Helper to set or delete params
+    const updateParam = (key: string, value: string | null) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    };
+    
+    updateParam('q', searchQuery || null);
+    updateParam('region', activeRegionSlug);
+    updateParam('price', selectedPrice);
+    updateParam('duration', selectedDuration);
+    updateParam('space', selectedSpace);
+    updateParam('plantType', selectedPlantType);
+    updateParam('difficulty', selectedDifficulty);
+
+    startTransition(() => {
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    });
+
+  }, [searchQuery, activeRegionSlug, selectedPrice, selectedDuration, selectedSpace, selectedPlantType, selectedDifficulty, router, pathname]);
+  
 
   useEffect(() => {
     const regionParam = searchParams.get('region');
     const qParam = searchParams.get('q');
-
+    
     if (userHasInteracted) {
-      setFilterSource('manual');
+      if(qParam !== null) setFilterSource('url');
+      else setFilterSource('manual');
       return;
     }
 
     if (regionParam) {
-      setFilterSource('url_or_geo');
+      setFilterSource('url');
       setActiveRegionSlug(regionParam);
       const regionName = regionOptions.find(r => r.value === regionParam)?.label || capitalizeFirstLetter(regionParam);
       setActiveRegionName(regionName);
@@ -179,11 +209,11 @@ export default function CultivosPage() {
         setGeolocationStatus('pending');
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            if (userHasInteracted) return; // Double check to avoid race conditions
+            if (userHasInteracted) return;
             const { latitude, longitude } = position.coords;
             const regionInfo = getRegionFromCoordinates(latitude, longitude);
             if (regionInfo) {
-              setFilterSource('url_or_geo');
+              setFilterSource('geo');
               setActiveRegionSlug(regionInfo.slug);
               setActiveRegionName(regionInfo.name);
             } else {
@@ -210,30 +240,28 @@ export default function CultivosPage() {
         setActiveRegionName(null);
       }
     }
-  }, [searchParams, userHasInteracted]);
+  }, [userHasInteracted]);
 
   const displayedCrops = sampleCropsData.filter(crop => {
-    const qParam = searchParams.get('q');
-    
-    if (qParam && !crop.name.toLowerCase().includes(qParam.toLowerCase())) {
-        return false;
+    if (searchQuery && !crop.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
     }
     if (activeRegionSlug && !crop.regionSlugs.includes(activeRegionSlug)) {
       return false;
     }
-    if (selectedPrice && selectedPrice !== 'all' && crop.estimatedPrice !== selectedPrice) {
+    if (selectedPrice && crop.estimatedPrice !== selectedPrice) {
       return false;
     }
-    if (selectedDuration && selectedDuration !== 'all' && crop.duration !== selectedDuration) {
+    if (selectedDuration && crop.duration !== selectedDuration) {
       return false;
     }
-    if (selectedSpace && selectedSpace !== 'all' && crop.spaceRequired !== selectedSpace) {
+    if (selectedSpace && crop.spaceRequired !== selectedSpace) {
       return false;
     }
-    if (selectedPlantType && selectedPlantType !== 'all' && crop.plantType !== selectedPlantType) {
+    if (selectedPlantType && crop.plantType !== selectedPlantType) {
       return false;
     }
-    if (selectedDifficulty && selectedDifficulty !== 'all' && crop.difficulty.toString() !== selectedDifficulty) {
+    if (selectedDifficulty && crop.difficulty.toString() !== selectedDifficulty) {
       return false;
     }
     return true;
@@ -243,9 +271,9 @@ export default function CultivosPage() {
   let pageDescription = "Descubre una variedad de cultivos de diferentes regiones de Colombia.";
   let alertMessageForPage: React.ReactNode = null;
 
-  if (searchParams.get('q')) {
-      pageTitle = `Resultados para: "${searchParams.get('q')}"`;
-      pageDescription = `Mostrando todos los cultivos que coinciden con tu búsqueda.`;
+  if (searchQuery) {
+      pageTitle = `Resultados para: "${searchQuery}"`;
+      pageDescription = `Mostrando cultivos que coinciden con "${searchQuery}".`;
   } else if (filterSource === 'manual') {
       if (activeRegionSlug) {
           pageTitle = `Cultivos para la Región: ${activeRegionName}`;
@@ -254,61 +282,47 @@ export default function CultivosPage() {
           pageTitle = "Cultivos Filtrados";
           pageDescription = "Mostrando cultivos de todas las regiones, según los filtros aplicados.";
       }
-  } else if (filterSource === 'url_or_geo' && activeRegionName) {
-      const isFromUrl = searchParams.get('region');
-      if (isFromUrl) {
-          pageTitle = `Cultivos de la Región ${activeRegionName}`;
-          pageDescription = `Explora los cultivos característicos de la región ${activeRegionName}.`;
-          alertMessageForPage = (
-              <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <AlertTitle className="font-nunito font-semibold">Filtro por Región</AlertTitle>
-                  <AlertDescription>Mostrando cultivos para la región: <strong>{activeRegionName}</strong>.</AlertDescription>
-              </Alert>
-          );
-      } else {
-          pageTitle = `Sugeridos para tu Región: ${activeRegionName}`;
-          pageDescription = `Basado en tu ubicación (aproximada), te sugerimos estos cultivos de la región ${activeRegionName}.`;
-          alertMessageForPage = (
-              <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
-                  <CheckCircle className="h-4 w-4 text-primary" />
-                  <AlertTitle className="font-nunito font-semibold">Región Detectada: {activeRegionName}</AlertTitle>
-                  <AlertDescription>Mostrando cultivos sugeridos para tu región. La detección es aproximada.</AlertDescription>
-              </Alert>
-          );
-      }
+  } else if (filterSource === 'url' && activeRegionName) {
+      pageTitle = `Cultivos de la Región ${activeRegionName}`;
+      pageDescription = `Explora los cultivos característicos de la región ${activeRegionName}.`;
+      alertMessageForPage = (
+          <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
+              <MapPin className="h-4 w-4 text-primary" />
+              <AlertTitle className="font-nunito font-semibold">Filtro por Región</AlertTitle>
+              <AlertDescription>Mostrando cultivos para la región: <strong>{activeRegionName}</strong>.</AlertDescription>
+          </Alert>
+      );
+  } else if (filterSource === 'geo' && activeRegionName) {
+      pageTitle = `Sugeridos para tu Región: ${activeRegionName}`;
+      pageDescription = `Basado en tu ubicación (aproximada), te sugerimos estos cultivos de la región ${activeRegionName}.`;
+      alertMessageForPage = (
+          <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
+              <CheckCircle className="h-4 w-4 text-primary" />
+              <AlertTitle className="font-nunito font-semibold">Región Detectada: {activeRegionName}</AlertTitle>
+              <AlertDescription>Mostrando cultivos sugeridos para tu región. La detección es aproximada.</AlertDescription>
+          </Alert>
+      );
   }
 
-    const handleFilterInteraction = () => {
-        if (!userHasInteracted) {
-            setUserHasInteracted(true);
-        }
-        const newParams = new URLSearchParams(searchParams.toString());
-        newParams.delete('q'); // Remove search query when a filter is used
-        router.replace(`/cultivos?${newParams.toString()}`, { scroll: false });
-    };
-
-    const updateFilterState = (setter: React.Dispatch<React.SetStateAction<string | null>>, value: string) => {
-        handleFilterInteraction();
-        setter(value === 'all' ? null : value);
-    };
-
-    const handleRegionChange = (value: string) => {
+  const handleFilterInteraction = () => {
+    if (!userHasInteracted) {
         setUserHasInteracted(true);
-        const newRegionSlug = value === 'all' ? null : value;
-        setActiveRegionSlug(newRegionSlug);
-        const regionName = newRegionSlug ? regionOptions.find(opt => opt.value === newRegionSlug)?.label || null : 'Todas las Regiones';
-        setActiveRegionName(regionName);
-        
-        const newParams = new URLSearchParams(searchParams.toString());
-        newParams.delete('q'); // Remove search query on region change
-        if (newRegionSlug) {
-            newParams.set('region', newRegionSlug);
-        } else {
-            newParams.delete('region');
-        }
-        router.push(`/cultivos?${newParams.toString()}`);
-    };
+    }
+    setSearchQuery(''); // Reset search query when a filter is changed
+  };
+
+  const updateFilterState = (setter: React.Dispatch<React.SetStateAction<string | null>>, value: string) => {
+      handleFilterInteraction();
+      setter(value === 'all' ? null : value);
+  };
+
+  const handleRegionChange = (value: string) => {
+      setUserHasInteracted(true);
+      const newRegionSlug = value === 'all' ? null : value;
+      setActiveRegionSlug(newRegionSlug);
+      const regionName = newRegionSlug ? regionOptions.find(opt => opt.value === newRegionSlug)?.label || null : 'Todas las Regiones';
+      setActiveRegionName(regionName);
+  };
 
   return (
     <div className="space-y-6">
@@ -336,11 +350,27 @@ export default function CultivosPage() {
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2 font-nunito font-bold">
             <Filter className="h-5 w-5" />
-            Filtrar Cultivos
+            Filtrar y Buscar Cultivos
           </CardTitle>
           <CardDescription>Ajusta los filtros para encontrar los cultivos que mejor se adapten a tus necesidades.</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-3">
+             <Label htmlFor="search-input" className="text-sm font-nunito font-semibold">Buscar por nombre</Label>
+             <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  id="search-input"
+                  placeholder="Ej: Tomate, Papa, Maíz..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    if (!userHasInteracted) setUserHasInteracted(true);
+                    setSearchQuery(e.target.value);
+                  }}
+                  className="pl-10"
+                />
+             </div>
+          </div>
           <div>
             <Label htmlFor="manualRegionSelect" className="text-sm font-nunito font-semibold">Región</Label>
             <Select 
@@ -472,7 +502,7 @@ export default function CultivosPage() {
                 <HelpCircle className="h-4 w-4" />
                 <AlertTitle className="font-nunito font-semibold">No se encontraron cultivos</AlertTitle>
                 <AlertDescription>
-                 No se encontraron cultivos que coincidan con los filtros aplicados. Prueba con otros filtros.
+                 No se encontraron cultivos que coincidan con los filtros o la búsqueda. Prueba a cambiar tus criterios.
                 </AlertDescription>
             </Alert>
           )}
