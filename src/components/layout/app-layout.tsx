@@ -83,31 +83,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  ) : isMobile ? (
-    <div className="flex items-center gap-2">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/login">
-              <LogIn className="h-5 w-5" />
-              <span className="sr-only">Iniciar Sesión</span>
-            </Link>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent><p>Iniciar Sesión</p></TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button asChild size="icon">
-            <Link href="/signup">
-              <UserPlus className="h-5 w-5" />
-              <span className="sr-only">Registrarse</span>
-            </Link>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent><p>Registrarse</p></TooltipContent>
-      </Tooltip>
-    </div>
   ) : (
     <div className="flex items-center gap-2">
       <Button asChild size="sm" variant="ghost">
@@ -117,6 +92,51 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <Link href="/signup">Registrarse</Link>
       </Button>
     </div>
+  );
+  
+  const mobileAuthButtons = user ? (
+     <AlertDialog>
+      <AlertDialogTrigger asChild>
+         <Button variant="ghost" className="justify-start gap-3 px-3 py-3 text-base font-nunito font-medium text-muted-foreground hover:bg-muted hover:text-destructive hover:text-destructive-foreground">
+           <LogOut className="h-6 w-6" />
+           Cerrar Sesión
+         </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Estás seguro que quieres cerrar sesión?</AlertDialogTitle>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setIsSheetOpen(false)}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={() => { handleSignOut(); setIsSheetOpen(false); }}>Cerrar Sesión</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ) : (
+      <>
+        <Link
+          href="/login"
+          onClick={() => setIsSheetOpen(false)}
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-nunito font-medium transition-all hover:bg-muted hover:text-primary",
+            "text-muted-foreground"
+          )}
+        >
+          <LogIn className="h-6 w-6" />
+          Iniciar Sesión
+        </Link>
+        <Link
+          href="/signup"
+          onClick={() => setIsSheetOpen(false)}
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-nunito font-medium transition-all hover:bg-muted hover:text-primary",
+            "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+          )}
+        >
+          <UserPlus className="h-6 w-6" />
+          Registrarse
+        </Link>
+      </>
   );
 
   return (
@@ -134,8 +154,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </SheetTrigger>
               <SheetContent side="left" className="flex flex-col p-0">
                 <SheetHeader className="p-4 border-b">
-                   <SheetTitle className="sr-only">Menú de Navegación</SheetTitle>
-                  <AppName />
+                   <SheetTitle asChild><AppName /></SheetTitle>
                 </SheetHeader>
                 <nav className="flex-grow grid gap-1 p-4">
                   {displayedNavItems.map((item) => (
@@ -154,26 +173,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
                       {item.label}
                     </Link>
                   ))}
-                   {user && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                         <Button variant="ghost" className="justify-start gap-3 px-3 py-3 text-base font-nunito font-medium text-muted-foreground hover:bg-muted hover:text-primary">
-                           <LogOut className="h-6 w-6" />
-                           Cerrar Sesión
-                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>¿Estás seguro que quieres cerrar sesión?</AlertDialogTitle>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel onClick={() => setIsSheetOpen(false)}>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => { handleSignOut(); setIsSheetOpen(false); }}>Cerrar Sesión</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
                 </nav>
+                 <div className="mt-auto border-t p-4 space-y-2">
+                    {!loading && mobileAuthButtons}
+                    <ThemeToggle />
+                 </div>
               </SheetContent>
             </Sheet>
             
@@ -204,7 +208,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2">
             <ThemeToggle />
             {!loading && authButtons}
           </div>
