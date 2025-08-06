@@ -212,16 +212,16 @@ export function InteractiveMap() {
 
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
             {/* Contenido Principal del Mapa */}
-            <div className="lg:col-span-2 w-full">
+            <div className="md:col-span-3 lg:col-span-2 w-full">
                 <Card className="h-[60vh] md:h-[70vh] lg:h-[600px] w-full relative overflow-hidden shadow-lg bg-primary/5 p-0 border-0">
                     {mapLoaded ? (
                         <DynamicMapContainer
                             center={mapCenter}
                             zoom={mapZoom}
                             scrollWheelZoom={true}
-                            className="h-full w-full rounded-lg"
+                            className="h-full w-full rounded-lg z-0"
                         >
                             <DynamicMapEventHandler center={mapCenter} zoom={mapZoom} />
                             
@@ -265,7 +265,7 @@ export function InteractiveMap() {
             </div>
 
             {/* Panel Lateral (Leyenda y Filtros) */}
-            <div className="lg:col-span-1 w-full space-y-6">
+            <div className="md:col-span-3 lg:col-span-1 w-full space-y-6">
                 <Card className="shadow-lg bg-card">
                     <CardHeader>
                         <CardTitle className="font-nunito font-bold">Leyenda del Mapa</CardTitle>
