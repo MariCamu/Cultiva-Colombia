@@ -89,8 +89,8 @@ export default function GuiasPage() {
         Centro de Guías
       </h1>
 
-      <div className="grid md:grid-cols-2 gap-8">
-        <Card className="w-full shadow-lg hover:shadow-xl transition-shadow">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <Card className="w-full shadow-lg hover:shadow-xl transition-shadow flex flex-col">
           <Image
             src="https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/guias_cultivo.jpg?alt=media&token=e28d4ed5-acba-45a9-8cb6-f8aff915b60e"
             alt="Guías de cultivo"
@@ -109,7 +109,7 @@ export default function GuiasPage() {
               </CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-grow">
             <p className="text-muted-foreground text-base">
               Aprende a sembrar, cuidar y cosechar tus propios alimentos en casa, en escuela o en comunidad. Métodos, materiales, soluciones ecológicas.
             </p>
@@ -122,7 +122,7 @@ export default function GuiasPage() {
           </CardFooter>
         </Card>
 
-        <Card className="w-full shadow-lg hover:shadow-xl transition-shadow bg-accent/10 border-accent/30">
+        <Card className="w-full shadow-lg hover:shadow-xl transition-shadow bg-accent/10 border-accent/30 flex flex-col">
            <Image
             src="https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/guias_colegio.jpg?alt=media&token=918bf4d2-4f63-49d2-9e0d-d3e7e8a9413a"
             alt="Actividades escolares"
@@ -141,7 +141,7 @@ export default function GuiasPage() {
               </CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-grow">
             <p className="text-muted-foreground text-base">
               Juegos, talleres y experiencias para aprender en el aula o la huerta escolar. Ideal para docentes y niños de todas las edades.
             </p>

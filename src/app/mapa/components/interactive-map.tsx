@@ -215,7 +215,7 @@ export function InteractiveMap() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             {/* Contenido Principal del Mapa */}
             <div className="lg:col-span-2 w-full">
-                <Card className="h-[600px] w-full relative overflow-hidden shadow-lg bg-primary/5 p-0 border-0">
+                <Card className="h-[60vh] md:h-[70vh] lg:h-[600px] w-full relative overflow-hidden shadow-lg bg-primary/5 p-0 border-0">
                     {mapLoaded ? (
                         <DynamicMapContainer
                             center={mapCenter}
@@ -272,7 +272,7 @@ export function InteractiveMap() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <div className="flex items-center gap-3">
-                            <div className="h-4 w-4 rounded-full bg-[#70964F] border-2 border-white shadow"></div>
+                            <div className="h-4 w-4 rounded-full bg-green-500 border-2 border-white shadow"></div>
                             <span className="text-sm font-medium text-muted-foreground">Fácil</span>
                         </div>
                         <div className="flex items-center gap-3">
@@ -337,21 +337,17 @@ export function InteractiveMap() {
                     <CardContent className="grid grid-cols-2 gap-3">
                         <Button
                             onClick={() => handleRegionQuickAccess('all')}
-                            className={cn(
-                                "rounded-full",
-                                activeRegionFilter === 'all' ? "bg-[#70964F] text-white hover:bg-[#608040]" : "bg-transparent border border-[#70964F] text-[#70964F] hover:bg-[#EDF2E8]"
-                            )}
+                            variant={activeRegionFilter === 'all' ? 'default' : 'outline'}
+                            size="sm"
                         >
-                            Todas las Regiones
+                            Todas
                         </Button>
                         {Object.keys(regionCenters).filter(slug => slug !== 'all').map(slug => (
                             <Button
                                 key={slug}
                                 onClick={() => handleRegionQuickAccess(slug)}
-                                className={cn(
-                                    "rounded-full",
-                                    activeRegionFilter === slug ? "bg-[#70964F] text-white hover:bg-[#608040]" : "bg-transparent border border-[#70964F] text-[#70964F] hover:bg-[#EDF2E8]"
-                                )}
+                                variant={activeRegionFilter === slug ? 'default' : 'outline'}
+                                size="sm"
                             >
                                 {slug.charAt(0).toUpperCase() + slug.slice(1)}
                             </Button>

@@ -355,7 +355,7 @@ export default function CultivosPage() {
           <CardDescription>Ajusta los filtros para encontrar los cultivos que mejor se adapten a tus necesidades.</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-3">
+          <div className="md:col-span-2 lg:col-span-3">
              <Label htmlFor="search-input" className="text-sm font-nunito font-semibold">Buscar por nombre</Label>
              <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -448,7 +448,7 @@ export default function CultivosPage() {
         </CardHeader>
         <CardContent>
           {displayedCrops.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {displayedCrops.map((crop) => {
                  const TypeIcon = getCropTypeIcon(crop.plantType);
                  const difficultyStyles = getDifficultyStyles(crop.difficulty);
