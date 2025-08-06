@@ -256,7 +256,7 @@ export function InteractiveMap() {
                         onClick={handleLocateMe}
                         variant="default"
                         size="sm"
-                        className="absolute bottom-4 left-4 z-[401] shadow-lg bg-green-500 hover:bg-green-600 text-white"
+                        className="absolute bottom-4 left-4 z-[401] shadow-lg"
                     >
                         <LocateFixed className="mr-2 h-4 w-4" />
                         Centrar en mi ubicación
