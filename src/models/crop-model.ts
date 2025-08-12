@@ -6,6 +6,7 @@ export interface SampleCrop {
   regionSlugs: string[];
   imageUrl: string;
   dataAiHint: string;
+  clima: 'Frío' | 'Templado' | 'Cálido' | 'Muy cálido';
   estimatedPrice: 'Precio bajo' | 'Precio moderado' | 'Precio alto';
   duration: 'Corta (1–2 meses)' | 'Media (3–5 meses)' | 'Larga (6 meses o más)';
   spaceRequired: 'Maceta pequeña (1–3 L)' | 'Maceta mediana (4–10 L)' | 'Maceta grande o jardín (10+ L)';
@@ -44,4 +45,6 @@ export interface UserProfile {
     harvestedCropsCount?: number;
     totalHarvestWeight?: number;
 }
+    
+
     
