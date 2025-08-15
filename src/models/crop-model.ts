@@ -31,7 +31,7 @@ export interface UserCrop {
   /**
    * The custom name the user gives to their specific plant instance.
    * This allows differentiation if they are growing multiple plants of the same type.
-   * Example: "Tomates del balcón" vs. the generic name "Tomate Cherry".
+   * Example: "Tomates del balcón" (nombre_cultivo_personal) vs. the generic name "Tomate Cherry".
    */
   nombre_cultivo_personal: string;
   
@@ -67,6 +67,13 @@ export interface UserAlert {
     message: string;
     type: 'riego' | 'abono' | 'cosecha' | 'info';
     date: Timestamp;
+    /**
+     * A boolean flag to track if the user has seen and dismissed the alert.
+     * - When an alert is created, it's set to `false`.
+     * - The Dashboard UI only displays alerts where `isRead` is `false`.
+     * - When the user clicks "Mark as Done", this field is updated to `true`.
+     * This keeps the user's alert panel clean and only shows pending tasks.
+     */
     isRead: boolean;
     icon: React.ElementType;
 }
