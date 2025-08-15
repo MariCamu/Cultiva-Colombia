@@ -46,6 +46,11 @@ export interface UserCrop {
   };
   lastNote: string;
   estado_actual_cultivo?: string;
+  /**
+   * Optional initial notes a user adds when setting up a new crop in their dashboard.
+   * It captures the state of the plant at the beginning of tracking (e.g., "Already has 3 real leaves").
+   * This is also used to create the very first entry in the crop's journal.
+   */
   notas_progreso_inicial?: string;
 }
 
