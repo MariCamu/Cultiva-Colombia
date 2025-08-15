@@ -1,4 +1,53 @@
 
+/**
+ * @fileOverview Defines the data structures for user-specific data and crops
+ * stored in the Firestore database.
+ */
+
+import type { Timestamp } from 'firebase/firestore';
+
+// --- USER PROFILE STRUCTURE ---
+// Firestore Path: /usuarios/{userId}
+
+export interface UserProfile {
+    nombre: string;
+    email: string;
+    fecha_registro: Timestamp;
+    preferencia_tema: string;
+    harvestedCropsCount: number; // Counter for harvested crops (for Dashboard)
+    totalHarvestWeight: number; // Sum of all harvest weights in kg (for Dashboard)
+}
+
+// --- USER'S CROP STRUCTURE ---
+// This data is stored in a SUBCOLLECTION.
+// Firestore Path: /usuarios/{userId}/cultivos_del_usuario/{cropId}
+// Using a subcollection is crucial for scalability, as it avoids the 1MB document size limit.
+// A user can have an unlimited number of crops, each as a separate document.
+
+export interface UserCrop {
+  id: string; // The Firestore document ID for this crop instance
+  ficha_cultivo_id: string; // ID linking to the main technical sheet
+  nombre_cultivo_personal: string;
+  fecha_plantacion: Timestamp;
+  imageUrl: string;
+  dataAiHint: string;
+  daysToHarvest: number; // Total days from planting to harvest
+  progress: number; // Calculated on the client: (days_since_planted / daysToHarvest) * 100
+  nextTask: { 
+    name: string; 
+    dueInDays: number; // Days from planting date
+    iconName: 'Droplets' | 'Sun' | 'Wind';
+  };
+  lastNote: string;
+  estado_actual_cultivo?: string;
+  notas_progreso_inicial?: string;
+}
+
+
+// --- SAMPLE CROP STRUCTURE ---
+// This defines the structure for the general crop data used in the
+// /cultivos page and the recommendation test. This is NOT user-specific.
+
 export interface SampleCrop {
   id: string;
   name: string;
@@ -21,31 +70,5 @@ export interface SampleCrop {
   patrimonial: boolean;
   sembrable_en_casa: 'sí' | 'no' | 'parcialmente';
   educativo: 'sí' | 'no' | 'parcialmente';
-}
-
-import type { Timestamp } from 'firebase/firestore';
-
-export interface UserCrop {
-  id: string; 
-  ficha_cultivo_id: string;
-  nombre_cultivo_personal: string;
-  fecha_plantacion: Timestamp;
-  imageUrl: string;
-  dataAiHint: string;
-  daysToHarvest: number;
-  progress: number;
-  nextTask: { name: string; dueInDays: number; iconName: 'Droplets' | 'Sun' | 'Wind' };
-  lastNote: string;
-  estado_actual_cultivo?: string;
-  notas_progreso_inicial?: string;
-}
-
-export interface UserProfile {
-    nombre: string;
-    email: string;
-    fecha_registro: Timestamp;
-    preferencia_tema: string;
-    harvestedCropsCount?: number;
-    totalHarvestWeight?: number;
 }
     
