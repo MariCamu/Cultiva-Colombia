@@ -21,21 +21,27 @@ export interface UserProfile {
 // --- USER'S CROP STRUCTURE ---
 // This data is stored in a SUBCOLLECTION.
 // Firestore Path: /usuarios/{userId}/cultivos_del_usuario/{cropId}
-// Using a subcollection is crucial for scalability, as it avoids the 1MB document size limit.
-// A user can have an unlimited number of crops, each as a separate document.
+// This uses a subcollection for scalability, allowing a user to have unlimited crops.
 
 export interface UserCrop {
-  id: string; // The Firestore document ID for this crop instance
-  ficha_cultivo_id: string; // ID linking to the main technical sheet
+  id: string; // The Firestore document ID for this crop instance.
+  ficha_cultivo_id: string; // ID linking to the main technical sheet (e.g., 'tomate-cherry').
+  
+  /**
+   * The custom name the user gives to their specific plant instance.
+   * This allows differentiation if they are growing multiple plants of the same type.
+   * Example: "Tomates del balcón" vs. the generic name "Tomate Cherry".
+   */
   nombre_cultivo_personal: string;
+  
   fecha_plantacion: Timestamp;
   imageUrl: string;
   dataAiHint: string;
-  daysToHarvest: number; // Total days from planting to harvest
-  progress: number; // Calculated on the client: (days_since_planted / daysToHarvest) * 100
+  daysToHarvest: number; // Total days from planting to harvest.
+  progress: number; // Calculated on the client: (days_since_planted / daysToHarvest) * 100.
   nextTask: { 
     name: string; 
-    dueInDays: number; // Days from planting date
+    dueInDays: number; // Days from planting date.
     iconName: 'Droplets' | 'Sun' | 'Wind';
   };
   lastNote: string;
@@ -50,7 +56,13 @@ export interface UserCrop {
 
 export interface SampleCrop {
   id: string;
+  
+  /**
+   * The generic, common name of the crop species/variety.
+   * Example: "Tomate Cherry", "Albahaca Genovesa".
+   */
   name: string;
+
   description: string;
   regionSlugs: string[];
   imageUrl: string;
