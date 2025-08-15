@@ -7,6 +7,15 @@
  * Each document in this collection will conform to the CropTechnicalSheet interface.
  */
 
+export interface Step {
+    descripcion: string;
+}
+
+export interface CultivationMethod {
+    nombre: string;
+    pasos: Step[];
+}
+
 export interface CropTechnicalSheet {
   id?: string; // For client-side use after fetching.
   slug: string; // URL-friendly identifier
@@ -30,6 +39,7 @@ export interface CropTechnicalSheet {
   compatibilidades: string[];
   incompatibilidades: string[];
   articulos_relacionados_ids: string[];
+  metodos_cultivo?: CultivationMethod[];
 }
 
 // Example Document: To be stored with ID 'tomate-cherry'
@@ -57,4 +67,24 @@ export const tomatoCherryData: Omit<CropTechnicalSheet, 'id'> = {
   compatibilidades: ['Albahaca', 'Zanahoria', 'Cebolla', 'Lechuga'],
   incompatibilidades: ['Brócoli', 'Coliflor', 'Papa', 'Hinojo'],
   articulos_relacionados_ids: ['control_de_plagas_organico', 'el_arte_de_cultivar_en_macetas'],
+  metodos_cultivo: [
+    {
+      nombre: 'Siembra en Semillero',
+      pasos: [
+        { descripcion: 'Rellena un semillero con sustrato húmedo y presiona ligeramente.' },
+        { descripcion: 'Coloca 2-3 semillas por alvéolo, a no más de 1 cm de profundidad.' },
+        { descripcion: 'Cubre las semillas con una fina capa de sustrato y riega suavemente con un pulverizador.' },
+        { descripcion: 'Mantén el semillero en un lugar cálido y luminoso hasta que las semillas germinen.' },
+      ],
+    },
+    {
+      nombre: 'Trasplante a Maceta Definitiva',
+      pasos: [
+        { descripcion: 'Cuando las plántulas tengan 4-6 hojas verdaderas, elige la más fuerte de cada alvéolo.' },
+        { descripcion: 'Prepara una maceta de al menos 20 litros con buen drenaje y sustrato rico en compost.' },
+        { descripcion: 'Con cuidado, saca la plántula del semillero y entiérrala en la maceta hasta los primeros cotiledones para fomentar un buen sistema radicular.' },
+        { descripcion: 'Riega abundantemente después del trasplante y coloca un tutor para guiar su crecimiento.' },
+      ],
+    },
+  ],
 };
