@@ -5,6 +5,7 @@
  */
 
 import type { Timestamp } from 'firebase/firestore';
+import type { ReactElement } from 'react';
 
 // --- USER PROFILE STRUCTURE ---
 // Firestore Path: /usuarios/{userId}
@@ -52,6 +53,22 @@ export interface UserCrop {
    * This is also used to create the very first entry in the crop's journal.
    */
   notas_progreso_inicial?: string;
+}
+
+// --- USER ALERT STRUCTURE ---
+// This data is stored in a SUBCOLLECTION.
+// Firestore Path: /usuarios/{userId}/alertas/{alertId}
+// These are generated automatically by the system based on crop data.
+
+export interface UserAlert {
+    id: string;
+    cropId: string;
+    cropName: string;
+    message: string;
+    type: 'riego' | 'abono' | 'cosecha' | 'info';
+    date: Timestamp;
+    isRead: boolean;
+    icon: React.ElementType;
 }
 
 

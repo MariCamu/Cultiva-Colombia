@@ -28,19 +28,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { fetchWeatherForecast } from '@/services/weatherService';
 import { getWeatherDescription, getWeatherIcon, type WeatherData, willItRainSoon } from '@/lib/weather-utils';
-import type { UserCrop, UserProfile } from '@/models/crop-model';
+import type { UserCrop, UserProfile, UserAlert } from '@/models/crop-model';
 
-
-export interface UserAlert {
-    id: string;
-    cropId: string;
-    cropName: string;
-    message: string;
-    type: 'riego' | 'abono' | 'cosecha' | 'info';
-    date: Timestamp;
-    isRead: boolean;
-    icon: React.ElementType;
-}
 
 interface SimulatedTask {
     date: Date;
@@ -257,7 +246,15 @@ function DashboardContent() {
   const [aiError, setAiError] = useState<string | null>(null);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | undefined>(new Date());
 
-
+    /**
+     * This function runs automatically when the dashboard loads.
+     * It checks all user's crops and creates alerts for tasks that are due.
+     * It checks for:
+     * 1. Harvest alerts: If a crop is ready to be harvested.
+     * 2. Next task alerts: Based on `nextTask.dueInDays` (e.g., watering).
+     * It writes these alerts to the `usuarios/{userId}/alertas` subcollection.
+     * The function is designed to not create duplicate alerts for the same task.
+     */
     const checkForUpcomingTasks = async (crops: UserCrop[]) => {
         if (!user) return;
 
