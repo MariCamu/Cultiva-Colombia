@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle, Wheat, BookHeart, Building, Home, Sprout, Search } from 'lucide-react';
+import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle, Wheat, BookHeart, Building, Home, Sprout, Search, ExternalLink } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { AddCropDialog } from './components/add-crop-dialog';
 import type { SampleCrop } from '@/models/crop-model';
 import { Input } from '@/components/ui/input';
+import Link from 'next/link';
 
 
 const sampleCropsData: SampleCrop[] = [
@@ -335,6 +336,10 @@ export default function CultivosPage() {
       const regionName = newRegionSlug ? regionOptions.find(opt => opt.value === newRegionSlug)?.label || null : 'Todas las Regiones';
       setActiveRegionName(regionName);
   };
+  
+  const createSlug = (name: string) => {
+    return name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+  }
 
   return (
     <div className="space-y-6">
@@ -474,6 +479,8 @@ export default function CultivosPage() {
                  const TypeIcon = getCropTypeIcon(crop.plantType);
                  const difficultyStyles = getDifficultyStyles(crop.difficulty);
                  const difficultyText = crop.difficulty <= 2 ? 'Fácil' : crop.difficulty <=4 ? 'Media' : 'Difícil';
+                 const slug = createSlug(crop.name);
+                 
                  return (
                     <Card key={crop.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
                         <CardHeader>
@@ -506,9 +513,14 @@ export default function CultivosPage() {
                                {crop.educativo !== 'no' && <Badge variant="secondary" className="bg-indigo-100 text-indigo-800"><BookHeart className="mr-1 h-3 w-3" />Educativo</Badge>}
                            </div>
                         </CardContent>
-                        <CardFooter>
+                        <CardFooter className="flex-col items-start gap-2">
+                            <Button asChild className="w-full">
+                                <Link href={`/cultivos/${slug}`}>
+                                    Ver Ficha Completa <ExternalLink className="ml-2 h-4 w-4" />
+                                </Link>
+                            </Button>
                            <AddCropDialog crop={crop}>
-                             <Button className="w-full">
+                             <Button className="w-full" variant="outline">
                                <PlusCircle className="mr-2 h-4 w-4" />
                                Añadir a mi Dashboard
                              </Button>
@@ -536,5 +548,3 @@ export default function CultivosPage() {
     </div>
   );
 }
-
-    

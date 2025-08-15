@@ -141,6 +141,10 @@ const createCropIcon = (crop: Crop) => {
     });
 };
 
+const createSlug = (name: string) => {
+  return name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+}
+
 
 // --- COMPONENTE PRINCIPAL INTERACTIVEMAP ---
 export function InteractiveMap() {
@@ -237,7 +241,7 @@ export function InteractiveMap() {
                                         <div>Tipo: {crop.type}</div>
                                         <div className="mt-2">
                                             <Button asChild variant="link" size="sm" className="p-0 h-auto font-semibold">
-                                                <Link href={`/cultivos?q=${encodeURIComponent(crop.name)}`}>
+                                                <Link href={`/cultivos/${createSlug(crop.name)}`}>
                                                     Ver ficha
                                                 </Link>
                                             </Button>

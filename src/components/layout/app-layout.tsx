@@ -171,7 +171,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                       onClick={() => setIsSheetOpen(false)}
                       className={cn(
                         "flex items-center gap-4 rounded-lg px-4 py-3 text-base font-nunito font-medium transition-all hover:bg-muted hover:text-primary",
-                        (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href)))
+                        (pathname === item.href || (item.href.length > 1 && pathname.startsWith(item.href)))
                           ? "bg-muted text-primary font-semibold" 
                           : "text-muted-foreground"
                       )}
@@ -199,7 +199,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 href={item.href}
                 className={cn(
                   "text-sm font-nunito font-semibold transition-colors hover:text-primary", 
-                  (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href)))
+                  (pathname === item.href || (item.href.length > 1 && pathname.startsWith(item.href)))
                     ? "text-primary border-b-2 border-primary pb-0.5" 
                     : "text-foreground/70"
                 )}
