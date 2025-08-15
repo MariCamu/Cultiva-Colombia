@@ -64,10 +64,14 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
       fecha_plantacion: plantingDate,
       imageUrl: crop.imageUrl,
       dataAiHint: crop.dataAiHint,
-      daysToHarvest: crop.daysToHarvest,
+      daysToHarvest: crop.datos_programaticos.dias_para_cosecha,
       estado_actual_cultivo: currentStage,
       notas_progreso_inicial: initialNotes,
-      nextTask: { name: 'Regar', dueInDays: 2, iconName: 'Droplets' },
+      nextTask: { 
+        name: 'Regar', 
+        dueInDays: crop.datos_programaticos.frecuencia_riego_dias, // Use programmatic data
+        iconName: 'Droplets' 
+      },
       lastNote: initialNotes || `¡Cultivo de ${crop.name} recién añadido!`,
       createdAt: serverTimestamp(),
     };

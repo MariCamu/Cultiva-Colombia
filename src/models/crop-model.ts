@@ -12,7 +12,10 @@ export interface SampleCrop {
   spaceRequired: 'Maceta pequeña (1–3 L)' | 'Maceta mediana (4–10 L)' | 'Maceta grande o jardín (10+ L)';
   plantType: 'Hortalizas de hoja' | 'Hortalizas de raíz' | 'Hortalizas de fruto' | 'Hortalizas de flor' | 'Leguminosas' | 'Cereales' | 'Plantas aromáticas' | 'Plantas de bulbo' | 'Frutales' | 'Tubérculos' | 'Otro';
   difficulty: 1 | 2 | 3 | 4 | 5;
-  daysToHarvest: number;
+  datos_programaticos: {
+    dias_para_cosecha: number;
+    frecuencia_riego_dias: number;
+  };
   lifeCycle?: { name: string }[];
   pancoger: boolean;
   patrimonial: boolean;
@@ -45,6 +48,4 @@ export interface UserProfile {
     harvestedCropsCount?: number;
     totalHarvestWeight?: number;
 }
-    
-
     

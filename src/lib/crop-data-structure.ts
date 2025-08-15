@@ -36,6 +36,10 @@ export interface CropTechnicalSheet {
     luz_solar: string;
     ph_suelo: string;
   };
+  datos_programaticos: {
+    frecuencia_riego_dias: number; // e.g., 3 for every 3 days
+    dias_para_cosecha: number;    // e.g., 90 for 90 days
+  };
   compatibilidades: string[];
   incompatibilidades: string[];
   articulos_relacionados_ids: string[];
@@ -63,6 +67,10 @@ export const tomatoCherryData: Omit<CropTechnicalSheet, 'id'> = {
     temperatura_ideal: '18°C - 28°C',
     luz_solar: '6-8 horas diarias',
     ph_suelo: '6.0 - 6.8',
+  },
+  datos_programaticos: {
+    frecuencia_riego_dias: 3,
+    dias_para_cosecha: 90,
   },
   compatibilidades: ['Albahaca', 'Zanahoria', 'Cebolla', 'Lechuga'],
   incompatibilidades: ['Brócoli', 'Coliflor', 'Papa', 'Hinojo'],
