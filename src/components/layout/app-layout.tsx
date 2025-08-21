@@ -223,12 +223,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <p>
                 © {new Date().getFullYear()} Cultiva Colombia. Todos los derechos reservados.
             </p>
-            <p className="mt-1">
-                Imágenes de cultivos por <a href="https://www.freepik.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Freepik</a>. 
-                Orégano por Helga (<a href="https://pixabay.com/es/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Pixabay</a>), 
-                Hierbabuena por R. E. Beck (<a href="https://pixabay.com/es/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Pixabay</a>), 
-                Árbol de Pan por PublicDomainPictures (<a href="https://pixabay.com/es/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Pixabay</a>).
-            </p>
+            <div className="mt-2 space-x-2">
+                <span className="font-semibold">Atribuciones de imágenes:</span>
+                <a href="https://www.freepik.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Freepik</a>
+                <span>,</span>
+                <a href="https://pixabay.com/es/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Pixabay</a>
+            </div>
         </div>
       </footer>
     </div>
