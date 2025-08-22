@@ -19,29 +19,8 @@ import type { SampleCrop } from '@/models/crop-model';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 
-
-const sampleCropsData: SampleCrop[] = [
-    { id: 'frijol_andino', name: 'Fríjol', regionSlugs: ['andina'], pancoger: true, patrimonial: false, sembrable_en_casa: 'sí', educativo: 'sí', description: 'Leguminosa fundamental en la dieta andina, con gran variedad de tipos y usos.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Ffrijol.jpg?alt=media&token=9af96b87-5d6c-40af-af29-0a4087544269', dataAiHint: 'bean plant', estimatedPrice: 'Precio bajo', duration: 'Media (3–5 meses)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Leguminosas', difficulty: 2, lifeCycle: [{ name: 'Siembra' }, { name: 'Germinación' }, { name: 'Crecimiento' }, { name: 'Floración' }, { name: 'Cosecha' }], clima: 'Templado', datos_programaticos: { dias_para_cosecha: 90, frecuencia_riego_dias: 3 } },
-    { id: 'papa_andina', name: 'Papa', regionSlugs: ['andina'], pancoger: true, patrimonial: true, sembrable_en_casa: 'sí', educativo: 'sí', description: 'Tubérculo versátil y nutritivo, base de la alimentación en la región andina. Se puede sembrar en costal.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fpapa.jpg?alt=media&token=9615f312-8217-47e2-8ea3-ae3fa80494c5', dataAiHint: 'potato field', estimatedPrice: 'Precio bajo', duration: 'Media (3–5 meses)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Tubérculos', difficulty: 2, lifeCycle: [{ name: 'Siembra' }, { name: 'Brote' }, { name: 'Desarrollo' }, { name: 'Maduración' }, { name: 'Cosecha' }], clima: 'Frío', datos_programaticos: { dias_para_cosecha: 120, frecuencia_riego_dias: 4 } },
-    { id: 'maiz_caribe', name: 'Maíz', regionSlugs: ['caribe'], pancoger: true, patrimonial: true, sembrable_en_casa: 'sí', educativo: 'sí', description: 'Cereal esencial en la cultura caribeña. Variedades pequeñas son aptas para siembra en casa.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fmaiz.jpg?alt=media&token=b2e64dac-2b21-4ddc-b54d-4fa2f79a681a', dataAiHint: 'corn field', estimatedPrice: 'Precio bajo', duration: 'Media (3–5 meses)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Cereales', difficulty: 2, lifeCycle: [{ name: 'Siembra' }, { name: 'Crecimiento' }, { name: 'Polinización' }, { name: 'Cosecha' }], clima: 'Cálido', datos_programaticos: { dias_para_cosecha: 100, frecuencia_riego_dias: 2 } },
-    { id: 'platano_caribe', name: 'Plátano', regionSlugs: ['caribe'], pancoger: true, patrimonial: true, sembrable_en_casa: 'no', educativo: 'no', description: 'Fruta esencial en la cocina caribeña, consumida verde o madura.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fplatano.jpg?alt=media&token=d9020e75-063b-400e-a855-934297e92040', dataAiHint: 'banana tree', estimatedPrice: 'Precio bajo', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 2, lifeCycle: [{ name: 'Cormo' }, { name: 'Crecimiento' }, { name: 'Floración' }, { name: 'Cosecha' }], clima: 'Cálido', datos_programaticos: { dias_para_cosecha: 365, frecuencia_riego_dias: 3 } },
-    { id: 'coco_insular', name: 'Coco', regionSlugs: ['insular'], pancoger: false, patrimonial: true, sembrable_en_casa: 'no', educativo: 'no', description: 'Fruto tropical versátil, utilizado para agua, pulpa y aceite en las islas.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fcoco.jpg?alt=media&token=642cf4b3-a160-47ba-975d-2b3ea6f9f77d', dataAiHint: 'coconut tree', estimatedPrice: 'Precio bajo', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 2, lifeCycle: [{ name: 'Nuez' }, { name: 'Palma Joven' }, { name: 'Producción' }, { name: 'Cosecha' }], clima: 'Muy cálido', datos_programaticos: { dias_para_cosecha: 2555, frecuencia_riego_dias: 7 } },
-    { id: 'arbol_pan_insular', name: 'Árbol del pan', regionSlugs: ['insular'], pancoger: false, patrimonial: true, sembrable_en_casa: 'no', educativo: 'no', description: 'Fruto grande y almidonado, básico en la alimentación de las islas caribeñas.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Farbol_de_pan.jpg?alt=media&token=738a9ce7-9f24-4947-bd72-441e526f9932', dataAiHint: 'breadfruit tree', estimatedPrice: 'Precio moderado', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 3, lifeCycle: [{ name: 'Semilla' }, { name: 'Plántula' }, { name: 'Crecimiento' }, { name: 'Producción' }, { name: 'Cosecha' }], clima: 'Muy cálido', datos_programaticos: { dias_para_cosecha: 1095, frecuencia_riego_dias: 5 } },
-    { id: 'arroz_orinoquia', name: 'Arroz', regionSlugs: ['orinoquia'], pancoger: true, patrimonial: false, sembrable_en_casa: 'sí', educativo: 'sí', description: 'Cereal básico cultivado extensamente en las llanuras inundables. Se puede cultivar en balde.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Farroz.jpg?alt=media&token=07c37633-2c5f-4e14-811b-27b60c9cbbd6', dataAiHint: 'rice paddy', estimatedPrice: 'Precio bajo', duration: 'Media (3–5 meses)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Cereales', difficulty: 3, lifeCycle: [{ name: 'Siembra' }, { name: 'Macollamiento' }, { name: 'Floración' }, { name: 'Maduración' }, { name: 'Cosecha' }], clima: 'Cálido', datos_programaticos: { dias_para_cosecha: 120, frecuencia_riego_dias: 1 } },
-    { id: 'yuca_amazonia', name: 'Yuca', regionSlugs: ['amazonia'], pancoger: true, patrimonial: true, sembrable_en_casa: 'no', educativo: 'parcialmente', description: 'Raíz comestible fundamental en la dieta amazónica, adaptable a climas tropicales.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fyuca.jpg?alt=media&token=581647db-384d-472c-8d7f-5c813515d097', dataAiHint: 'cassava plant', estimatedPrice: 'Precio bajo', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Tubérculos', difficulty: 2, lifeCycle: [{ name: 'Estaca' }, { name: 'Brotación' }, { name: 'Engrosamiento' }, { name: 'Cosecha' }], clima: 'Cálido', datos_programaticos: { dias_para_cosecha: 240, frecuencia_riego_dias: 4 } },
-    { id: 'cacao_amazonia', name: 'Cacao', regionSlugs: ['amazonia'], pancoger: false, patrimonial: true, sembrable_en_casa: 'no', educativo: 'sí', description: 'Fruto del que se obtiene el chocolate, de gran importancia cultural y económica. Se puede germinar como proyecto educativo.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Flow-angle-scacao.jpg?alt=media&token=810a39e7-767b-47d6-b457-d15cc31cbc14', dataAiHint: 'cacao pods', estimatedPrice: 'Precio moderado', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 4, lifeCycle: [{ name: 'Semilla' }, { name: 'Plántula' }, { name: 'Crecimiento' }, { name: 'Producción' }, { name: 'Cosecha' }], clima: 'Cálido', datos_programaticos: { dias_para_cosecha: 1095, frecuencia_riego_dias: 3 } },
-    { id: 'name_pacifico', name: 'Ñame', regionSlugs: ['pacifica'], pancoger: true, patrimonial: true, sembrable_en_casa: 'parcialmente', educativo: 'parcialmente', description: 'Tubérculo importante en la gastronomía del Pacífico, similar a la papa. Se puede sembrar en costal.', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'yam tuber', estimatedPrice: 'Precio bajo', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Tubérculos', difficulty: 3, lifeCycle: [{ name: 'Siembra' }, { name: 'Brotación' }, { name: 'Desarrollo' }, { name: 'Maduración' }, { name: 'Cosecha' }], clima: 'Cálido', datos_programaticos: { dias_para_cosecha: 270, frecuencia_riego_dias: 4 } },
-    { id: 'mango_caribe', name: 'Mango', regionSlugs: ['caribe'], pancoger: true, patrimonial: false, sembrable_en_casa: 'no', educativo: 'no', description: 'Fruta tropical dulce y jugosa, con múltiples variedades en la región.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fmango.jpg?alt=media&token=2482a09a-213b-486a-9923-80a9c2f24d75', dataAiHint: 'mango fruit', estimatedPrice: 'Precio moderado', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 3, lifeCycle: [{ name: 'Semilla' }, { name: 'Plántula' }, { name: 'Crecimiento' }, { name: 'Producción' }, { name: 'Cosecha' }], clima: 'Cálido', datos_programaticos: { dias_para_cosecha: 1460, frecuencia_riego_dias: 5 } },
-    { id: 'oregano', name: 'Orégano', regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'], pancoger: false, patrimonial: true, sembrable_en_casa: 'sí', educativo: 'sí', description: 'Hierba aromática popular, fácil de cultivar en macetas.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Foregano.jpg?alt=media&token=b303420f-be22-4721-bc4e-3fbac3945796', dataAiHint: 'oregano plant', estimatedPrice: 'Precio bajo', duration: 'Corta (1–2 meses)', spaceRequired: 'Maceta pequeña (1–3 L)', plantType: 'Plantas aromáticas', difficulty: 1, lifeCycle: [{ name: 'Siembra' }, { name: 'Crecimiento' }, { name: 'Cosecha' }], clima: 'Templado', datos_programaticos: { dias_para_cosecha: 60, frecuencia_riego_dias: 2 } },
-    { id: 'hierbabuena', name: 'Hierbabuena', regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'], pancoger: false, patrimonial: true, sembrable_en_casa: 'sí', educativo: 'sí', description: 'Hierba aromática refrescante y de crecimiento rápido, ideal para principiantes.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fhierbabuena.jpg?alt=media&token=dac10822-6ccd-42f1-a56f-65d38f8513a5', dataAiHint: 'mint plant', estimatedPrice: 'Precio bajo', duration: 'Corta (1–2 meses)', spaceRequired: 'Maceta pequeña (1–3 L)', plantType: 'Plantas aromáticas', difficulty: 1, lifeCycle: [{ name: 'Siembra' }, { name: 'Crecimiento' }, { name: 'Cosecha' }], clima: 'Templado', datos_programaticos: { dias_para_cosecha: 50, frecuencia_riego_dias: 2 } },
-    { id: 'albahaca', name: 'Albahaca', regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'], pancoger: false, patrimonial: true, sembrable_en_casa: 'sí', educativo: 'sí', description: 'Hierba culinaria muy versátil, perfecta para huertos caseros.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Falbahaca.jpg?alt=media&token=3e287ab2-463b-480c-9483-d18c6f9cb6c7', dataAiHint: 'basil plant', estimatedPrice: 'Precio bajo', duration: 'Corta (1–2 meses)', spaceRequired: 'Maceta pequeña (1–3 L)', plantType: 'Plantas aromáticas', difficulty: 2, lifeCycle: [{ name: 'Siembra' }, { name: 'Crecimiento' }, { name: 'Cosecha' }], clima: 'Templado', datos_programaticos: { dias_para_cosecha: 70, frecuencia_riego_dias: 2 } },
-    { id: 'guayaba', name: 'Guayaba', regionSlugs: ['andina', 'caribe'], pancoger: true, patrimonial: true, sembrable_en_casa: 'parcialmente', educativo: 'sí', description: 'Árbol frutal fácil de cuidar que produce frutos deliciosos. Requiere macetón grande o suelo.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fguayaba.jpg?alt=media&token=354326fb-b67b-4af3-86d7-c6a6be6a8d43', dataAiHint: 'guava tree', estimatedPrice: 'Precio bajo', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 3, lifeCycle: [{ name: 'Semilla' }, { name: 'Plántula' }, { name: 'Producción' }], clima: 'Templado', datos_programaticos: { dias_para_cosecha: 730, frecuencia_riego_dias: 4 } },
-    { id: 'tomate_cherry', name: 'Tomate cherry', regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'], pancoger: false, patrimonial: false, sembrable_en_casa: 'sí', educativo: 'sí', description: 'Pequeños tomates dulces y jugosos, ideales para cultivar en macetas.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Ftomate_cherry.jpg?alt=media&token=44504067-71d1-4ee0-838b-54f70e31c451', dataAiHint: 'cherry tomatoes', estimatedPrice: 'Precio moderado', duration: 'Media (3–5 meses)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Hortalizas de fruto', difficulty: 2, lifeCycle: [{ name: 'Siembra' }, { name: 'Crecimiento' }, { name: 'Floración' }, { name: 'Cosecha' }], clima: 'Templado', datos_programaticos: { dias_para_cosecha: 90, frecuencia_riego_dias: 3 } },
-    { id: 'cebollin', name: 'Cebollín', regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'], pancoger: false, patrimonial: true, sembrable_en_casa: 'sí', educativo: 'sí', description: 'Fácil de cultivar en macetas, añade un sabor suave a cebolla a tus platos.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fcebollin.jpg?alt=media&token=d15c1bb8-287a-48d0-93b7-9bf407a48ebf', dataAiHint: 'chives plant', estimatedPrice: 'Precio bajo', duration: 'Corta (1–2 meses)', spaceRequired: 'Maceta pequeña (1–3 L)', plantType: 'Hortalizas de hoja', difficulty: 1, lifeCycle: [{ name: 'Siembra' }, { name: 'Crecimiento' }, { name: 'Cosecha' }], clima: 'Frío', datos_programaticos: { dias_para_cosecha: 60, frecuencia_riego_dias: 2 } },
-    { id: 'maracuya', name: 'Maracuyá', regionSlugs: ['pacifica', 'andina', 'caribe'], pancoger: true, patrimonial: true, sembrable_en_casa: 'parcialmente', educativo: 'sí', description: 'Enredadera que produce una fruta tropical exótica y deliciosa.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fmaracuya.jpg?alt=media&token=5fe49455-3e5c-4f4d-bb99-75385115b4c5', dataAiHint: 'passion fruit vine', estimatedPrice: 'Precio moderado', duration: 'Larga (6 meses o más)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Frutales', difficulty: 4, lifeCycle: [{ name: 'Siembra' }, { name: 'Crecimiento' }, { name: 'Floración' }, { name: 'Cosecha' }], clima: 'Templado', datos_programaticos: { dias_para_cosecha: 365, frecuencia_riego_dias: 3 } },
-    { id: 'auyama', name: 'Auyama', regionSlugs: ['caribe', 'andina'], pancoger: true, patrimonial: true, sembrable_en_casa: 'sí', educativo: 'sí', description: 'Calabaza versátil y nutritiva, se puede cultivar en huertas o costales.', imageUrl: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fauyama.jpg?alt=media&token=aba42a3a-3e24-4ddf-8a32-b800a6a8fe96', dataAiHint: 'squash plant', estimatedPrice: 'Precio bajo', duration: 'Media (3–5 meses)', spaceRequired: 'Maceta grande o jardín (10+ L)', plantType: 'Hortalizas de fruto', difficulty: 2, lifeCycle: [{ name: 'Siembra' }, { name: 'Crecimiento' }, { name: 'Floración' }, { name: 'Cosecha' }], clima: 'Cálido', datos_programaticos: { dias_para_cosecha: 100, frecuencia_riego_dias: 2 } },
-];
-
+// NOTE: sampleCropsData has been removed as the app will now fetch data from Firestore.
+// The component is now prepared to handle an empty state while the database is being populated.
 
 const regionBoundingBoxes = [
   { slug: 'insular', name: 'Insular', bounds: { minLat: 12.0, maxLat: 16.5, minLng: -82.0, maxLng: -78.0 } },
@@ -78,6 +57,8 @@ const climaOptions = [
     { value: 'Cálido', label: 'Cálido (24–30 °C)' },
     { value: 'Muy cálido', label: 'Muy cálido (>30 °C)' },
 ];
+// Note: These filter options will be dynamically generated from Firestore data in a future implementation.
+// For now, they are hardcoded based on the initial sample data.
 const priceOptions = [
   { value: 'all', label: 'Todos los Precios' },
   { value: 'Precio bajo', label: 'Precio bajo' },
@@ -98,7 +79,13 @@ const spaceOptions = [
 ];
 const plantTypeOptions = [
   { value: 'all', label: 'Todos los Tipos' },
-  ...Array.from(new Set(sampleCropsData.map(c => c.plantType))).sort().map(pt => ({ value: pt, label: pt }))
+  { value: 'Leguminosas', label: 'Leguminosas' },
+  { value: 'Tubérculos', label: 'Tubérculos' },
+  { value: 'Frutales', label: 'Frutales' },
+  { value: 'Cereales', label: 'Cereales' },
+  { value: 'Plantas aromáticas', label: 'Plantas aromáticas' },
+  { value: 'Hortalizas de fruto', label: 'Hortalizas de fruto' },
+  { value: 'Hortalizas de hoja', label: 'Hortalizas de hoja' },
 ];
 const difficultyOptions = [
   { value: 'all', label: 'Todas las Dificultades' },
@@ -149,6 +136,10 @@ export default function CultivosPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  
+  // State for fetched crops from Firestore
+  const [allCrops, setAllCrops] = useState<SampleCrop[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [geolocationStatus, setGeolocationStatus] = useState<GeolocationStatus>('idle');
   const [geolocationErrorMsg, setGeolocationErrorMsg] = useState<string | null>(null);
@@ -166,6 +157,13 @@ export default function CultivosPage() {
   
   const [filterSource, setFilterSource] = useState<FilterSource>('none');
   const [userHasInteracted, setUserHasInteracted] = useState(false);
+
+  // TODO: Implement fetching from Firestore
+  useEffect(() => {
+    // This is where you would fetch data from Firestore and populate `allCrops`
+    // For now, it will be empty.
+    setIsLoading(false); 
+  }, []);
 
   // Update URL from state changes
   useEffect(() => {
@@ -252,14 +250,14 @@ export default function CultivosPage() {
     }
   }, [userHasInteracted]);
 
-  const displayedCrops = sampleCropsData.filter(crop => {
+  const displayedCrops = allCrops.filter(crop => {
     if (searchQuery && !crop.name.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
     if (activeRegionSlug && !crop.regionSlugs.includes(activeRegionSlug)) {
       return false;
     }
-     if (selectedClima && crop.clima !== selectedClima) {
+     if (selectedClima && crop.clima.clase[0] !== selectedClima) { // Note: adapted for new structure
       return false;
     }
     if (selectedPrice && crop.estimatedPrice !== selectedPrice) {
@@ -533,15 +531,12 @@ export default function CultivosPage() {
           ) : (
              <Alert variant="default" className="mt-4">
                 <HelpCircle className="h-4 w-4" />
-                <AlertTitle className="font-nunito font-semibold">No se encontraron cultivos</AlertTitle>
+                <AlertTitle className="font-nunito font-semibold">{isLoading ? 'Cargando Cultivos...' : 'No se encontraron cultivos'}</AlertTitle>
                 <AlertDescription>
-                 No se encontraron cultivos que coincidan con los filtros o la búsqueda. Prueba a cambiar tus criterios.
+                 {isLoading ? 'Por favor espera mientras cargamos los datos desde la base de datos.' : 'No se encontraron cultivos que coincidan con los filtros o la búsqueda. A medida que añadas datos a Firestore, aparecerán aquí.'}
                 </AlertDescription>
             </Alert>
           )}
-          <p className="mt-6 text-sm text-muted-foreground">
-            Estos son datos de ejemplo. La funcionalidad completa estará disponible pronto.
-          </p>
         </CardContent>
       </Card>
 

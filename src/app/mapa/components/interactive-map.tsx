@@ -78,30 +78,15 @@ const LeafIcon = (props: React.SVGProps<SVGSVGElement>) => (
 interface Crop {
     id: string;
     name: string;
-    difficulty: 'easy' | 'medium' | 'hard';
-    type: 'Hortaliza' | 'Fruta' | 'Aromática' | 'Grano' | 'Tubérculo' | 'Leguminosa';
-    space: 'Maceta pequeña' | 'Maceta grande' | 'Jardín';
+    difficulty: 'Fácil' | 'Media' | 'Difícil' | string;
+    type: 'Hortaliza' | 'Fruta' | 'Aromática' | 'Grano' | 'Tubérculo' | 'Leguminosa' | string;
+    space: 'Maceta pequeña' | 'Maceta grande' | 'Jardín' | string;
     position: [number, number]; // [lat, lng]
     icon: React.ElementType;
     regionSlugs: string[]; // Para filtrar por región
 }
 
-const mapCropsData: Crop[] = [
-    { id: 'frijol_andino', name: 'Fríjol',difficulty: 'easy', type: 'Leguminosa', space: 'Maceta grande', position: [4.8, -75.7], icon: LeafIcon, regionSlugs: ['andina'] },
-    { id: 'maiz_caribe', name: 'Maíz', difficulty: 'easy', type: 'Grano', space: 'Jardín', position: [3.4, -76.5], icon: CornIcon, regionSlugs: ['caribe', 'andina'] },
-    { id: 'papa_andina', name: 'Papa', difficulty: 'easy', type: 'Tubérculo', space: 'Maceta grande', position: [5.5, -73.3], icon: LeafIcon, regionSlugs: ['andina'] },
-    { id: 'mango_caribe', name: 'Mango', difficulty: 'medium', type: 'Fruta', space: 'Jardín', position: [11.0, -74.2], icon: LeafIcon, regionSlugs: ['caribe'] },
-    { id: 'arroz_orinoquia', name: 'Arroz', difficulty: 'medium', type: 'Grano', space: 'Jardín', position: [4.5, -72.0], icon: CornIcon, regionSlugs: ['orinoquia'] },
-    { id: 'name_pacifico', name: 'Ñame', difficulty: 'hard', type: 'Tubérculo', space: 'Jardín', position: [3.8, -77.0], icon: LeafIcon, regionSlugs: ['pacifica'] },
-    { id: 'yuca_amazonia', name: 'Yuca', difficulty: 'easy', type: 'Tubérculo', space: 'Jardín', position: [0.0, -70.0], icon: LeafIcon, regionSlugs: ['amazonia'] },
-    { id: 'oregano', name: 'Orégano', difficulty: 'easy', type: 'Aromática', space: 'Maceta pequeña', position: [6.2, -75.5], icon: LeafIcon, regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'] },
-    { id: 'hierbabuena', name: 'Hierbabuena', difficulty: 'easy', type: 'Aromática', space: 'Maceta pequeña', position: [1.2, -77.2], icon: LeafIcon, regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'] },
-    { id: 'guayaba', name: 'Guayaba', difficulty: 'medium', type: 'Fruta', space: 'Jardín', position: [2.9, -75.2], icon: LeafIcon, regionSlugs: ['andina', 'caribe'] },
-    { id: 'tomate_cherry', name: 'Tomate cherry', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta grande', position: [7.8, -72.5], icon: LeafIcon, regionSlugs: ['andina', 'caribe', 'pacifica', 'orinoquia', 'amazonia', 'insular'] },
-    { id: 'maracuya', name: 'Maracuyá', difficulty: 'hard', type: 'Fruta', space: 'Jardín', position: [4.9, -76.6], icon: LeafIcon, regionSlugs: ['pacifica', 'andina', 'caribe'] },
-    { id: 'auyama', name: 'Auyama', difficulty: 'easy', type: 'Hortaliza', space: 'Maceta grande', position: [9.3, -75.4], icon: LeafIcon, regionSlugs: ['caribe', 'andina'] },
-];
-
+// NOTE: mapCropsData has been removed as the app will now fetch data from Firestore.
 
 // --- PUNTOS CENTRALES APROXIMADOS POR REGIÓN ---
 const regionCenters: { [key: string]: [number, number] | undefined } = {
@@ -115,16 +100,17 @@ const regionCenters: { [key: string]: [number, number] | undefined } = {
 };
 
 // --- FUNCIONES AUXILIARES PARA LOS ÍCONOS PERSONALIZADOS ---
-const getDifficultyClass = (difficulty: 'easy' | 'medium' | 'hard') => {
+const getDifficultyClass = (difficulty: 'Fácil' | 'Media' | 'Difícil' | string) => {
     switch (difficulty) {
-        case 'easy': return 'map-marker-easy';
-        case 'medium': return 'map-marker-medium';
-        case 'hard': return 'map-marker-hard';
+        case 'Fácil': return 'map-marker-easy';
+        case 'Media': return 'map-marker-medium';
+        case 'Difícil': return 'map-marker-hard';
+        default: return 'map-marker-easy';
     }
 };
 
 const createCropIcon = (crop: Crop) => {
-    const IconComponent = crop.icon;
+    const IconComponent = crop.icon || LeafIcon;
     const difficultyClass = getDifficultyClass(crop.difficulty);
     const iconHtml = ReactDOMServer.renderToString(
       <div className={cn("map-marker", difficultyClass)}>
@@ -148,10 +134,13 @@ const createSlug = (name: string) => {
 
 // --- COMPONENTE PRINCIPAL INTERACTIVEMAP ---
 export function InteractiveMap() {
+    const [allCrops, setAllCrops] = useState<Crop[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [spaceFilter, setSpaceFilter] = useState<string>('all');
     const [activeRegionFilter, setActiveRegionFilter] = useState<string>('all');
-    const [filteredCrops, setFilteredCrops] = useState<Crop[]>(mapCropsData);
+    const [filteredCrops, setFilteredCrops] = useState<Crop[]>([]);
     const [mapCenter, setMapCenter] = useState<[number, number]>(regionCenters.all as [number, number]);
     const [mapZoom, setMapZoom] = useState<number>(6);
 
@@ -163,8 +152,15 @@ export function InteractiveMap() {
         }
     }, []);
 
+    // TODO: Implement fetching from Firestore
+    useEffect(() => {
+        // This is where you would fetch data from Firestore and populate `allCrops`
+        // For now, it will be empty.
+        setIsLoading(false);
+    }, []);
+
     const handleFilterChange = () => {
-        let crops = mapCropsData;
+        let crops = allCrops;
 
         if (activeRegionFilter !== 'all') {
             crops = crops.filter(c => c.regionSlugs.includes(activeRegionFilter));
@@ -182,7 +178,7 @@ export function InteractiveMap() {
         setTypeFilter('all');
         setSpaceFilter('all');
         setActiveRegionFilter('all');
-        setFilteredCrops(mapCropsData);
+        setFilteredCrops(allCrops);
         setMapCenter(regionCenters.all as [number, number]);
         setMapZoom(6);
     };
@@ -202,7 +198,7 @@ export function InteractiveMap() {
             setActiveRegionFilter('all'); 
             setTypeFilter('all');
             setSpaceFilter('all');
-            setFilteredCrops(mapCropsData);
+            setFilteredCrops(allCrops);
             
         } catch (error: any) {
             console.error("Error al obtener ubicación:", error);
@@ -212,7 +208,7 @@ export function InteractiveMap() {
 
     useEffect(() => {
         handleFilterChange();
-    }, [typeFilter, spaceFilter, activeRegionFilter]);
+    }, [typeFilter, spaceFilter, activeRegionFilter, allCrops]);
 
 
     return (

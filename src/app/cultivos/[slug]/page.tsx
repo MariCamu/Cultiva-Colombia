@@ -11,7 +11,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor, MapPin, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -24,10 +24,20 @@ interface CropDetailPageProps {
 
 async function getCropBySlug(slug: string): Promise<CropTechnicalSheet | null> {
   const cropsCollectionRef = collection(db, 'fichas_tecnicas_cultivos');
-  const q = query(cropsCollectionRef, where('slug', '==', slug));
+  const q = query(cropsCollectionRef, where('id', '==', slug)); // Querying by 'id' field which should be the slug
   const querySnapshot = await getDocs(q);
 
   if (querySnapshot.empty) {
+    // Fallback query for document ID if 'id' field doesn't exist
+    const docRef = doc(db, 'fichas_tecnicas_cultivos', slug);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        const data = docSnap.data() as CropTechnicalSheet;
+        return {
+            id: docSnap.id,
+            ...data,
+        };
+    }
     return null;
   }
 
@@ -123,15 +133,16 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
         <div className="space-y-4">
           <h1 className="text-4xl font-nunito font-extrabold tracking-tight lg:text-5xl">{crop.nombre}</h1>
+          <p className="text-xl text-muted-foreground font-sans italic">{crop.nombreCientifico}</p>
           <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">{crop.tipo_planta}</Badge>
               <Badge variant="secondary">{crop.dificultad}</Badge>
-              <Badge variant="secondary">{crop.clima}</Badge>
+              {crop.clima.clase.map(c => <Badge key={c} variant="secondary">{c}</Badge>)}
           </div>
-          <p className="text-lg text-muted-foreground">{crop.descripcion_general}</p>
+          <p className="text-lg text-muted-foreground">{crop.descripcion}</p>
         </div>
         <Image
-          src={crop.imagen.url}
+          src={crop.imagenes[0].url}
           alt={`Imagen de ${crop.nombre}`}
           width={600}
           height={400}
@@ -152,7 +163,7 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
 
       <div>
         <h2 className="text-3xl font-nunito font-bold text-center mb-6">Información Adicional</h2>
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="multiple" defaultValue={["item-1", "item-2", "item-3"]} className="w-full">
             <AccordionItem value="item-1">
                 <AccordionTrigger className="text-xl">Datos Técnicos y Ciclo de Vida</AccordionTrigger>
                 <AccordionContent>
@@ -195,7 +206,7 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
                 </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2">
-                <AccordionTrigger className="text-xl">Asociaciones y Artículos</AccordionTrigger>
+                <AccordionTrigger className="text-xl">Asociaciones y Regiones</AccordionTrigger>
                 <AccordionContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
                         <Card>
@@ -218,23 +229,42 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card>
+                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2"><BookOpen className="h-5 w-5 text-amber-600"/>Artículos Relacionados</CardTitle>
+                                <CardTitle className="text-lg flex items-center gap-2"><MapPin className="h-5 w-5 text-blue-600"/>Regiones Principales</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <ul className="space-y-2">
-                                    {crop.articulos_relacionados_ids.map(id => (
-                                        <li key={id}>
-                                            <Link href={`/articulos/${id.replace(/_/g, '-')}`} className="text-primary hover:underline text-sm font-semibold">
-                                                {id.replace(/_/g, ' ').replace('articulo ', '')}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
+                                <div className="flex flex-wrap gap-2">
+                                    {crop.region.principal.map(region => <Badge key={region} variant="outline" className="bg-blue-100 text-blue-800">{region}</Badge>)}
+                                </div>
+                                <div className="mt-4 text-sm text-muted-foreground flex items-start gap-2">
+                                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0"/>
+                                    <p>{crop.region.nota}</p>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
+                </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+                <AccordionTrigger className="text-xl">Artículos Relacionados</AccordionTrigger>
+                <AccordionContent>
+                     <Card className="mt-4">
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2"><BookOpen className="h-5 w-5 text-amber-600"/>Artículos Relacionados</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ul className="space-y-2">
+                                {crop.articulos_relacionados_ids.map(id => (
+                                    <li key={id}>
+                                        <Link href={`/articulos/${id.replace(/_/g, '-')}`} className="text-primary hover:underline text-sm font-semibold">
+                                            {id.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
                 </AccordionContent>
             </AccordionItem>
         </Accordion>
