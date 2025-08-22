@@ -24,6 +24,12 @@ export interface CultivationMethod {
     pasos: Step[];
 }
 
+export interface LifeCycleStage {
+    etapa: string;
+    duracion: string;
+    descripcion: string;
+}
+
 export interface CropTechnicalSheet {
   id?: string; // Firestore Document ID (e.g., 'lechuga')
   nombre: string; // nombreComun in spreadsheet
@@ -47,13 +53,12 @@ export interface CropTechnicalSheet {
   imagenes: ImageWithAttribution[];
   articulos_relacionados_ids: string[]; // articulosRelacionados
   
-  // These fields are from the previous model and should be added to the new data structure
-  tipo_planta: 'Fruto' | 'Hoja' | 'Raíz' | 'Aromática' | 'Tubérculo' | 'Leguminosa' | 'Otro' | string;
-  ciclo_vida: {
-    etapa: string;
-    duracion: string;
-    descripcion: string;
-  }[];
+  // Embedded data from other Excel sheets
+  tipo_planta: string;
+  ciclo_vida: LifeCycleStage[];
+  metodos_cultivo: CultivationMethod[];
+
+  // Programmatic data for app logic
   datos_tecnicos: {
     riego: string;
     temperatura_ideal: string;
@@ -64,5 +69,4 @@ export interface CropTechnicalSheet {
     frecuencia_riego_dias: number;
     dias_para_cosecha: number;
   };
-  metodos_cultivo?: CultivationMethod[];
 }

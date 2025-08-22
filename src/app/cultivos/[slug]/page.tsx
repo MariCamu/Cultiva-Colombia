@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import type { CropTechnicalSheet, CultivationMethod } from '@/lib/crop-data-structure';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,20 +24,24 @@ interface CropDetailPageProps {
 
 async function getCropBySlug(slug: string): Promise<CropTechnicalSheet | null> {
   const cropsCollectionRef = collection(db, 'fichas_tecnicas_cultivos');
-  const q = query(cropsCollectionRef, where('id', '==', slug)); // Querying by 'id' field which should be the slug
+  // Firestore document IDs cannot contain slashes and are case-sensitive.
+  // We assume the slug is the intended document ID.
+  const docRef = doc(db, 'fichas_tecnicas_cultivos', slug);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    const data = docSnap.data() as CropTechnicalSheet;
+    return {
+        id: docSnap.id,
+        ...data,
+    };
+  }
+  
+  // Fallback query if the slug is a field value instead of the document ID
+  const q = query(cropsCollectionRef, where('id', '==', slug));
   const querySnapshot = await getDocs(q);
 
   if (querySnapshot.empty) {
-    // Fallback query for document ID if 'id' field doesn't exist
-    const docRef = doc(db, 'fichas_tecnicas_cultivos', slug);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        const data = docSnap.data() as CropTechnicalSheet;
-        return {
-            id: docSnap.id,
-            ...data,
-        };
-    }
     return null;
   }
 
