@@ -24,13 +24,13 @@ export default function Icon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: '50%',
+          borderRadius: '6px', // Rounded corners for the background
         }}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
+          width="24"
+          height="24"
           viewBox="0 0 24 24"
           fill="none"
           stroke="#70964F" // Primary color
@@ -38,8 +38,9 @@ export default function Icon() {
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          <path d="M2 22s5-4 5-10-5-10-5-10" />
-          <path d="M22 2s-5 4-5 10 5 10 5 10" />
+            <path d="M7 20h10" />
+            <path d="M10 20c0-3.3 1-6.5 3-8a5 5 0 0 1 5-8" />
+            <path d="M14 20c0-3.3-1-6.5-3-8a5 5 0 0 0-5-8" />
         </svg>
       </div>
     ),
