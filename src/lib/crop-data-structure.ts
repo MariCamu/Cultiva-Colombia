@@ -16,11 +16,19 @@ export interface CultivationMethod {
     pasos: Step[];
 }
 
+export interface ImageWithAttribution {
+    url: string;
+    attribution?: {
+        text: string;
+        link: string;
+    }
+}
+
 export interface CropTechnicalSheet {
   id?: string; // For client-side use after fetching.
   slug: string; // URL-friendly identifier
   nombre: string;
-  imagen_url: string;
+  imagen: ImageWithAttribution; // Replaced imagen_url
   tipo_planta: 'Fruto' | 'Hoja' | 'Raíz' | 'Aromática' | 'Tubérculo' | 'Leguminosa' | 'Otro';
   clima: string;
   dificultad: 'Fácil' | 'Media' | 'Difícil';
@@ -50,7 +58,10 @@ export interface CropTechnicalSheet {
 export const tomatoCherryData: Omit<CropTechnicalSheet, 'id'> = {
   slug: 'tomate-cherry',
   nombre: 'Tomate Cherry',
-  imagen_url: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Ftomate_cherry.jpg?alt=media&token=44504067-71d1-4ee0-838b-54f70e31c451',
+  imagen: {
+    url: 'https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Ftomate_cherry.jpg?alt=media&token=44504067-71d1-4ee0-838b-54f70e31c451',
+    // No attribution needed for this example image
+  },
   tipo_planta: 'Fruto',
   clima: 'Templado',
   dificultad: 'Media',

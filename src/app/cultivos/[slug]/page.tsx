@@ -131,7 +131,7 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
           <p className="text-lg text-muted-foreground">{crop.descripcion_general}</p>
         </div>
         <Image
-          src={crop.imagen_url}
+          src={crop.imagen.url}
           alt={`Imagen de ${crop.nombre}`}
           width={600}
           height={400}

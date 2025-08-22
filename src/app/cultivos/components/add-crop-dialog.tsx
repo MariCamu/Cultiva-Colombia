@@ -62,7 +62,7 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
       ficha_cultivo_id: crop.id,
       nombre_cultivo_personal: crop.name,
       fecha_plantacion: plantingDate,
-      imageUrl: crop.imageUrl,
+      imageUrl: crop.imageUrl, // This should be updated if the data structure changes to an object
       dataAiHint: crop.dataAiHint,
       daysToHarvest: crop.datos_programaticos.dias_para_cosecha,
       estado_actual_cultivo: currentStage,
