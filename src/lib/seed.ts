@@ -32,9 +32,20 @@ const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id'>[] = [
     }],
     "articulos_relacionados_ids": ["arranque_P_casero", "N_vegetativo_casero", "riego_goteo_casero", "alto_k_casero"],
     "tipo_planta": "Hortalizas de hoja",
-    "ciclo_vida": [],
-    "metodos_cultivo": [],
-    "datos_tecnicos": { "riego": "Frecuente", "temperatura_ideal": "15-20°C", "luz_solar": "6-8 horas", "ph_suelo": "6.0-7.0" },
+    "ciclo_vida": [
+        { "etapa": "Germinación", "duracion": "5-10 días", "descripcion": "La semilla brota y emergen los cotiledones." },
+        { "etapa": "Crecimiento de Plántula", "duracion": "15-20 días", "descripcion": "Desarrollo de las primeras hojas verdaderas." }
+    ],
+    "metodos_cultivo": [
+        { "nombre": "Siembra Directa", "pasos": [{ "descripcion": "Preparar el suelo y sembrar las semillas a 1 cm de profundidad." }] }
+    ],
+    "datos_tecnicos": { 
+        "riego": "Frecuente, mantener el suelo húmedo pero no encharcado.", 
+        "temperatura_ideal": "15-20°C", 
+        "luz_solar": "Mínimo 6 horas de sol directo.", 
+        "ph_suelo": "6.0-7.0"
+        // Aquí irían los demás campos de la ficha técnica detallada.
+    },
     "datos_programaticos": { "frecuencia_riego_dias": 2, "dias_para_cosecha": 60 }
   },
   {
@@ -59,7 +70,12 @@ const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id'>[] = [
     "tipo_planta": "Plantas aromáticas",
     "ciclo_vida": [],
     "metodos_cultivo": [],
-    "datos_tecnicos": { "riego": "Moderado", "temperatura_ideal": "18-25°C", "luz_solar": "4-6 horas", "ph_suelo": "6.0-7.5" },
+    "datos_tecnicos": { 
+        "riego": "Moderado, evitar encharcamiento.", 
+        "temperatura_ideal": "18-25°C", 
+        "luz_solar": "4-6 horas de sol, tolera semisombra.", 
+        "ph_suelo": "6.0-7.5" 
+    },
     "datos_programaticos": { "frecuencia_riego_dias": 3, "dias_para_cosecha": 45 }
   },
 ];
@@ -68,19 +84,15 @@ async function seedFichasTecnicas() {
   const collectionRef = collection(db, 'fichas_tecnicas_cultivos');
   console.log(`Iniciando siembra de ${fichasTecnicasCultivos.length} fichas técnicas de cultivo...`);
 
-  // Firestore permite un máximo de 500 operaciones por batch.
-  // Dividimos el trabajo en trozos si es necesario.
   const chunkSize = 400;
   for (let i = 0; i < fichasTecnicasCultivos.length; i += chunkSize) {
     const chunk = fichasTecnicasCultivos.slice(i, i + chunkSize);
     const batch = writeBatch(db);
 
     chunk.forEach(cropData => {
-      // Usamos el nombre en minúsculas y como slug para el ID del documento.
       const slug = cropData.nombre.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
       const docRef = doc(collectionRef, slug);
       
-      // Creamos una copia de los datos para no modificar el original
       const dataToSet = { ...cropData };
       
       batch.set(docRef, dataToSet);
@@ -91,7 +103,6 @@ async function seedFichasTecnicas() {
       console.log(`Lote de ${chunk.length} documentos subido exitosamente.`);
     } catch (error) {
       console.error("Error al subir lote a Firestore:", error);
-      // Si un lote falla, detenemos el proceso para no continuar con errores.
       return;
     }
   }
@@ -99,20 +110,12 @@ async function seedFichasTecnicas() {
   console.log('¡Siembra de fichas técnicas completada!');
 }
 
-
-// --- FUNCIÓN PRINCIPAL DE SIEMBRA ---
 async function main() {
   console.log('--- Iniciando Proceso de Siembra en Firestore ---');
-  
-  // Por ahora, solo llamamos a la siembra de fichas técnicas.
-  // En el futuro, aquí puedes añadir llamadas a otras funciones de siembra
-  // para el glosario, las guías, etc.
   await seedFichasTecnicas();
-
   console.log('--- Proceso de Siembra Finalizado ---');
 }
 
-// Ejecutar la función principal
 main().catch(error => {
   console.error("Ocurrió un error en el script de siembra:", error);
 });

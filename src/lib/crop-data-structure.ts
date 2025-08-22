@@ -1,7 +1,7 @@
 
 /**
- * @fileOverview Defines the structure for the 'fichas_tecnicas_cultivos' Firestore collection
- * based on the user's provided data model.
+ * @fileOverview Defines the final, unified structure for the 'fichas_tecnicas_cultivos' 
+ * Firestore collection, combining general info and detailed technical data into a single document.
  *
  * Collection: fichas_tecnicas_cultivos
  * Each document in this collection will conform to the CropTechnicalSheet interface.
@@ -32,13 +32,20 @@ export interface LifeCycleStage {
     descripcion: string;
 }
 
+/**
+ * Represents the complete data for a single crop, stored as one document in Firestore.
+ * This structure is optimized for efficient data retrieval, getting all necessary
+ * information for a crop in a single read operation.
+ */
 export interface CropTechnicalSheet {
   id?: string; // Firestore Document ID (e.g., 'lechuga')
-  nombre: string; // nombreComun in spreadsheet
+  
+  // --- General Information ---
+  nombre: string; 
   nombreCientifico: string;
   descripcion: string;
   tags: string[];
-  dificultad: 'Fácil' | 'Media' | 'Difícil' | string; // Allow string for flexibility
+  dificultad: 'Fácil' | 'Media' | 'Difícil' | string;
   clima: {
     clase: string[];
   };
@@ -48,22 +55,34 @@ export interface CropTechnicalSheet {
   };
   compatibilidades: string[];
   incompatibilidades: string[];
-  posicion: GeoPoint; // Use Firestore's GeoPoint for map functionality
+  posicion: GeoPoint; 
   imagenes: ImageWithAttribution[];
-  articulos_relacionados_ids: string[]; // articulosRelacionados
+  articulos_relacionados_ids: string[];
   
-  // Embedded data from other Excel sheets
+  // --- Embedded Detailed Data ---
   tipo_planta: string;
   ciclo_vida: LifeCycleStage[];
   metodos_cultivo: CultivationMethod[];
 
-  // Programmatic data for app logic
+  // --- Detailed Technical Sheet Data (Nested Map) ---
   datos_tecnicos: {
-    riego: string;
-    temperatura_ideal: string;
-    luz_solar: string;
-    ph_suelo: string;
+    // Clima
+    temperatura_ideal: string; // Ejemplo: "15-20°C"
+    // Riego
+    riego: string; // Ejemplo: "Frecuente"
+    // Luz
+    luz_solar: string; // Ejemplo: "6-8 horas"
+    // Suelo
+    ph_suelo: string; // Ejemplo: "6.0-7.0"
+    
+    // Placeholder for more detailed fields from the user's Excel
+    // Example:
+    // epoca_siembra?: string;
+    // suelo_drenaje?: 'Bueno' | 'Moderado' | 'Pobre';
+    // ... add all other technical fields here
   };
+
+  // --- Programmatic data for app logic ---
   datos_programaticos: {
     frecuencia_riego_dias: number;
     dias_para_cosecha: number;
