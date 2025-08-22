@@ -6,6 +6,8 @@
  * Collection: fichas_tecnicas_cultivos
  * Each document in this collection will conform to the CropTechnicalSheet interface.
  */
+import type { GeoPoint } from 'firebase/firestore';
+
 
 export interface ImageWithAttribution {
   url: string;
@@ -46,10 +48,7 @@ export interface CropTechnicalSheet {
   };
   compatibilidades: string[];
   incompatibilidades: string[];
-  posicion: { // Corresponds to Lat Lon
-    lat: number;
-    lng: number;
-  };
+  posicion: GeoPoint; // Use Firestore's GeoPoint for map functionality
   imagenes: ImageWithAttribution[];
   articulos_relacionados_ids: string[]; // articulosRelacionados
   
