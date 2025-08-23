@@ -16,18 +16,21 @@ import { Search, Info } from 'lucide-react';
 
 async function getGlossaryTerms(): Promise<GlossaryTerm[]> {
     const termsCollectionRef = collection(db, 'glosario');
-    const q = query(termsCollectionRef, orderBy('termino', 'asc'));
+    // FIX: Order by the correct field 'palabra' instead of 'termino'
+    const q = query(termsCollectionRef, orderBy('palabra', 'asc'));
     const querySnapshot = await getDocs(q);
     
     return querySnapshot.docs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
-        termino: data.termino || data.palabra, // Support for 'palabra' or 'termino'
+        // FIX: Prioritize 'palabra' as the main field for the term.
+        termino: data.palabra || data.termino, 
         definicion: data.definicion,
         categoria: data.categoria,
-        icono_referencia: data.icono_referencia || data.emojis, // Support for both field names
-        orden_alfabetico: (data.termino || data.palabra).charAt(0).toUpperCase(),
+        // FIX: Prioritize 'emojis' as the main field for the icon.
+        icono_referencia: data.emojis || data.icono_referencia,
+        orden_alfabetico: (data.palabra || data.termino).charAt(0).toUpperCase(),
         palabras_clave: data.palabras_clave || [],
       } as GlossaryTerm;
     });
@@ -49,7 +52,7 @@ export default function GlosarioPage() {
                 setTerms(fetchedTerms);
             } catch (err) {
                 console.error("Error fetching glossary:", err);
-                setError("No se pudieron cargar los términos del glosario. Inténtalo de nuevo más tarde.");
+                setError("No se pudieron cargar los términos del glosario. Revisa las reglas de seguridad de Firestore y la conexión a internet.");
             } finally {
                 setIsLoading(false);
             }
