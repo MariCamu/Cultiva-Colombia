@@ -3,37 +3,59 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { GlossaryTerm } from '@/models/glossary-model';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Search, BookText, Info } from 'lucide-react';
+import { Search, Info } from 'lucide-react';
 
-const exampleTerms: Omit<GlossaryTerm, 'id'>[] = [
-    { termino: "Compost", definicion: "Proceso natural de descomposición de materia orgánica (restos de comida, hojas secas) para crear un abono rico en nutrientes para el suelo. ¡Es como el oro para tus plantas!", categoria: "Conceptos Básicos", icono_referencia: "🌿", orden_alfabetico: "C", palabras_clave: ["abono", "orgánico", "descomposición"] },
-    { termino: "Hidroponía", definicion: "Método de cultivo de plantas que no utiliza suelo. Las raíces se suspenden en una solución de agua rica en nutrientes. ¡Ideal para espacios pequeños y mucha diversión!", categoria: "Técnicas de Cultivo", icono_referencia: "💧", orden_alfabetico: "H", palabras_clave: ["cultivo sin suelo", "agua", "nutrientes"] },
-    { termino: "pH del Suelo", definicion: "Medida de la acidez o alcalinidad del suelo, crucial para que las plantas absorban nutrientes. Un pH balanceado es la clave para un huerto feliz. ¡Ni muy ácido, ni muy básico!", categoria: "Suelo y Nutrientes", icono_referencia: "🧪", orden_alfabetico: "P", palabras_clave: ["acidez", "alcalinidad", "suelo"] },
-    { termino: "Control Biológico", definicion: "Uso de organismos vivos (como insectos beneficiosos o bacterias) o métodos naturales para controlar plagas y enfermedades en los cultivos de forma ecológica, sin químicos dañinos. ¡La naturaleza ayuda a la naturaleza!", categoria: "Salud de la Planta", icono_referencia: "🐞", orden_alfabetico: "C", palabras_clave: ["plagas", "enfermedades", "ecológico"] },
-    { termino: "Mulch", definicion: "Capa de material (como paja, corteza o plástico) que se esparce sobre el suelo para conservar la humedad, suprimir malezas y regular la temperatura del suelo.", categoria: "Técnicas de Cultivo", icono_referencia: "🌾", orden_alfabetico: "M", palabras_clave: ["cobertura", "acolchado", "protección suelo"] },
-    { termino: "Germinación", definicion: "Proceso por el cual una semilla se desarrolla para convertirse en una nueva planta. Es el primer paso emocionante en el viaje de un cultivo.", categoria: "Conceptos Básicos", icono_referencia: "🌱", orden_alfabetico: "G", palabras_clave: ["semilla", "brote", "nacer"] },
-    { termino: "Polinización", definicion: "Transferencia de polen que permite la fecundación y la producción de frutos y semillas. Puede ser realizada por el viento, el agua o animales como abejas y pájaros.", categoria: "Conceptos Básicos", icono_referencia: "🐝", orden_alfabetico: "P", palabras_clave: ["abejas", "reproducción", "flores"] }
-];
 
-// Add a unique id to each term for React keys
-const glossaryData: GlossaryTerm[] = exampleTerms.map((term, index) => ({
-    ...term,
-    id: `glossary-term-${index}`
-}));
+async function getGlossaryTerms(): Promise<GlossaryTerm[]> {
+    const termsCollectionRef = collection(db, 'glosario');
+    const q = query(termsCollectionRef, orderBy('termino', 'asc'));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        termino: data.termino || data.palabra, // Support for 'palabra' or 'termino'
+        definicion: data.definicion,
+        categoria: data.categoria,
+        icono_referencia: data.icono_referencia || data.emojis, // Support for both field names
+        orden_alfabetico: (data.termino || data.palabra).charAt(0).toUpperCase(),
+        palabras_clave: data.palabras_clave || [],
+      } as GlossaryTerm;
+    });
+}
 
 
 export default function GlosarioPage() {
-    const [terms] = useState<GlossaryTerm[]>(glossaryData);
-    const [isLoading, setIsLoading] = useState(false); // Can be removed or kept for optimistic UI
+    const [terms, setTerms] = useState<GlossaryTerm[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
+
+    useEffect(() => {
+        const fetchTerms = async () => {
+            setIsLoading(true);
+            try {
+                const fetchedTerms = await getGlossaryTerms();
+                setTerms(fetchedTerms);
+            } catch (err) {
+                console.error("Error fetching glossary:", err);
+                setError("No se pudieron cargar los términos del glosario. Inténtalo de nuevo más tarde.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchTerms();
+    }, []);
 
     const categories = useMemo(() => {
         const uniqueCategories = [...new Set(terms.map(term => term.categoria))];
@@ -91,7 +113,7 @@ export default function GlosarioPage() {
                     </div>
                     <div>
                          <label htmlFor="category-filter" className="sr-only">Filtrar por categoría</label>
-                         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                         <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={isLoading || categories.length === 0}>
                             <SelectTrigger id="category-filter" className="h-11">
                                 <SelectValue placeholder="Filtrar por categoría..." />
                             </SelectTrigger>
@@ -109,6 +131,7 @@ export default function GlosarioPage() {
             <div className="space-y-6">
                 {isLoading && (
                     <div className="space-y-4">
+                        <Skeleton className="h-10 w-20 mb-4" />
                         <Skeleton className="h-24 w-full" />
                         <Skeleton className="h-24 w-full" />
                         <Skeleton className="h-24 w-full" />
@@ -141,12 +164,21 @@ export default function GlosarioPage() {
                     ))
                 )}
 
-                {!isLoading && !error && filteredTerms.length === 0 && (
+                {!isLoading && !error && terms.length > 0 && filteredTerms.length === 0 && (
                      <Alert>
                         <Info className="h-4 w-4" />
                         <AlertTitle>No se encontraron términos</AlertTitle>
                         <AlertDescription>
                             No se encontraron términos que coincidan con tu búsqueda. Prueba a cambiar los filtros o el término de búsqueda.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                 {!isLoading && !error && terms.length === 0 && (
+                     <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>Glosario Vacío</AlertTitle>
+                        <AlertDescription>
+                            Aún no se han añadido términos a la base de datos. Una vez que los añadas en Firestore, aparecerán aquí.
                         </AlertDescription>
                     </Alert>
                 )}
