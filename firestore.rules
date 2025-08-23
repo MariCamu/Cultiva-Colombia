@@ -1,17 +1,48 @@
-
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permite que cualquiera lea la colección de artículos, pero no que la modifique.
-    match /articulos/{articleId} {
+
+    // --- Reglas para Colecciones Públicas ---
+    // Permite que cualquier persona (incluso sin iniciar sesión) lea los datos
+    // de estas colecciones. Nadie puede escribir o borrar.
+    match /fichas_tecnicas_cultivos/{document=**} {
       allow read: if true;
-      allow write: if false; // Por seguridad, la escritura se hará desde la consola de Firebase.
+      allow write: if false;
+    }
+    
+    match /glosario/{document=**} {
+      allow read: if true;
+      allow write: if false;
     }
 
-    // Protege los datos de los usuarios.
-    // Solo el usuario autenticado puede leer y escribir sus propios documentos.
-    match /usuarios/{userId}/{documents=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    match /articulos/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // --- Reglas para Datos de Usuarios ---
+    // Un usuario solo puede acceder a su propio documento en la colección 'usuarios'.
+    match /usuarios/{userId} {
+      // Permite a un usuario leer y actualizar su propio perfil.
+      // Permite la creación si el usuario que lo crea es el mismo que el del documento.
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+
+      // Un usuario solo puede leer y escribir en sus propias subcolecciones.
+      match /cultivos_del_usuario/{cropId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+
+        // Reglas para el diario dentro de cada cultivo del usuario
+        match /diario/{logId} {
+          allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+
+      // Reglas para las alertas del usuario
+      match /alertas/{alertId} {
+         allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+      }
     }
   }
 }
