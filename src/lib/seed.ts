@@ -1,7 +1,7 @@
 
 'use server';
 
-import { writeBatch, collection, doc, serverTimestamp, GeoPoint } from 'firebase/firestore';
+import { writeBatch, collection, doc, GeoPoint } from 'firebase/firestore';
 import { db } from './firebase';
 import type { CropTechnicalSheet } from './crop-data-structure';
 
@@ -12,6 +12,7 @@ import type { CropTechnicalSheet } from './crop-data-structure';
 // 3. ¡Listo! Tu colección 'fichas_tecnicas_cultivos' en Firestore se llenará con estos datos.
 
 const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id'>[] = [
+  // EJEMPLO COMPLETO CON LECHUGA - USA ESTE COMO GUÍA
   {
     "nombre": "Lechuga",
     "nombreCientifico": "Lactuca sativa",
@@ -32,22 +33,46 @@ const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id'>[] = [
     }],
     "articulos_relacionados_ids": ["arranque_P_casero", "N_vegetativo_casero", "riego_goteo_casero", "alto_k_casero"],
     "tipo_planta": "Hortalizas de hoja",
+    
+    "datos_tecnicos": {
+        "temperatura_ideal": "10-21°C",
+        "riego": "Mantener humedad constante sin encharcar.",
+        "luz_solar": "Prefiere sol pleno en clima fresco; en clima cálido agradece sol filtrado.",
+        "ph_suelo": "5.7-6.8"
+        // ... aquí irían todos los demás campos de tu ficha técnica detallada ...
+    },
+    
     "ciclo_vida": [
         { "etapa": "Germinación", "duracion": "5-10 días", "descripcion": "La semilla brota y emergen los cotiledones." },
-        { "etapa": "Crecimiento de Plántula", "duracion": "15-20 días", "descripcion": "Desarrollo de las primeras hojas verdaderas." }
+        { "etapa": "Crecimiento de Plántula", "duracion": "15-20 días", "descripcion": "Desarrollo de las primeras hojas verdaderas." },
+        { "etapa": "Formación de Cabeza", "duracion": "30-40 días", "descripcion": "Las hojas centrales se compactan para formar la cabeza." },
+        { "etapa": "Cosecha", "duracion": "N/A", "descripcion": "La cabeza está firme y ha alcanzado el tamaño deseado." }
     ],
+    
     "metodos_cultivo": [
-        { "nombre": "Siembra Directa", "pasos": [{ "descripcion": "Preparar el suelo y sembrar las semillas a 1 cm de profundidad." }] }
+        { 
+            "nombre": "Siembra en Semillero", 
+            "pasos": [
+                { "descripcion": "Llenar el semillero con sustrato húmedo y bien drenado." },
+                { "descripcion": "Colocar 2-3 semillas por celda a 0.5 cm de profundidad." },
+                { "descripcion": "Mantener la humedad constante y en un lugar con luz indirecta." },
+                { "descripcion": "Trasplantar al lugar definitivo cuando tenga 4-5 hojas verdaderas." }
+            ] 
+        },
+        { 
+            "nombre": "Siembra Directa", 
+            "pasos": [
+                { "descripcion": "Preparar el suelo, dejándolo suelto y rico en materia orgánica." },
+                { "descripcion": "Sembrar las semillas en hileras, a 1 cm de profundidad." },
+                { "descripcion": "Aclarar las plántulas dejando un espacio de 25-30 cm entre ellas." }
+            ] 
+        }
     ],
-    "datos_tecnicos": { 
-        "riego": "Frecuente, mantener el suelo húmedo pero no encharcado.", 
-        "temperatura_ideal": "15-20°C", 
-        "luz_solar": "Mínimo 6 horas de sol directo.", 
-        "ph_suelo": "6.0-7.0"
-        // Aquí irían los demás campos de la ficha técnica detallada.
-    },
+
     "datos_programaticos": { "frecuencia_riego_dias": 2, "dias_para_cosecha": 60 }
   },
+  
+  // MOLDE PARA EL SIGUIENTE CULTIVO - CILANTRO
   {
     "nombre": "Cilantro",
     "nombreCientifico": "Coriandrum sativum",
@@ -68,28 +93,39 @@ const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id'>[] = [
     }],
     "articulos_relacionados_ids": ["arranque_P_casero", "N_vegetativo_casero", "riego_goteo_casero", "alto_k_casero"],
     "tipo_planta": "Plantas aromáticas",
-    "ciclo_vida": [],
-    "metodos_cultivo": [],
-    "datos_tecnicos": { 
-        "riego": "Moderado, evitar encharcamiento.", 
-        "temperatura_ideal": "18-25°C", 
-        "luz_solar": "4-6 horas de sol, tolera semisombra.", 
-        "ph_suelo": "6.0-7.5" 
+
+    // --- ¡AQUÍ DEBES PEGAR TUS DATOS! ---
+    "datos_tecnicos": {
+        // Pega aquí los datos de la ficha técnica del cilantro
+        "temperatura_ideal": "", 
+        "riego": "",
+        "luz_solar": "", 
+        "ph_suelo": ""
     },
+    "ciclo_vida": [
+        // Pega aquí las fases del ciclo de vida del cilantro
+    ],
+    "metodos_cultivo": [
+        // Pega aquí los métodos de cultivo del cilantro y sus pasos
+    ],
+    // --- FIN DE LA SECCIÓN PARA PEGAR DATOS ---
+
     "datos_programaticos": { "frecuencia_riego_dias": 3, "dias_para_cosecha": 45 }
   },
+  // ... y así sucesivamente con el resto de tus cultivos.
 ];
 
 async function seedFichasTecnicas() {
   const collectionRef = collection(db, 'fichas_tecnicas_cultivos');
   console.log(`Iniciando siembra de ${fichasTecnicasCultivos.length} fichas técnicas de cultivo...`);
 
-  const chunkSize = 400;
+  const chunkSize = 400; // Firestore permite hasta 500 operaciones por lote
   for (let i = 0; i < fichasTecnicasCultivos.length; i += chunkSize) {
     const chunk = fichasTecnicasCultivos.slice(i, i + chunkSize);
     const batch = writeBatch(db);
 
     chunk.forEach(cropData => {
+      // Usar el nombre como base para un ID amigable (slug)
       const slug = cropData.nombre.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
       const docRef = doc(collectionRef, slug);
       
@@ -103,6 +139,7 @@ async function seedFichasTecnicas() {
       console.log(`Lote de ${chunk.length} documentos subido exitosamente.`);
     } catch (error) {
       console.error("Error al subir lote a Firestore:", error);
+      // Detener si un lote falla para no continuar con errores.
       return;
     }
   }
@@ -113,9 +150,11 @@ async function seedFichasTecnicas() {
 async function main() {
   console.log('--- Iniciando Proceso de Siembra en Firestore ---');
   await seedFichasTecnicas();
+  // Aquí podríamos añadir llamadas a otras funciones de siembra, ej: await seedGlosario();
   console.log('--- Proceso de Siembra Finalizado ---');
 }
 
+// Ejecuta la función principal
 main().catch(error => {
   console.error("Ocurrió un error en el script de siembra:", error);
 });
