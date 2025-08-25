@@ -12,7 +12,7 @@ import type { CropTechnicalSheet } from './crop-data-structure';
 // 2. Abre la terminal y ejecuta el comando: `npm run db:seed`
 // 3. ¡Listo! Tu colección 'fichas_tecnicas_cultivos' en Firestore se llenará con estos datos.
 
-const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id'>[] = [
+const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id' | 'posicion'>[] = [
   // COMIENZO DEL CULTIVO DE LECHUGA (PLANTILLA)
   {
     "nombre": "Lechuga",
@@ -29,7 +29,7 @@ const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id'>[] = [
     },
     "compatibilidades": ["cilantro", "fresa", "aji_dulce", "pepino_cohombro", "albahaca", "espinaca", "hierbabuena", "jengibre", "calabacin", "rabano", "curcuma", "yuca_dulce", "tomate_cherry", "oregano", "acelga", "pepino_de_maracuya", "pina", "pimenton", "maiz"],
     "incompatibilidades": ["perejil"],
-    "posicion": new GeoPoint(4.816667, -74.350000),
+    "posicion": { "lat": 4.816667, "lon": -74.350000 },
     "imagenes": [{
       "url": "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Flechuga.jpg?alt=media&token=fdf580f3-6e74-4e0a-8047-34dfaa7ef4a3",
       "attribution": {
@@ -99,7 +99,6 @@ const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id'>[] = [
   // ,
   // {
   //   "nombre": "Tomate Cherry",
-  //   "nombreCientifico": "Solanum lycopersicum var. cerasiforme",
   //   ... (todos los demás datos)
   // }
 ];
@@ -118,7 +117,11 @@ async function seedFichasTecnicas() {
       const slug = cropData.nombre.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
       const docRef = doc(collectionRef, slug);
       
-      const dataToSet = { ...cropData };
+      const { posicion, ...restOfData } = cropData;
+      const dataToSet = {
+        ...restOfData,
+        posicion: new GeoPoint(posicion.lat, posicion.lon),
+      };
       
       batch.set(docRef, dataToSet);
     });
