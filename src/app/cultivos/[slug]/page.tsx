@@ -64,10 +64,13 @@ const MethodCard = ({ method }: { method: CultivationMethod }) => (
     </CardHeader>
     <CardContent>
       <ol className="space-y-4">
-        {method.pasos.map((paso, index) => (
+        {method.pasos.sort((a, b) => a.orden - b.orden).map((paso, index) => (
           <li key={index} className="flex items-start gap-4">
-            <div className="flex-shrink-0 bg-primary/10 text-primary font-bold rounded-full h-8 w-8 flex items-center justify-center text-lg">{index + 1}</div>
-            <p className="text-muted-foreground pt-1">{paso.descripcion}</p>
+            <div className="flex-shrink-0 bg-primary/10 text-primary font-bold rounded-full h-8 w-8 flex items-center justify-center text-lg">{paso.orden}</div>
+            <div className="flex-grow">
+                <p className="font-nunito font-bold">{paso.titulo}</p>
+                <p className="text-muted-foreground pt-1">{paso.descripcion}</p>
+            </div>
           </li>
         ))}
       </ol>
@@ -114,10 +117,10 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
   }
   
   const dataTecnicos = [
-      { icon: Droplets, label: "Riego", value: crop.datos_tecnicos.riego },
-      { icon: Thermometer, label: "Temperatura Ideal", value: crop.datos_tecnicos.temperatura_ideal },
-      { icon: Sun, label: "Luz Solar", value: crop.datos_tecnicos.luz_solar },
-      { icon: Beaker, label: "pH del Suelo", value: crop.datos_tecnicos.ph_suelo },
+      { icon: Droplets, label: "Riego", value: crop.tecnica.riego },
+      { icon: Thermometer, label: "Temperatura Ideal", value: crop.tecnica.temperatura_ideal },
+      { icon: Sun, label: "Luz Solar", value: crop.tecnica.luz_solar },
+      { icon: Beaker, label: "pH del Suelo", value: crop.tecnica.ph_suelo },
   ]
 
   return (
@@ -155,10 +158,10 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
         />
       </div>
       
-      {crop.metodos_cultivo && crop.metodos_cultivo.length > 0 && (
+      {crop.metodos && crop.metodos.length > 0 && (
           <div className="space-y-6">
               <h2 className="text-3xl font-nunito font-bold text-center">Guía de Cultivo Paso a Paso</h2>
-              {crop.metodos_cultivo.map(method => (
+              {crop.metodos.map(method => (
                   <MethodCard key={method.nombre} method={method} />
               ))}
           </div>
@@ -178,12 +181,12 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
                             </CardHeader>
                             <CardContent>
                                 <ul className="space-y-3">
-                                    {crop.ciclo_vida.map((etapa, i) => (
+                                    {crop.cicloVida.sort((a, b) => a.orden - b.orden).map((etapa, i) => (
                                         <li key={i} className="flex items-start gap-3">
-                                            <div className="flex-shrink-0 bg-primary/10 text-primary font-bold rounded-full h-6 w-6 flex items-center justify-center text-xs">{i+1}</div>
+                                            <div className="flex-shrink-0 bg-primary/10 text-primary font-bold rounded-full h-6 w-6 flex items-center justify-center text-xs">{etapa.orden}</div>
                                             <div>
-                                                <p className="font-semibold">{etapa.etapa} <span className="text-muted-foreground font-normal">({etapa.duracion})</span></p>
-                                                <p className="text-sm text-muted-foreground">{etapa.descripcion}</p>
+                                                <p className="font-semibold">{etapa.etapa} <span className="text-muted-foreground font-normal">({etapa.duracion_dias_tipico} días)</span></p>
+                                                <p className="text-sm text-muted-foreground">{etapa.notas}</p>
                                             </div>
                                         </li>
                                     ))}
@@ -259,7 +262,7 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
                         </CardHeader>
                         <CardContent>
                             <ul className="space-y-2">
-                                {crop.articulos_relacionados_ids.map(id => (
+                                {crop.articulosRelacionados.map(id => (
                                     <li key={id}>
                                         <Link href={`/articulos/${id.replace(/_/g, '-')}`} className="text-primary hover:underline text-sm font-semibold">
                                             {id.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
