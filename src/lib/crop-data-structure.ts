@@ -11,7 +11,7 @@ import type { GeoPoint } from 'firebase/firestore';
 
 export interface ImageWithAttribution {
   url: string;
-  attribution?: {
+  atribucion?: {
     text: string;
     link: string;
   };
@@ -55,7 +55,7 @@ export interface CropTechnicalSheet {
   };
   compatibilidades: string[];
   incompatibilidades: string[];
-  posicion: GeoPoint; 
+  posicion: any; // Using 'any' for seeding flexibility with {lat, lon} object before converting to GeoPoint
   imagenes: ImageWithAttribution[];
   articulos_relacionados_ids: string[];
   

@@ -12,8 +12,9 @@ import type { CropTechnicalSheet } from './crop-data-structure';
 // 2. Abre la terminal y ejecuta el comando: `npm run db:seed`
 // 3. ¡Listo! Tu colección 'fichas_tecnicas_cultivos' en Firestore se llenará con estos datos.
 
-const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id' | 'posicion'>[] = [
+const fichasTecnicasCultivos: Partial<CropTechnicalSheet>[] = [
   // COMIENZO DEL CULTIVO DE LECHUGA (PLANTILLA)
+  // PEGA AQUÍ TUS DATOS CONVERTIDOS DE EXCEL A JSON
   {
     "nombre": "Lechuga",
     "nombreCientifico": "Lactuca sativa",
@@ -29,10 +30,10 @@ const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id' | 'posicion'>[] = [
     },
     "compatibilidades": ["cilantro", "fresa", "aji_dulce", "pepino_cohombro", "albahaca", "espinaca", "hierbabuena", "jengibre", "calabacin", "rabano", "curcuma", "yuca_dulce", "tomate_cherry", "oregano", "acelga", "pepino_de_maracuya", "pina", "pimenton", "maiz"],
     "incompatibilidades": ["perejil"],
-    "posicion": { "lat": 4.816667, "lon": -74.350000 },
+    "posicion": { "lat": 4.816667, "lon": -74.35 },
     "imagenes": [{
       "url": "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Flechuga.jpg?alt=media&token=fdf580f3-6e74-4e0a-8047-34dfaa7ef4a3",
-      "attribution": {
+      "atribucion": {
         "text": "Image by jcomp on Freepik",
         "link": "https://www.freepik.com/free-photo/green-salad-that-is-ready-be-harvested-garden_5490731.htm"
       }
@@ -43,49 +44,48 @@ const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id' | 'posicion'>[] = [
       "temperatura_ideal": "10-21°C",
       "riego": "Mantener humedad constante sin encharcar. En semillero y plántulas, aplicar riego diario en forma de rocío; si hay humedad ambiental alta, preferir goteo/manual al pie.",
       "luz_solar": "Prefiere sol pleno en clima fresco; en clima cálido agradece sol filtrado o semisombra, ya que el sol directo intenso puede marchitarla.",
-      "ph_suelo": "5.7-6.8"
+      "ph_suelo": "5.7-6.8",
     },
     "ciclo_vida": [
       {
         "etapa": "Germinación",
         "duracion": "3-10 días",
-        "descripcion": "La semilla brota y emergen los cotiledones. Requiere humedad constante y temperaturas suaves (18-21°C) para un inicio vigoroso."
+        "descripcion": "La semilla brota y emergen los cotiledones."
       },
       {
         "etapa": "Crecimiento de Plántula",
         "duracion": "15-20 días",
-        "descripcion": "Desarrollo de las primeras 4-5 hojas verdaderas. Es una fase crucial para establecer un sistema radicular fuerte antes del trasplante."
+        "descripcion": "Desarrollo de las primeras hojas verdaderas."
       },
       {
         "etapa": "Formación de Cabeza",
         "duracion": "30-40 días",
-        "descripcion": "Las hojas comienzan a agruparse en el centro, formando una cabeza compacta. Necesita nutrientes (especialmente nitrógeno) y riego regular."
+        "descripcion": "Las hojas se compactan formando la cabeza o roseta."
       },
       {
         "etapa": "Cosecha",
         "duracion": "N/A",
-        "descripcion": "La cabeza está firme y ha alcanzado el tamaño deseado. Se debe cosechar antes de que la planta empiece a espigar (florecer)."
+        "descripcion": "La cabeza está firme y ha alcanzado el tamaño deseado."
       }
     ],
     "metodos_cultivo": [
       {
         "nombre": "En Maceta",
         "pasos": [
-          { "descripcion": "Llenar una maceta (mínimo 3L) con sustrato bien drenado y rico en compost." },
-          { "descripcion": "Sembrar 2-3 semillas a 0.5 cm de profundidad y cubrir ligeramente." },
-          { "descripcion": "Mantener el sustrato húmedo sin encharcar. Regar diariamente si es necesario." },
-          { "descripcion": "Cuando las plántulas tengan 2-3 hojas, dejar solo la más fuerte." },
-          { "descripcion": "Cosechar las hojas exteriores cuando alcancen 10-15 cm, o la cabeza entera." }
+          { "descripcion": "Llenar maceta con sustrato bien drenado." },
+          { "descripcion": "Sembrar 2-3 semillas por maceta y cubrir ligeramente." },
+          { "descripcion": "Mantener el sustrato húmedo hasta la germinación." },
+          { "descripcion": "Aclarar para dejar la plántula más fuerte." },
+          { "descripcion": "Regar regularmente y fertilizar cada 2-3 semanas." }
         ]
       },
       {
         "nombre": "En Jardín",
         "pasos": [
-           { "descripcion": "Preparar el suelo aflojándolo y mezclándolo con compost." },
-           { "descripcion": "Sembrar en hileras, dejando 25-30 cm entre plantas y 40 cm entre hileras." },
-           { "descripcion": "Regar regularmente para mantener el suelo húmedo, especialmente en climas cálidos." },
-           { "descripcion": "Aplicar una capa de mulch (paja o hojarasca) para conservar la humedad." },
-           { "descripcion": "Cosechar la cabeza completa cuando esté firme y de buen tamaño." }
+          { "descripcion": "Preparar el suelo con compost y asegurar buen drenaje." },
+          { "descripcion": "Sembrar en surcos, dejando 30cm entre hileras." },
+          { "descripcion": "Aclarar las plántulas para dejar un espacio de 20-25cm entre ellas." },
+          { "descripcion": "Mantener el área libre de malezas y regar constantemente." }
         ]
       }
     ],
@@ -93,14 +93,7 @@ const fichasTecnicasCultivos: Omit<CropTechnicalSheet, 'id' | 'posicion'>[] = [
       "frecuencia_riego_dias": 2,
       "dias_para_cosecha": 60
     }
-  }
-  // Añade aquí los objetos para tus otros cultivos, separados por una coma.
-  // Ejemplo:
-  // ,
-  // {
-  //   "nombre": "Tomate Cherry",
-  //   ... (todos los demás datos)
-  // }
+  },
 ];
 
 async function seedFichasTecnicas() {
@@ -113,15 +106,21 @@ async function seedFichasTecnicas() {
     const batch = writeBatch(db);
 
     chunk.forEach(cropData => {
+      if (!cropData.nombre) {
+        console.warn('Se encontró un objeto de cultivo sin nombre, será omitido.', cropData);
+        return;
+      }
       // Usar el nombre como base para un ID amigable (slug)
       const slug = cropData.nombre.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
       const docRef = doc(collectionRef, slug);
       
       const { posicion, ...restOfData } = cropData;
-      const dataToSet = {
-        ...restOfData,
-        posicion: new GeoPoint(posicion.lat, posicion.lon),
-      };
+      const dataToSet: { [key: string]: any } = { ...restOfData };
+
+      // Convertir el objeto {lat, lon} a un GeoPoint de Firestore
+      if (posicion && typeof posicion.lat === 'number' && typeof posicion.lon === 'number') {
+        dataToSet.posicion = new GeoPoint(posicion.lat, posicion.lon);
+      }
       
       batch.set(docRef, dataToSet);
     });
