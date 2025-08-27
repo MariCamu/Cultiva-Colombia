@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import type { CropTechnicalSheet } from '@/lib/crop-data-structure';
 import type { Article } from '@/models/article-model';
-import { doc, getDoc, collection, query, where, getDocs, documentId } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, documentId, type GeoPoint } from 'firebase/firestore';
 import { CropDetailClient } from './components/crop-detail-client';
 import type { SampleCrop } from '@/models/crop-model';
 
@@ -75,6 +75,12 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
         notFound();
     }
     
+    // FIX: Convert Firestore GeoPoint to a plain object before passing to client component
+    if (crop.posicion && typeof (crop.posicion as GeoPoint).latitude === 'number') {
+        const geoPoint = crop.posicion as GeoPoint;
+        crop.posicion = { lat: geoPoint.latitude, lon: geoPoint.longitude };
+    }
+
     // Adapt data for AddCropDialog
     const sampleCrop: SampleCrop = {
         id: crop.id || params.slug,
