@@ -25,6 +25,11 @@ import { willItRainSoon, type WeatherData } from '@/lib/weather-utils';
 import type { CropTechnicalSheet, LifeCycleStage } from '@/lib/crop-data-structure';
 import { differenceInDays } from 'date-fns';
 
+// Helper to make technical terms more human-readable
+const humanizeTerm = (term: string) => {
+    if (!term) return '';
+    return term.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+};
 
 interface LogEntry {
   id: string;
@@ -353,8 +358,8 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                                 <AlertDescription className="text-primary/90 space-y-1 mt-2 text-xs">
                                                    <p><strong>Notas para esta etapa:</strong> {currentLifeCycleStage.notas}</p>
                                                    <p><strong>Labores recomendadas:</strong> {currentLifeCycleStage.labores.join(', ')}</p>
-                                                   {typeof currentLifeCycleStage.alertas_plagas === 'string' && currentLifeCycleStage.alertas_plagas && <p><strong>Plagas comunes:</strong> {currentLifeCycleStage.alertas_plagas}</p>}
-                                                   {Array.isArray(currentLifeCycleStage.alertas_plagas) && currentLifeCycleStage.alertas_plagas.length > 0 && <p><strong>Plagas comunes:</strong> {currentLifeCycleStage.alertas_plagas.join(', ')}</p>}
+                                                   {typeof currentLifeCycleStage.alertas_plagas === 'string' && currentLifeCycleStage.alertas_plagas && <p><strong>Plagas comunes:</strong> {humanizeTerm(currentLifeCycleStage.alertas_plagas)}</p>}
+                                                   {Array.isArray(currentLifeCycleStage.alertas_plagas) && currentLifeCycleStage.alertas_plagas.length > 0 && <p><strong>Plagas comunes:</strong> {currentLifeCycleStage.alertas_plagas.map(humanizeTerm).join(', ')}</p>}
                                                 </AlertDescription>
                                             </Alert>
                                         )}
@@ -473,10 +478,10 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                     <CardContent className="space-y-2 text-sm">
                                         <p><strong>Especie:</strong> <i>{technicalSheet.nombreCientifico}</i></p>
                                         <p><strong>Familia:</strong> {technicalSheet.tipo_planta}</p>
-                                        <p><strong>Clima Ideal:</strong> {technicalSheet.clima.clase.join(', ')}</p>
+                                        <p><strong>Clima Ideal:</strong> {technicalSheet.clima.clase.map(humanizeTerm).join(', ')}</p>
                                         <p><strong>Exposición Solar:</strong> {technicalSheet.tecnica.luz_solar}</p>
                                         <p><strong>Riego:</strong> {technicalSheet.tecnica.riego}</p>
-                                        <p><strong>Suelo:</strong> {technicalSheet.tecnica.suelo.textura}, {technicalSheet.tecnica.suelo.drenaje}.</p>
+                                        <p><strong>Suelo:</strong> {humanizeTerm(technicalSheet.tecnica.suelo.textura)}, {humanizeTerm(technicalSheet.tecnica.suelo.drenaje)}.</p>
                                     </CardContent>
                                 </Card>
                             ) : (

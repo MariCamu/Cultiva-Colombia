@@ -26,7 +26,13 @@ interface SimplifiedItem {
 // --- HELPER FUNCTIONS ---
 
 const createSlug = (name: string) => {
-    return name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+    return name
+      .toLowerCase()
+      .normalize("NFD") // Descompone los caracteres acentuados en letra + acento
+      .replace(/[\u0300-\u036f]/g, "") // Elimina los acentos
+      .replace(/ñ/g, "n") // Reemplaza ñ por n
+      .replace(/ /g, '-')
+      .replace(/[^\w-]+/g, '');
 };
 
 async function getCropBySlug(slug: string): Promise<CropTechnicalSheet | null> {
@@ -95,11 +101,10 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
         imageUrl: crop.imagenes?.[0]?.url || 'https://placehold.co/300x200.png',
         dataAiHint: 'crop field',
         clima: crop.clima.clase[0] as SampleCrop['clima'],
-        estimatedPrice: 'Precio moderado',
         duration: 'Media (3–5 meses)',
         spaceRequired: 'Maceta mediana (4–10 L)',
         plantType: crop.tipo_planta as SampleCrop['plantType'],
-        difficulty: 3, // Default
+        difficulty: 'Media',
         datos_programaticos: crop.datos_programaticos,
         lifeCycle: crop.cicloVida.map(etapa => ({ name: etapa.etapa })),
         pancoger: crop.tags.includes('pancoger'),

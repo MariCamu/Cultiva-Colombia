@@ -99,7 +99,7 @@ export interface SampleCrop {
   dataAiHint: string;
   clima: 'Frío' | 'Templado' | 'Cálido' | 'Muy cálido' | string;
   duration: 'Corta (1–2 meses)' | 'Media (3–5 meses)' | 'Larga (6+ meses)';
-  spaceRequired: 'Maceta pequeña (1–3 L)' | 'Maceta mediana (4–10 L)' | 'Maceta grande o jardín (10+ L)';
+  spaceRequired: 'Maceta pequeña (1–3 L)' | 'Maceta mediana (4–10 L)' | 'Maceta grande (10+ L)' | 'Jardín';
   plantType: 'Hortalizas de hoja' | 'Hortalizas de raíz' | 'Hortalizas de fruto' | 'Hortalizas de flor' | 'Leguminosas' | 'Cereales' | 'Plantas aromáticas' | 'Plantas de bulbo' | 'Frutales' | 'Tubérculos' | 'Otro' | string;
   difficulty: 'Fácil' | 'Media' | 'Difícil';
   datos_programaticos: {
@@ -111,5 +111,6 @@ export interface SampleCrop {
   patrimonial: boolean;
   sembrable_en_casa: 'sí' | 'no' | 'parcialmente';
   educativo: 'sí' | 'no' | 'parcialmente';
+  tags?: string[];
 }
     

@@ -23,8 +23,22 @@ import type { CropTechnicalSheet } from '@/lib/crop-data-structure';
 
 // --- HELPER FUNCTION ---
 const createSlug = (name: string) => {
-  return name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-}
+  return name
+    .toLowerCase()
+    .normalize("NFD") // Descompone los caracteres acentuados en letra + acento
+    .replace(/[\u0300-\u036f]/g, "") // Elimina los acentos
+    .replace(/ñ/g, "n") // Reemplaza ñ por n
+    .replace(/ /g, '-')
+    .replace(/[^\w-]+/g, '');
+};
+
+const normalizeText = (text: string) => {
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+};
+
 
 // --- NUEVA FUNCIÓN PARA OBTENER DATOS DE FIRESTORE ---
 async function getSampleCrops(): Promise<SampleCrop[]> {
@@ -71,6 +85,7 @@ async function getSampleCrops(): Promise<SampleCrop[]> {
       patrimonial: data.tags.includes('patrimonial'),
       sembrable_en_casa: 'sí',
       educativo: 'no',
+      tags: data.tags || [],
     } as SampleCrop;
   });
 
@@ -111,10 +126,10 @@ const durationOptions = [
 ];
 const spaceOptions = [
   { value: 'all', label: 'Todos los Espacios' },
-  { value: 'Maceta pequeña (1–3 L)', label: 'Maceta pequeña (1–3 L)' },
-  { value: 'Maceta mediana (4–10 L)', label: 'Maceta mediana (4–10 L)' },
-  { value: 'Maceta grande (10+ L)', label: 'Maceta grande (10+ L)' },
-  { value: 'Jardín', label: 'Jardín' },
+  { value: 'maceta_pequena', label: 'Maceta pequeña (1–3 L)' },
+  { value: 'maceta_mediana', label: 'Maceta mediana (4–10 L)' },
+  { value: 'maceta_grande', label: 'Maceta grande (10+ L)' },
+  { value: 'jardin', label: 'Jardín' },
 ];
 
 const difficultyOptions = [
@@ -243,12 +258,14 @@ export default function CultivosPage() {
   }, [userHasInteracted]);
 
   const displayedCrops = allCrops.filter(crop => {
-    if (searchQuery && !crop.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (searchQuery && !normalizeText(crop.name).includes(normalizeText(searchQuery))) return false;
     if (activeRegionSlug && !crop.regionSlugs.includes(activeRegionSlug)) return false;
     if (selectedClima && crop.clima.toLowerCase() !== selectedClima.toLowerCase()) return false;
     if (selectedDuration && crop.duration !== selectedDuration) return false;
-    // Special handling for 'Jardín' filter
-    if (selectedSpace && selectedSpace !== 'Jardín' && crop.spaceRequired !== selectedSpace) return false;
+    
+    if (selectedSpace === 'jardin') return true; // Show all for 'jardin'
+    if (selectedSpace && crop.tags && !crop.tags.includes(selectedSpace)) return false;
+
     if (selectedPlantType && crop.plantType !== selectedPlantType) return false;
     if (selectedDifficulty && crop.difficulty !== selectedDifficulty) return false;
     return true;
