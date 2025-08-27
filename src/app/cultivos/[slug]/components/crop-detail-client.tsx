@@ -10,13 +10,21 @@ import type { Article } from '@/models/article-model';
 import { doc, getDoc, collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor, MapPin, Info, ExternalLink, PlusCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor, MapPin, Info, ExternalLink, PlusCircle, AlertCircle, Check, Recycle, AlertTriangle, Clock, Target, StepForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useAuth } from '@/context/auth-context';
 import type { SampleCrop } from '@/models/crop-model';
 import { AddCropDialog } from '../../components/add-crop-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// Helper to make technical terms more human-readable
+const humanizeTerm = (term: string | null | undefined) => {
+    if (!term) return '';
+    return term.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+};
+
 
 interface SimplifiedItem {
     id: string;
@@ -62,25 +70,64 @@ const ItemCard = ({ item, type }: { item: SimplifiedItem; type: 'crop' | 'articl
 
 const MethodCard = ({ method }: { method: CultivationMethod }) => (
   <Card className="bg-background/50">
-    <CardHeader>
-      <CardTitle className="text-xl flex items-center gap-3">
-        <Tractor className="h-6 w-6 text-primary" />
-        {method.nombre}
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <ol className="space-y-4">
+     <Accordion type="single" collapsible defaultValue="item-1">
         {method.pasos.sort((a, b) => (a.orden || 0) - (b.orden || 0)).map((paso, index) => (
-          <li key={index} className="flex items-start gap-4">
-            <div className="flex-shrink-0 bg-primary/10 text-primary font-bold rounded-full h-8 w-8 flex items-center justify-center text-lg">{(paso.orden || index + 1)}</div>
-            <div className="flex-grow">
-                <p className="font-nunito font-bold">{paso.titulo}</p>
-                <p className="text-muted-foreground pt-1">{paso.descripcion || ''}</p>
-            </div>
-          </li>
+          <AccordionItem value={`item-${index + 1}`} key={index}>
+            <AccordionTrigger className="text-xl px-6 py-4">
+                <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0 bg-primary/10 text-primary font-bold rounded-full h-10 w-10 flex items-center justify-center text-lg">{paso.orden || index + 1}</div>
+                    <span className="font-nunito font-bold text-left">{paso.titulo}</span>
+                </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-6 pb-6">
+                 <div className="space-y-4 prose prose-sm dark:prose-invert max-w-none prose-p:font-sans">
+                    <p className="text-base">{paso.descripcion}</p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 not-prose">
+                        {paso.tiempo_dias && (
+                             <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                                <Clock className="h-5 w-5 text-primary mt-1 flex-shrink-0"/>
+                                <div>
+                                    <p className="font-nunito font-semibold">Tiempo estimado</p>
+                                    <p className="text-muted-foreground">{paso.tiempo_dias} días</p>
+                                </div>
+                            </div>
+                        )}
+                        {paso.indicadores && (
+                            <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                                <Target className="h-5 w-5 text-primary mt-1 flex-shrink-0"/>
+                                <div>
+                                    <p className="font-nunito font-semibold">Indicadores de éxito</p>
+                                    <p className="text-muted-foreground">{paso.indicadores}</p>
+                                </div>
+                            </div>
+                        )}
+                        {paso.materiales_paso && paso.materiales_paso.length > 0 && (
+                             <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                                <Recycle className="h-5 w-5 text-primary mt-1 flex-shrink-0"/>
+                                <div>
+                                    <p className="font-nunito font-semibold">Materiales recomendados</p>
+                                    <ul className="list-disc list-inside text-muted-foreground">
+                                        {paso.materiales_paso.map((mat, i) => <li key={i}>{mat}</li>)}
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
+                         {paso.evitar && (
+                             <div className="flex items-start gap-3 p-3 bg-red-500/10 rounded-lg text-red-800 dark:text-red-300">
+                                <AlertTriangle className="h-5 w-5 mt-1 flex-shrink-0"/>
+                                <div>
+                                    <p className="font-nunito font-semibold">¡A evitar!</p>
+                                    <p>{paso.evitar}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                 </div>
+            </AccordionContent>
+          </AccordionItem>
         ))}
-      </ol>
-    </CardContent>
+      </Accordion>
   </Card>
 );
 
@@ -149,12 +196,21 @@ export function CropDetailClient({
         </div>
       </div>
       
-      {crop.metodos && crop.metodos.length > 0 && (
+       {crop.metodos && crop.metodos.length > 0 && (
           <div className="space-y-6">
               <h2 className="text-3xl font-nunito font-bold text-center">Guía de Cultivo Paso a Paso</h2>
-              {crop.metodos.map(method => (
-                  <MethodCard key={method.nombre} method={method} />
-              ))}
+               <Tabs defaultValue={crop.metodos[0].id} className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                    {crop.metodos.map(method => (
+                        <TabsTrigger key={method.id} value={method.id}>{humanizeTerm(method.nombre)}</TabsTrigger>
+                    ))}
+                </TabsList>
+                 {crop.metodos.map(method => (
+                    <TabsContent key={method.id} value={method.id} className="mt-4">
+                        <MethodCard method={method} />
+                    </TabsContent>
+                ))}
+              </Tabs>
           </div>
       )}
 
@@ -163,25 +219,23 @@ export function CropDetailClient({
         <h2 className="text-3xl font-nunito font-bold text-center mb-6">Información Adicional</h2>
         <Accordion type="multiple" defaultValue={["item-1", "item-2", "item-3"]} className="w-full">
             <AccordionItem value="item-1">
-                <AccordionTrigger className="text-xl">Datos Técnicos y Ciclo de Vida</AccordionTrigger>
+                <AccordionTrigger className="text-xl">Ciclo de Vida y Datos Técnicos</AccordionTrigger>
                 <AccordionContent>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-lg flex items-center gap-2"><Sprout className="h-5 w-5 text-primary"/>Ciclo de Vida</CardTitle>
                             </CardHeader>
-                            <CardContent>
-                                <ul className="space-y-3">
-                                    {crop.cicloVida.sort((a, b) => a.orden - b.orden).map((etapa, i) => (
-                                        <li key={i} className="flex items-start gap-3">
-                                            <div className="flex-shrink-0 bg-primary/10 text-primary font-bold rounded-full h-6 w-6 flex items-center justify-center text-xs">{etapa.orden}</div>
-                                            <div>
-                                                <p className="font-semibold">{etapa.etapa} <span className="text-muted-foreground font-normal">({etapa.duracion_dias_tipico} días)</span></p>
-                                                <p className="text-sm text-muted-foreground">{etapa.notas}</p>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
+                            <CardContent className="space-y-4">
+                                {crop.cicloVida.sort((a, b) => a.orden - b.orden).map((etapa, i) => (
+                                    <div key={i} className="flex items-start gap-4 p-3 bg-muted/50 rounded-lg">
+                                        <div className="flex-shrink-0 bg-primary/10 text-primary font-bold rounded-full h-8 w-8 flex items-center justify-center text-lg">{etapa.orden}</div>
+                                        <div>
+                                            <p className="font-semibold">{etapa.etapa} <span className="text-muted-foreground font-normal">({etapa.duracion_dias_tipico} días)</span></p>
+                                            <p className="text-sm text-muted-foreground">{etapa.notas}</p>
+                                        </div>
+                                    </div>
+                                ))}
                             </CardContent>
                         </Card>
                         <Card>
