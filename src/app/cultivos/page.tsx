@@ -373,7 +373,7 @@ export default function CultivosPage() {
         {displayedCrops.map((crop) => {
            const TypeIcon = getCropTypeIcon(crop.plantType);
            const difficultyStyles = getDifficultyStyles(crop.difficulty);
-           const slug = createSlug(crop.name);
+           const slug = crop.id; // Use the document ID for the link
            
            return (
               <Card key={crop.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">

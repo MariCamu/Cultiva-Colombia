@@ -62,7 +62,7 @@ async function getRelatedCrops(cropSlugs: string[]): Promise<SimplifiedItem[]> {
     const data = doc.data() as CropTechnicalSheet;
     return {
       id: doc.id,
-      slug: createSlug(data.nombre), // Use consistent slug generation
+      slug: doc.id, // Use the document ID for consistent slug generation
       name: data.nombre,
       imageUrl: data.imagenes?.[0]?.url || 'https://placehold.co/300x200',
       dataAiHint: 'crop field',

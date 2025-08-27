@@ -253,7 +253,7 @@ export function InteractiveMap() {
                                     <div>Tipo: {crop.type}</div>
                                     <div className="mt-2">
                                         <Button asChild variant="link" size="sm" className="p-0 h-auto font-semibold">
-                                            <Link href={`/cultivos/${createSlug(crop.name)}`}>
+                                            <Link href={`/cultivos/${crop.id}`}>
                                                 Ver ficha
                                             </Link>
                                         </Button>
