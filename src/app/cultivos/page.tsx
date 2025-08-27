@@ -104,9 +104,10 @@ const durationOptions = [
 ];
 const spaceOptions = [
   { value: 'all', label: 'Todos los Espacios' },
-  { value: 'Maceta pequeña (1–3 L)', label: 'Maceta pequeña' },
-  { value: 'Maceta mediana (4–10 L)', label: 'Maceta mediana' },
-  { value: 'Maceta grande o jardín (10+ L)', label: 'Maceta grande o jardín' },
+  { value: 'Maceta pequeña (1–3 L)', label: 'Maceta pequeña (1–3 L)' },
+  { value: 'Maceta mediana (4–10 L)', label: 'Maceta mediana (4–10 L)' },
+  { value: 'Maceta grande (10+ L)', label: 'Maceta grande (10+ L)' },
+  { value: 'Jardín', label: 'Jardín' },
 ];
 
 const difficultyOptions = [
