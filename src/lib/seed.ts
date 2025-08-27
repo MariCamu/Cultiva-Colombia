@@ -55,6 +55,7 @@ const pestsAndDiseasesData: Omit<Pest, 'slug' | 'imageUrl' | 'dataAiHint'>[] = [
 
 // URLs de imágenes de ejemplo para añadir a los datos de siembra.
 // Asegúrate de que los IDs aquí coincidan con los IDs de tus datos.
+// SI UN ID NO ESTÁ AQUÍ, SE LE ASIGNARÁ UNA IMAGEN DE MARCADOR DE POSICIÓN.
 const pestImages: { [id: string]: { imageUrl: string; dataAiHint: string } } = {
   pulgon: {
     imageUrl: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Plagas%2Fpulgon.jpg?alt=media&token=e1f7b055-0af2-430c-9c7b-839e55a33116",
