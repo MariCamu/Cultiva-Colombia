@@ -4,13 +4,16 @@
 import { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import ReactDOMServer from 'react-dom/server';
-import { LocateFixed, Filter, Trash2 } from 'lucide-react';
+import { LocateFixed, Filter, Trash2, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from '@/lib/utils';
 import { getUserLocation } from '@/app/mapa/utils/geolocation';
 import Link from 'next/link';
+import { collection, getDocs, query, type GeoPoint } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { CropTechnicalSheet } from '@/lib/crop-data-structure';
 
 // --- NUEVA IMPORTACIÓN DINÁMICA DE COMPONENTES DE REACT-LEAFLET ---
 import dynamic from 'next/dynamic';
@@ -49,31 +52,6 @@ const DynamicMapEventHandler = dynamic(
     { ssr: false }
 );
 
-// --- COMPONENTES DE ÍCONOS SVG (DEFINIDOS FUERA DEL COMPONENTE PRINCIPAL) ---
-const CornIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 100 100" width="30" height="30" {...props}>
-    <path d="M50 10 C 40 30, 40 70, 50 90 C 60 70, 60 30, 50 10 Z" fill="#fde047" />
-    <path d="M50 10 C 55 30, 45 30, 50 10" fill="#84cc16" />
-    <path d="M45 15 C 40 35, 35 75, 45 95" fill="#a3e635" stroke="#84cc16" strokeWidth="2" />
-    <path d="M55 15 C 60 35, 65 75, 55 95" fill="#a3e635" stroke="#84cc16" strokeWidth="2" />
-  </svg>
-);
-const CoffeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg viewBox="0 0 100 100" width="28" height="28" {...props}>
-      <path d="M30 40 Q 20 50, 30 60" stroke="#b91c1c" fill="none" strokeWidth="8" strokeLinecap="round"/>
-      <path d="M70 40 Q 80 50, 70 60" stroke="#b91c1c" fill="none" strokeWidth="8" strokeLinecap="round"/>
-      <circle cx="50" cy="50" r="20" fill="#ef4444" />
-      <circle cx="50" cy="50" r="12" fill="#dc2626" />
-    </svg>
-);
-const LeafIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg viewBox="0 0 100 100" width="28" height="28" {...props}>
-      <path d="M50 10 C 20 40, 20 70, 50 90 C 80 70, 80 40, 50 10 Z" fill="#4ade80" />
-      <line x1="50" y1="90" x2="50" y2="25" stroke="#16a34a" strokeWidth="5" />
-    </svg>
-);
-
-
 // --- INTERFACE CROP ---
 interface Crop {
     id: string;
@@ -86,7 +64,38 @@ interface Crop {
     regionSlugs: string[]; // Para filtrar por región
 }
 
-// NOTE: mapCropsData has been removed as the app will now fetch data from Firestore.
+const getCropIcon = (plantType: string): React.ElementType => {
+    // Placeholder, in a real app this could be more complex
+    return Leaf;
+};
+
+
+// --- FETCH FUNCTION FROM FIRESTORE ---
+async function getCropsForMap(): Promise<Crop[]> {
+    const cropsCollectionRef = collection(db, 'fichas_tecnicas_cultivos');
+    const q = query(cropsCollectionRef);
+    const querySnapshot = await getDocs(q);
+
+    const crops: Crop[] = [];
+    querySnapshot.forEach(doc => {
+        const data = doc.data() as CropTechnicalSheet;
+        if (data.posicion && (data.posicion as GeoPoint).latitude) {
+            const geoPoint = data.posicion as GeoPoint;
+            crops.push({
+                id: doc.id,
+                name: data.nombre,
+                difficulty: data.dificultad,
+                type: data.tipo_planta,
+                space: 'Jardín', // Placeholder
+                position: [geoPoint.latitude, geoPoint.longitude],
+                icon: getCropIcon(data.tipo_planta),
+                regionSlugs: data.region.principal.map(r => r.toLowerCase()),
+            });
+        }
+    });
+    return crops;
+}
+
 
 // --- PUNTOS CENTRALES APROXIMADOS POR REGIÓN ---
 const regionCenters: { [key: string]: [number, number] | undefined } = {
@@ -110,7 +119,7 @@ const getDifficultyClass = (difficulty: 'Fácil' | 'Media' | 'Difícil' | string
 };
 
 const createCropIcon = (crop: Crop) => {
-    const IconComponent = crop.icon || LeafIcon;
+    const IconComponent = crop.icon || Leaf;
     const difficultyClass = getDifficultyClass(crop.difficulty);
     const iconHtml = ReactDOMServer.renderToString(
       <div className={cn("map-marker", difficultyClass)}>
@@ -152,11 +161,20 @@ export function InteractiveMap() {
         }
     }, []);
 
-    // TODO: Implement fetching from Firestore
     useEffect(() => {
-        // This is where you would fetch data from Firestore and populate `allCrops`
-        // For now, it will be empty.
-        setIsLoading(false);
+        const fetchCrops = async () => {
+            setIsLoading(true);
+            try {
+                const cropsFromDb = await getCropsForMap();
+                setAllCrops(cropsFromDb);
+                setFilteredCrops(cropsFromDb); // Initially show all crops
+            } catch (error) {
+                console.error("Error fetching map crops:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchCrops();
     }, []);
 
     const handleFilterChange = () => {

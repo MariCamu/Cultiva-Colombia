@@ -215,5 +215,3 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
     </Dialog>
   );
 }
-
-    

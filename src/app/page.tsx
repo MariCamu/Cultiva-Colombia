@@ -13,7 +13,7 @@ const popularCrops = [
     imgSrc: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2FtomateCherry.jpg?alt=media&token=4cd680d4-f38f-481c-8d5e-2e710f303608",
     imgAlt: "Tomates cherry maduros", 
     hint: "cherry tomatoes", 
-    href: "/cultivos/tomate_cherry",
+    href: "/cultivos/tomate-cherry",
     tags: ["Región: Andina", "Clima: Templado", "Para balcón"] 
   },
   { 
@@ -219,5 +219,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    

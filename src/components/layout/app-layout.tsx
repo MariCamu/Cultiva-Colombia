@@ -218,11 +218,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <main className="flex-grow flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         {children}
       </main>
-      <footer className="border-t bg-background/95">
-        <div className="container mx-auto px-6 py-4 text-center text-xs text-muted-foreground">
-            <p>
-                © {new Date().getFullYear()} Cultiva Colombia. Todos los derechos reservados.
-            </p>
+      <footer className="border-t bg-background/95 py-4">
+        <div className="container mx-auto px-6 text-center text-xs text-muted-foreground">
+            <p>© {new Date().getFullYear()} Cultiva Colombia. Todos los derechos reservados.</p>
         </div>
       </footer>
     </div>
@@ -286,5 +284,3 @@ function AuthButtons() {
         </div>
     );
 }
-
-    
