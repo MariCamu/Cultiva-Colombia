@@ -3,7 +3,7 @@
 
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState, useTransition, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -37,12 +37,14 @@ async function getSampleCrops(): Promise<SampleCrop[]> {
   const crops = querySnapshot.docs.map(doc => {
     const data = doc.data() as CropTechnicalSheet;
     
-    // Mapeo de dificultad de texto a número
-    let difficultyScore = 3; // Default a Medio
-    if (data.dificultad === 'Fácil') difficultyScore = 2;
-    if (data.dificultad === 'Muy Fácil') difficultyScore = 1;
-    if (data.dificultad === 'Difícil') difficultyScore = 4;
-    if (data.dificultad === 'Muy Difícil') difficultyScore = 5;
+    let difficultyLabel: SampleCrop['difficulty'] = 'Media';
+    if (data.dificultad.toLowerCase().includes('fácil')) difficultyLabel = 'Fácil';
+    if (data.dificultad.toLowerCase().includes('difícil')) difficultyLabel = 'Difícil';
+    
+    let durationLabel: SampleCrop['duration'] = 'Media (3–5 meses)';
+    const harvestDays = data.datos_programaticos.dias_para_cosecha;
+    if (harvestDays <= 60) durationLabel = 'Corta (1–2 meses)';
+    if (harvestDays > 150) durationLabel = 'Larga (6+ meses)';
 
     return {
       id: doc.id,
@@ -51,16 +53,13 @@ async function getSampleCrops(): Promise<SampleCrop[]> {
       regionSlugs: data.region.principal.map(r => r.toLowerCase()),
       imageUrl: data.imagenes?.[0]?.url || 'https://placehold.co/300x200.png',
       dataAiHint: 'crop field',
-      clima: data.clima.clase[0] as SampleCrop['clima'], // Toma el primer clima como principal
-      // Los siguientes campos son placeholders ya que no están en la nueva estructura
-      estimatedPrice: 'Precio moderado', 
-      duration: 'Media (3–5 meses)',
-      spaceRequired: 'Maceta mediana (4–10 L)',
+      clima: data.clima.clase[0] as SampleCrop['clima'],
+      duration: durationLabel,
+      spaceRequired: data.espacioRequerido as SampleCrop['spaceRequired'],
       plantType: data.tipo_planta as SampleCrop['plantType'],
-      difficulty: difficultyScore as SampleCrop['difficulty'],
+      difficulty: difficultyLabel,
       datos_programaticos: data.datos_programaticos,
       lifeCycle: data.cicloVida.map(etapa => ({ name: etapa.etapa })),
-      // Estos campos no existen en la nueva estructura, se ponen como false
       pancoger: data.tags.includes('pancoger'),
       patrimonial: data.tags.includes('patrimonial'),
       sembrable_en_casa: 'sí',
@@ -73,31 +72,20 @@ async function getSampleCrops(): Promise<SampleCrop[]> {
 
 
 const regionBoundingBoxes = [
-  { slug: 'insular', name: 'Insular', bounds: { minLat: 12.0, maxLat: 16.5, minLng: -82.0, maxLng: -78.0 } },
-  { slug: 'caribe', name: 'Caribe', bounds: { minLat: 7.0, maxLat: 12.5, minLng: -76.0, maxLng: -71.0 } },
-  { slug: 'pacifica', name: 'Pacífica', bounds: { minLat: 0.5, maxLat: 8.0, minLng: -79.5, maxLng: -75.8 } },
-  { slug: 'amazonia', name: 'Amazonía', bounds: { minLat: -4.25, maxLat: 1.5, minLng: -75.5, maxLng: -66.8 } },
-  { slug: 'orinoquia', name: 'Orinoquía', bounds: { minLat: 1.0, maxLat: 7.5, minLng: -72.5, maxLng: -67.0 } },
-  { slug: 'andina', name: 'Andina', bounds: { minLat: -1.5, maxLat: 11.5, minLng: -78.0, maxLng: -71.5 } }, 
+  { slug: 'insular', name: 'Insular' },
+  { slug: 'caribe', name: 'Caribe' },
+  { slug: 'pacifica', name: 'Pacífica' },
+  { slug: 'amazonia', name: 'Amazonía' },
+  { slug: 'orinoquia', name: 'Orinoquía' },
+  { slug: 'andina', name: 'Andina' }, 
 ];
-
-function getRegionFromCoordinates(lat: number, lng: number): { slug: string; name: string } | null {
-  for (const region of regionBoundingBoxes) {
-    if (lat >= region.bounds.minLat && lat <= region.bounds.maxLat &&
-        lng >= region.bounds.minLng && lng <= region.bounds.maxLng) {
-      return { slug: region.slug, name: region.name };
-    }
-  }
-  return null;
-}
 
 function capitalizeFirstLetter(string: string | null | undefined) {
   if (!string) return "";
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-type GeolocationStatus = 'idle' | 'pending' | 'success' | 'error';
-type FilterSource = 'manual' | 'url' | 'geo' | 'none';
+type FilterSource = 'manual' | 'url' | 'none';
 
 const regionOptions = regionBoundingBoxes.map(r => ({ value: r.slug, label: r.name }));
 const climaOptions = [
@@ -107,43 +95,25 @@ const climaOptions = [
     { value: 'calido', label: 'Cálido (24–30 °C)' },
     { value: 'muy calido', label: 'Muy cálido (>30 °C)' },
 ];
-// Note: These filter options will be dynamically generated from Firestore data in a future implementation.
-// For now, they are hardcoded based on the initial sample data.
-const priceOptions = [
-  { value: 'all', label: 'Todos los Precios' },
-  { value: 'Precio bajo', label: 'Precio bajo' },
-  { value: 'Precio moderado', label: 'Precio moderado' },
-  { value: 'Precio alto', label: 'Precio alto' },
-];
+
 const durationOptions = [
   { value: 'all', label: 'Todas las Duraciones' },
   { value: 'Corta (1–2 meses)', label: 'Corta (1–2 meses)' },
   { value: 'Media (3–5 meses)', label: 'Media (3–5 meses)' },
-  { value: 'Larga (6 meses o más)', label: 'Larga (6 meses o más)' },
+  { value: 'Larga (6+ meses)', label: 'Larga (6+ meses)' },
 ];
 const spaceOptions = [
   { value: 'all', label: 'Todos los Espacios' },
-  { value: 'Maceta pequeña (1–3 L)', label: 'Maceta pequeña (1–3 L)' },
-  { value: 'Maceta mediana (4–10 L)', label: 'Maceta mediana (4–10 L)' },
-  { value: 'Maceta grande o jardín (10+ L)', label: 'Maceta grande o jardín (10+ L)' },
+  { value: 'Maceta pequeña (1–3 L)', label: 'Maceta pequeña' },
+  { value: 'Maceta mediana (4–10 L)', label: 'Maceta mediana' },
+  { value: 'Maceta grande o jardín (10+ L)', label: 'Maceta grande o jardín' },
 ];
-const plantTypeOptions = [
-  { value: 'all', label: 'Todos los Tipos' },
-  { value: 'Leguminosas', label: 'Leguminosas' },
-  { value: 'Tubérculos', label: 'Tubérculos' },
-  { value: 'Frutales', label: 'Frutales' },
-  { value: 'Cereales', label: 'Cereales' },
-  { value: 'Plantas aromáticas', label: 'Plantas aromáticas' },
-  { value: 'Hortalizas de fruto', label: 'Hortalizas de fruto' },
-  { value: 'Hortalizas de hoja', label: 'Hortalizas de hoja' },
-];
+
 const difficultyOptions = [
   { value: 'all', label: 'Todas las Dificultades' },
-  { value: '1', label: '⭐ (Muy Fácil)' },
-  { value: '2', label: '⭐⭐ (Fácil)' },
-  { value: '3', label: '⭐⭐⭐ (Medio)' },
-  { value: '4', label: '⭐⭐⭐⭐ (Difícil)' },
-  { value: '5', label: '⭐⭐⭐⭐⭐ (Muy Difícil)' },
+  { value: 'Fácil', label: 'Fácil' },
+  { value: 'Media', label: 'Media' },
+  { value: 'Difícil', label: 'Difícil' },
 ];
 
 // SVG Icons for Crop Types
@@ -161,22 +131,19 @@ const GenericFruitIcon = (props: React.SVGProps<SVGSVGElement>) => (
 )
 
 const getCropTypeIcon = (plantType: string) => {
-    switch (plantType) {
-        case 'Leguminosas': return BeanIcon;
-        case 'Tubérculos':
-        case 'Hortalizas de raíz': return CarrotIconSvg;
-        case 'Frutales':
-        case 'Hortalizas de fruto': return GenericFruitIcon;
-        case 'Cereales': return Wheat;
-        case 'Plantas aromáticas':
-        case 'Hortalizas de hoja': return LeafIconSvg;
-        default: return LeafIconSvg;
-    }
+    if (!plantType) return LeafIconSvg;
+    const pt = plantType.toLowerCase();
+    if (pt.includes('leguminosa')) return BeanIcon;
+    if (pt.includes('tubérculo') || pt.includes('raíz')) return CarrotIconSvg;
+    if (pt.includes('frutal') || pt.includes('fruto')) return GenericFruitIcon;
+    if (pt.includes('cereal')) return Wheat;
+    if (pt.includes('aromática') || pt.includes('hoja')) return LeafIconSvg;
+    return LeafIconSvg;
 };
 
-const getDifficultyStyles = (difficulty: number): { badge: string, iconBg: string, iconText: string } => {
-    if (difficulty <= 2) return { badge: 'bg-green-100 text-green-800 border-green-200', iconBg: 'bg-green-500', iconText: 'text-white' };
-    if (difficulty <= 4) return { badge: 'bg-yellow-100 text-yellow-800 border-yellow-200', iconBg: 'bg-yellow-500', iconText: 'text-white' };
+const getDifficultyStyles = (difficulty: SampleCrop['difficulty']): { badge: string, iconBg: string, iconText: string } => {
+    if (difficulty === 'Fácil') return { badge: 'bg-green-100 text-green-800 border-green-200', iconBg: 'bg-green-500', iconText: 'text-white' };
+    if (difficulty === 'Media') return { badge: 'bg-yellow-100 text-yellow-800 border-yellow-200', iconBg: 'bg-yellow-500', iconText: 'text-white' };
     return { badge: 'bg-red-100 text-red-800 border-red-200', iconBg: 'bg-red-600', iconText: 'text-white' };
 };
 
@@ -187,19 +154,14 @@ export default function CultivosPage() {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   
-  // State for fetched crops from Firestore
   const [allCrops, setAllCrops] = useState<SampleCrop[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [geolocationStatus, setGeolocationStatus] = useState<GeolocationStatus>('idle');
-  const [geolocationErrorMsg, setGeolocationErrorMsg] = useState<string | null>(null);
-  
   const [activeRegionSlug, setActiveRegionSlug] = useState<string | null>(searchParams.get('region'));
   const [activeRegionName, setActiveRegionName] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [selectedClima, setSelectedClima] = useState<string | null>(searchParams.get('clima'));
-  const [selectedPrice, setSelectedPrice] = useState<string | null>(searchParams.get('price'));
   const [selectedDuration, setSelectedDuration] = useState<string | null>(searchParams.get('duration'));
   const [selectedSpace, setSelectedSpace] = useState<string | null>(searchParams.get('space'));
   const [selectedPlantType, setSelectedPlantType] = useState<string | null>(searchParams.get('plantType'));
@@ -223,23 +185,23 @@ export default function CultivosPage() {
     fetchCrops();
   }, []);
 
+  const plantTypeOptions = useMemo(() => {
+    const types = [...new Set(allCrops.map(crop => crop.plantType))].sort();
+    return [{ value: 'all', label: 'Todos los Tipos' }, ...types.map(t => ({ value: t, label: t }))];
+  }, [allCrops]);
+
   // Update URL from state changes
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
     
-    // Helper to set or delete params
     const updateParam = (key: string, value: string | null) => {
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
-      }
+      if (value) params.set(key, value);
+      else params.delete(key);
     };
     
     updateParam('q', searchQuery || null);
     updateParam('region', activeRegionSlug);
     updateParam('clima', selectedClima);
-    updateParam('price', selectedPrice);
     updateParam('duration', selectedDuration);
     updateParam('space', selectedSpace);
     updateParam('plantType', selectedPlantType);
@@ -249,7 +211,7 @@ export default function CultivosPage() {
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     });
 
-  }, [searchQuery, activeRegionSlug, selectedClima, selectedPrice, selectedDuration, selectedSpace, selectedPlantType, selectedDifficulty, router, pathname]);
+  }, [searchQuery, activeRegionSlug, selectedClima, selectedDuration, selectedSpace, selectedPlantType, selectedDifficulty, router, pathname]);
   
 
   useEffect(() => {
@@ -267,72 +229,19 @@ export default function CultivosPage() {
       setActiveRegionSlug(regionParam);
       const regionName = regionOptions.find(r => r.value === regionParam)?.label || capitalizeFirstLetter(regionParam);
       setActiveRegionName(regionName);
-      return;
-    }
-
-    if (!qParam) {
-      if (navigator.geolocation) {
-        setGeolocationStatus('pending');
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            if (userHasInteracted) return;
-            const { latitude, longitude } = position.coords;
-            const regionInfo = getRegionFromCoordinates(latitude, longitude);
-            if (regionInfo) {
-              setFilterSource('geo');
-              setActiveRegionSlug(regionInfo.slug);
-              setActiveRegionName(regionInfo.name);
-            } else {
-               setFilterSource('none');
-               setActiveRegionSlug(null);
-               setActiveRegionName(null);
-            }
-            setGeolocationStatus('success');
-          },
-          (error) => {
-            if (userHasInteracted) return;
-            let message = "No se pudo obtener tu ubicación.";
-            if (error.code === error.PERMISSION_DENIED) message = "Permiso de ubicación denegado.";
-            setGeolocationErrorMsg(message);
-            setGeolocationStatus('error');
-            setFilterSource('none');
-            setActiveRegionSlug(null);
-            setActiveRegionName(null);
-          }
-        );
-      } else {
+    } else {
         setFilterSource('none');
-        setActiveRegionSlug(null);
-        setActiveRegionName(null);
-      }
     }
   }, [userHasInteracted]);
 
   const displayedCrops = allCrops.filter(crop => {
-    if (searchQuery && !crop.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    if (activeRegionSlug && !crop.regionSlugs.includes(activeRegionSlug)) {
-      return false;
-    }
-     if (selectedClima && crop.clima.toLowerCase() !== selectedClima.toLowerCase()) {
-      return false;
-    }
-    if (selectedPrice && crop.estimatedPrice !== selectedPrice) {
-      return false;
-    }
-    if (selectedDuration && crop.duration !== selectedDuration) {
-      return false;
-    }
-    if (selectedSpace && crop.spaceRequired !== selectedSpace) {
-      return false;
-    }
-    if (selectedPlantType && crop.plantType !== selectedPlantType) {
-      return false;
-    }
-    if (selectedDifficulty && crop.difficulty.toString() !== selectedDifficulty) {
-      return false;
-    }
+    if (searchQuery && !crop.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (activeRegionSlug && !crop.regionSlugs.includes(activeRegionSlug)) return false;
+    if (selectedClima && crop.clima.toLowerCase() !== selectedClima.toLowerCase()) return false;
+    if (selectedDuration && crop.duration !== selectedDuration) return false;
+    if (selectedSpace && crop.spaceRequired !== selectedSpace) return false;
+    if (selectedPlantType && crop.plantType !== selectedPlantType) return false;
+    if (selectedDifficulty && crop.difficulty.toString() !== selectedDifficulty) return false;
     return true;
   });
 
@@ -361,23 +270,13 @@ export default function CultivosPage() {
               <AlertDescription>Mostrando cultivos para la región: <strong>{activeRegionName}</strong>.</AlertDescription>
           </Alert>
       );
-  } else if (filterSource === 'geo' && activeRegionName) {
-      pageTitle = `Sugeridos para tu Región: ${activeRegionName}`;
-      pageDescription = `Basado en tu ubicación (aproximada), te sugerimos estos cultivos de la región ${activeRegionName}.`;
-      alertMessageForPage = (
-          <Alert variant="default" className="bg-primary/10 border-primary/30 text-primary">
-              <CheckCircle className="h-4 w-4 text-primary" />
-              <AlertTitle className="font-nunito font-semibold">Región Detectada: {activeRegionName}</AlertTitle>
-              <AlertDescription>Mostrando cultivos sugeridos para tu región. La detección es aproximada.</AlertDescription>
-          </Alert>
-      );
   }
 
   const handleFilterInteraction = () => {
     if (!userHasInteracted) {
         setUserHasInteracted(true);
     }
-    setSearchQuery(''); // Reset search query when a filter is changed
+    setSearchQuery(''); 
   };
 
   const updateFilterState = (setter: React.Dispatch<React.SetStateAction<string | null>>, value: string) => {
@@ -440,7 +339,6 @@ export default function CultivosPage() {
         {displayedCrops.map((crop) => {
            const TypeIcon = getCropTypeIcon(crop.plantType);
            const difficultyStyles = getDifficultyStyles(crop.difficulty);
-           const difficultyText = crop.difficulty <= 2 ? 'Fácil' : crop.difficulty <=4 ? 'Media' : 'Difícil';
            const slug = createSlug(crop.name);
            
            return (
@@ -453,7 +351,7 @@ export default function CultivosPage() {
                           <div>
                               <CardTitle className="text-xl font-nunito font-bold">{crop.name}</CardTitle>
                               <Badge variant="outline" className={cn("mt-1 w-fit font-nunito", difficultyStyles.badge)}>
-                                Dificultad: {difficultyText}
+                                Dificultad: {crop.difficulty}
                               </Badge>
                           </div>
                       </div>
@@ -469,7 +367,9 @@ export default function CultivosPage() {
                       />
                      <p className="text-sm text-muted-foreground pt-2">{crop.description}</p>
                      <div className="flex flex-wrap gap-2 pt-2 border-t">
-                         <Badge variant="secondary" className="bg-sky-100 text-sky-800"><MapPin className="mr-1 h-3 w-3" />{crop.regionSlugs[0] ? capitalizeFirstLetter(crop.regionSlugs[0]) : 'Varias'}</Badge>
+                         {crop.regionSlugs.map(slug => (
+                           <Badge key={slug} variant="secondary" className="bg-sky-100 text-sky-800"><MapPin className="mr-1 h-3 w-3" />{capitalizeFirstLetter(slug)}</Badge>
+                         ))}
                          <Badge variant="secondary" className="bg-amber-100 text-amber-800"><Sprout className="mr-1 h-3 w-3" />{crop.clima ? capitalizeFirstLetter(crop.clima) : 'N/A'}</Badge>
                      </div>
                   </CardContent>
@@ -499,20 +399,6 @@ export default function CultivosPage() {
         {pageTitle}
       </h1>
 
-      {geolocationStatus === 'pending' && !userHasInteracted && !searchParams.get('region') && (
-        <Alert>
-          <LocateFixed className="h-4 w-4 animate-ping" />
-          <AlertTitle className="font-nunito font-semibold">Obteniendo Ubicación</AlertTitle>
-          <AlertDescription>Intentando detectar tu región para mostrarte cultivos relevantes...</AlertDescription>
-        </Alert>
-      )}
-      {geolocationStatus === 'error' && !userHasInteracted && !searchParams.get('region') && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle className="font-nunito font-semibold">Error de Geolocalización</AlertTitle>
-          <AlertDescription>{geolocationErrorMsg} Mostrando todos los cultivos.</AlertDescription>
-        </Alert>
-      )}
       {alertMessageForPage}
       
       <Card>
@@ -565,16 +451,7 @@ export default function CultivosPage() {
             </Select>
           </div>
           <div>
-            <Label htmlFor="priceSelect" className="text-sm font-nunito font-semibold">Precio Estimado</Label>
-            <Select value={selectedPrice || 'all'} onValueChange={(v) => updateFilterState(setSelectedPrice, v)}>
-              <SelectTrigger id="priceSelect" className="font-nunito"><SelectValue placeholder="Todos los Precios" /></SelectTrigger>
-              <SelectContent>
-                {priceOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="durationSelect" className="text-sm font-nunito font-semibold">Duración</Label>
+            <Label htmlFor="durationSelect" className="text-sm font-nunito font-semibold">Duración para Cosecha</Label>
             <Select value={selectedDuration || 'all'} onValueChange={(v) => updateFilterState(setSelectedDuration, v)}>
               <SelectTrigger id="durationSelect" className="font-nunito"><SelectValue placeholder="Todas las Duraciones" /></SelectTrigger>
               <SelectContent>
@@ -632,5 +509,3 @@ export default function CultivosPage() {
     </div>
   );
 }
-
-    

@@ -17,6 +17,7 @@ export interface UserProfile {
     preferencia_tema: string;
     harvestedCropsCount: number; // Counter for harvested crops (for Dashboard)
     totalHarvestWeight: number; // Sum of all harvest weights in kg (for Dashboard)
+    region?: string;
 }
 
 // --- USER'S CROP STRUCTURE ---
@@ -96,12 +97,11 @@ export interface SampleCrop {
   regionSlugs: string[];
   imageUrl: string;
   dataAiHint: string;
-  clima: 'Frío' | 'Templado' | 'Cálido' | 'Muy cálido';
-  estimatedPrice: 'Precio bajo' | 'Precio moderado' | 'Precio alto';
-  duration: 'Corta (1–2 meses)' | 'Media (3–5 meses)' | 'Larga (6 meses o más)';
+  clima: 'Frío' | 'Templado' | 'Cálido' | 'Muy cálido' | string;
+  duration: 'Corta (1–2 meses)' | 'Media (3–5 meses)' | 'Larga (6+ meses)';
   spaceRequired: 'Maceta pequeña (1–3 L)' | 'Maceta mediana (4–10 L)' | 'Maceta grande o jardín (10+ L)';
-  plantType: 'Hortalizas de hoja' | 'Hortalizas de raíz' | 'Hortalizas de fruto' | 'Hortalizas de flor' | 'Leguminosas' | 'Cereales' | 'Plantas aromáticas' | 'Plantas de bulbo' | 'Frutales' | 'Tubérculos' | 'Otro';
-  difficulty: 1 | 2 | 3 | 4 | 5;
+  plantType: 'Hortalizas de hoja' | 'Hortalizas de raíz' | 'Hortalizas de fruto' | 'Hortalizas de flor' | 'Leguminosas' | 'Cereales' | 'Plantas aromáticas' | 'Plantas de bulbo' | 'Frutales' | 'Tubérculos' | 'Otro' | string;
+  difficulty: 'Fácil' | 'Media' | 'Difícil';
   datos_programaticos: {
     dias_para_cosecha: number;
     frecuencia_riego_dias: number;
