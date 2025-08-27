@@ -1,4 +1,5 @@
 
+import 'dotenv/config'; // Carga las variables de entorno ANTES que cualquier otra cosa.
 import { initializeApp, getApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
