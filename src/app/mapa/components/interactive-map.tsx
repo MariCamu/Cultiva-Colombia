@@ -60,14 +60,9 @@ interface Crop {
     type: string;
     space: string; // Placeholder field for now
     position: [number, number]; // [lat, lng]
-    icon: React.ElementType;
+    imageUrl: string;
     regionSlugs: string[]; // Para filtrar por región
 }
-
-const getCropIcon = (plantType: string): React.ElementType => {
-    // Placeholder, in a real app this could be more complex
-    return Leaf;
-};
 
 
 // --- FETCH FUNCTION FROM FIRESTORE ---
@@ -88,7 +83,7 @@ async function getCropsForMap(): Promise<Crop[]> {
                 type: data.tipo_planta,
                 space: 'Jardín', // Placeholder, as this data is not in the main sheet yet
                 position: [geoPoint.latitude, geoPoint.longitude],
-                icon: getCropIcon(data.tipo_planta),
+                imageUrl: data.imagenes?.[0]?.url || 'https://placehold.co/40x40.png',
                 regionSlugs: data.region.principal.map(r => r.toLowerCase()),
             });
         }
@@ -111,7 +106,7 @@ const regionCenters: { [key: string]: [number, number] | undefined } = {
 // --- FUNCIONES AUXILIARES PARA LOS ÍCONOS PERSONALIZADOS ---
 const getDifficultyClass = (difficulty: 'Fácil' | 'Media' | 'Difícil' | string) => {
     const lowerCaseDifficulty = difficulty.toLowerCase();
-    if (lowerCaseDifficulty.includes('fácil')) return 'map-marker-easy';
+    if (lowerCaseDifficulty.includes('muy fácil') || lowerCaseDifficulty.includes('fácil')) return 'map-marker-easy';
     if (lowerCaseDifficulty.includes('media')) return 'map-marker-medium';
     if (lowerCaseDifficulty.includes('difícil')) return 'map-marker-hard';
     return 'map-marker-easy'; // Default to easy if no match
@@ -119,11 +114,10 @@ const getDifficultyClass = (difficulty: 'Fácil' | 'Media' | 'Difícil' | string
 
 
 const createCropIcon = (crop: Crop) => {
-    const IconComponent = crop.icon || Leaf;
     const difficultyClass = getDifficultyClass(crop.difficulty);
     const iconHtml = ReactDOMServer.renderToString(
       <div className={cn("map-marker", difficultyClass)}>
-        <IconComponent className="map-marker-icon" />
+        <img src={crop.imageUrl} alt={crop.name} className="w-full h-full object-cover rounded-full" />
       </div>
     );
 
