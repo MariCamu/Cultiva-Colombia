@@ -106,6 +106,8 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
       { icon: Beaker, label: "pH del Suelo", value: crop.tecnica.ph_suelo },
   ]
 
+  const mainImage = crop.imagenes?.[0];
+
   return (
     <article className="max-w-5xl mx-auto space-y-10">
       <nav className="hidden md:flex items-center text-sm font-medium text-muted-foreground mb-4">
@@ -131,14 +133,23 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
           </div>
           <p className="text-lg text-muted-foreground">{crop.descripcion}</p>
         </div>
-        <Image
-          src={crop.imagenes[0].url}
-          alt={`Imagen de ${crop.nombre}`}
-          width={600}
-          height={400}
-          className="w-full h-auto object-cover rounded-xl shadow-lg"
-          priority
-        />
+        <div>
+          {mainImage && (
+            <Image
+              src={mainImage.url}
+              alt={`Imagen de ${crop.nombre}`}
+              width={600}
+              height={400}
+              className="w-full h-auto object-cover rounded-xl shadow-lg"
+              priority
+            />
+          )}
+          {mainImage?.atribucion?.text && mainImage?.atribucion?.link && (
+            <p className="text-xs text-muted-foreground text-right mt-2 pr-2">
+              Foto por <a href={mainImage.atribucion.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary">{mainImage.atribucion.text}</a>
+            </p>
+          )}
+        </div>
       </div>
       
       {crop.metodos && crop.metodos.length > 0 && (
@@ -263,3 +274,5 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
     </article>
   );
 }
+
+    
