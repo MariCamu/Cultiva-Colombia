@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import L from 'leaflet';
 import ReactDOMServer from 'react-dom/server';
-import { LocateFixed, Filter, Trash2, Leaf } from 'lucide-react';
+import { LocateFixed, Filter, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,43 +14,27 @@ import Link from 'next/link';
 import { collection, getDocs, query, type GeoPoint } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { CropTechnicalSheet } from '@/lib/crop-data-structure';
-
-// --- NUEVA IMPORTACIÓN DINÁMICA DE COMPONENTES DE REACT-LEAFLET ---
 import dynamic from 'next/dynamic';
 
-const DynamicMapContainer = dynamic(
-  () => import('react-leaflet').then(mod => mod.MapContainer),
-  { ssr: false }
-);
+// --- DYNAMIC IMPORTS FOR REACT-LEAFLET COMPONENTS ---
+const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 
-const DynamicTileLayer = dynamic(
-  () => import('react-leaflet').then(mod => mod.TileLayer),
-  { ssr: false }
-);
-
-const DynamicMarker = dynamic(
-  () => import('react-leaflet').then(mod => mod.Marker),
-  { ssr: false }
-);
-
-const DynamicPopup = dynamic(
-  () => import('react-leaflet').then(mod => mod.Popup),
-  { ssr: false }
-);
-
-const DynamicMapEventHandler = dynamic(
-    () => import('react-leaflet').then(mod => {
-        const useMapHook = mod.useMap;
-        return ({ center, zoom }: { center: [number, number]; zoom: number }) => {
-            const map = useMapHook();
-            useEffect(() => {
+const MapEventHandler = dynamic(() => import('react-leaflet').then(mod => {
+    const useMapHook = mod.useMap;
+    return ({ center, zoom }: { center: [number, number]; zoom: number }) => {
+        const map = useMapHook();
+        useEffect(() => {
+            if (map) {
                 map.setView(center, zoom);
-            }, [center, zoom, map]);
-            return null;
-        };
-    }),
-    { ssr: false }
-);
+            }
+        }, [center, zoom, map]);
+        return null;
+    };
+}), { ssr: false });
+
 
 // --- INTERFACE CROP ---
 interface Crop {
@@ -115,7 +99,6 @@ const getDifficultyClass = (difficulty: 'Fácil' | 'Media' | 'Difícil' | string
 
 const createCropIcon = (crop: Crop) => {
     const difficultyClass = getDifficultyClass(crop.difficulty);
-    // Use inline styles to force the circular shape and proper image fitting
     const iconHtml = ReactDOMServer.renderToString(
         <div 
             className={cn("map-marker", difficultyClass)}
@@ -123,7 +106,7 @@ const createCropIcon = (crop: Crop) => {
                 width: '40px',
                 height: '40px',
                 borderRadius: '50%',
-                padding: '2px', // Simulates the border thickness
+                padding: '2px', 
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -169,14 +152,6 @@ export function InteractiveMap() {
     const [mapCenter, setMapCenter] = useState<[number, number]>(regionCenters.all as [number, number]);
     const [mapZoom, setMapZoom] = useState<number>(6);
 
-    const [mapLoaded, setMapLoaded] = useState(false);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setMapLoaded(true);
-        }
-    }, []);
-
     useEffect(() => {
         const fetchCrops = async () => {
             setIsLoading(true);
@@ -202,7 +177,7 @@ export function InteractiveMap() {
     const resetFilters = () => {
         setTypeFilter('all');
         setSpaceFilter('all');
-        handleRegionQuickAccess('all'); // This will also reset the region filter and map view
+        handleRegionQuickAccess('all');
     };
 
     const handleRegionQuickAccess = (regionSlug: string) => {
@@ -216,59 +191,47 @@ export function InteractiveMap() {
             const location = await getUserLocation();
             setMapCenter([location.lat, location.lon]);
             setMapZoom(12);
-            
-            // Reset filters to show all nearby crops
             setActiveRegionFilter('all'); 
             setTypeFilter('all');
             setSpaceFilter('all');
-            
         } catch (error: any) {
             console.error("Error al obtener ubicación:", error);
             alert(`No se pudo obtener tu ubicación: ${error.message}. Por favor, activa los permisos de geolocalización.`);
         }
     };
 
-
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-            {/* Contenido Principal del Mapa */}
             <div className="md:col-span-3 lg:col-span-2 w-full">
                 <Card className="h-[60vh] md:h-[70vh] lg:h-[600px] w-full relative overflow-hidden shadow-lg bg-primary/5 p-0 border-0">
-                    {mapLoaded ? (
-                        <DynamicMapContainer
-                            center={mapCenter}
-                            zoom={mapZoom}
-                            scrollWheelZoom={true}
-                            className="h-full w-full rounded-lg z-0"
-                        >
-                            <DynamicMapEventHandler center={mapCenter} zoom={mapZoom} />
-                            
-                            <DynamicTileLayer
-                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            />
-                            {filteredCrops.map(crop => (
-                                <DynamicMarker key={crop.id} position={crop.position} icon={createCropIcon(crop)}>
-                                    <DynamicPopup>
-                                        <div className="font-nunito font-bold">{crop.name}</div>
-                                        <div>Dificultad: {crop.difficulty}</div>
-                                        <div>Tipo: {crop.type}</div>
-                                        <div className="mt-2">
-                                            <Button asChild variant="link" size="sm" className="p-0 h-auto font-semibold">
-                                                <Link href={`/cultivos/${createSlug(crop.name)}`}>
-                                                    Ver ficha
-                                                </Link>
-                                            </Button>
-                                        </div>
-                                    </DynamicPopup>
-                                </DynamicMarker>
-                            ))}
-                        </DynamicMapContainer>
-                    ) : (
-                        <div className="flex items-center justify-center h-full w-full bg-gray-100 rounded-lg text-gray-500">
-                            Cargando mapa...
-                        </div>
-                    )}
+                    <MapContainer
+                        center={mapCenter}
+                        zoom={mapZoom}
+                        scrollWheelZoom={true}
+                        className="h-full w-full rounded-lg z-0"
+                    >
+                        <MapEventHandler center={mapCenter} zoom={mapZoom} />
+                        <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        {filteredCrops.map(crop => (
+                            <Marker key={crop.id} position={crop.position} icon={createCropIcon(crop)}>
+                                <Popup>
+                                    <div className="font-nunito font-bold">{crop.name}</div>
+                                    <div>Dificultad: {crop.difficulty}</div>
+                                    <div>Tipo: {crop.type}</div>
+                                    <div className="mt-2">
+                                        <Button asChild variant="link" size="sm" className="p-0 h-auto font-semibold">
+                                            <Link href={`/cultivos/${createSlug(crop.name)}`}>
+                                                Ver ficha
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </Popup>
+                            </Marker>
+                        ))}
+                    </MapContainer>
                     
                     <Button
                         onClick={handleLocateMe}
@@ -282,7 +245,6 @@ export function InteractiveMap() {
                 </Card>
             </div>
 
-            {/* Panel Lateral (Leyenda y Filtros) */}
             <div className="md:col-span-3 lg:col-span-1 w-full space-y-6">
                 <Card className="shadow-lg bg-card">
                     <CardHeader>
@@ -318,7 +280,6 @@ export function InteractiveMap() {
                                 <SelectTrigger id="type-filter"><SelectValue placeholder="Todos los tipos" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Todos los tipos</SelectItem>
-                                    {/* Dynamically get unique types from crops */}
                                     {[...new Set(allCrops.map(c => c.type))].sort().map(type => (
                                         <SelectItem key={type} value={type}>{type}</SelectItem>
                                     ))}

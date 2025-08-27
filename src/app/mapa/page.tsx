@@ -1,11 +1,8 @@
 
 "use client";
 
-import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 
 const InteractiveMap = dynamic(
   () => import('@/app/mapa/components/interactive-map').then(mod => mod.InteractiveMap),
