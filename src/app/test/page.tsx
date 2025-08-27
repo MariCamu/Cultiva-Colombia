@@ -63,10 +63,10 @@ const steps: Step[] = [
     question: '¿Y cómo describirías el clima donde vives?',
     stateKey: 'clima',
     options: [
-      { value: 'Frío', label: 'Frío', description: '10–17 °C (ej. Bogotá, Tunja)' },
-      { value: 'Templado', label: 'Templado', description: '18–23 °C (ej. Medellín, Popayán)' },
-      { value: 'Cálido', label: 'Cálido', description: '24–30 °C (ej. Barranquilla, Cali)' },
-      { value: 'Muy cálido', label: 'Muy cálido', description: '>30 °C (ej. Riohacha, Santa Marta)' },
+      { value: 'frio', label: 'Frío', description: '10–17 °C (ej. Bogotá, Tunja)' },
+      { value: 'templado', label: 'Templado', description: '18–23 °C (ej. Medellín, Popayán)' },
+      { value: 'calido', label: 'Cálido', description: '24–30 °C (ej. Barranquilla, Cali)' },
+      { value: 'muy calido', label: 'Muy cálido', description: '>30 °C (ej. Riohacha, Santa Marta)' },
       { value: 'any', label: 'No estoy seguro' },
     ],
   },
@@ -217,7 +217,7 @@ export default function TestPage() {
       const results = sampleCropsData.filter(crop => {
           let matches = true;
           if (regionFilter && !crop.regionSlugs.includes(regionFilter)) matches = false;
-          if (climaFilter && !crop.clima.clase.includes(climaFilter)) matches = false;
+          if (climaFilter && crop.clima.toLowerCase() !== climaFilter.toLowerCase()) matches = false;
           if (spaceFilter && crop.spaceRequired !== spaceFilter) matches = false;
           if (plantTypeFilter && crop.plantType !== plantTypeFilter) matches = false;
           if (maxDifficulty !== null && crop.difficulty > maxDifficulty) matches = false;
@@ -401,3 +401,5 @@ export default function TestPage() {
     </div>
   );
 }
+
+    

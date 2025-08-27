@@ -40,7 +40,7 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
   const { toast } = useToast();
   
   const userRegion = userProfile?.region;
-  const isCropInUserRegion = userRegion && crop.regionSlugs.includes(userRegion.toLowerCase());
+  const isCropInUserRegion = userRegion && crop.regionSlugs.map(r => r.toLowerCase()).includes(userRegion.toLowerCase());
   const showRegionWarning = userRegion && !isCropInUserRegion;
 
   const handleAddCrop = async (event: FormEvent) => {
@@ -215,3 +215,5 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
     </Dialog>
   );
 }
+
+    

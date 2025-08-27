@@ -9,28 +9,28 @@ import Image from "next/image";
 
 const popularCrops = [
   { 
-    name: "Fríjol", 
-    imgSrc: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Ffrijol.jpg?alt=media&token=9af96b87-5d6c-40af-af29-0a4087544269",
-    imgAlt: "Planta de fríjol", 
-    hint: "bean plant", 
-    href: "/cultivos?q=Fríjol",
-    tags: ["Región: Andina", "Dificultad: Fácil", "Pancoger"] 
+    name: "Tomate Cherry", 
+    imgSrc: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2FtomateCherry.jpg?alt=media&token=4cd680d4-f38f-481c-8d5e-2e710f303608",
+    imgAlt: "Tomates cherry maduros", 
+    hint: "cherry tomatoes", 
+    href: "/cultivos/tomate_cherry",
+    tags: ["Región: Andina", "Clima: Templado", "Para balcón"] 
   },
   { 
-    name: "Papa", 
-    imgSrc: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fpapa.jpg?alt=media&token=9615f312-8217-47e2-8ea3-ae3fa80494c5", 
-    imgAlt: "Cultivo de papa", 
-    hint: "potato harvest", 
-    href: "/cultivos?q=Papa",
-    tags: ["Región: Andina", "Dificultad: Fácil", "Pancoger"]
+    name: "Acelga", 
+    imgSrc: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Facelga.jpg?alt=media&token=e1dd9c89-2353-4c92-b2e4-f52f3913e75e", 
+    imgAlt: "Hojas de acelga frescas", 
+    hint: "chard leaves", 
+    href: "/cultivos/acelga",
+    tags: ["Región: Andina", "Clima: Frío/Templado", "Cosecha continua"]
   },
   { 
-    name: "Maíz", 
-    imgSrc: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fmaiz.jpg?alt=media&token=b2e64dac-2b21-4ddc-b54d-4fa2f79a681a", 
-    imgAlt: "Planta de maíz", 
-    hint: "corn field", 
-    href: "/cultivos?q=Maíz",
-    tags: ["Región: Caribe", "Dificultad: Fácil", "Patrimonial"]
+    name: "Hierbabuena", 
+    imgSrc: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Cultivos%2Fhierbabuena%20(2).jpg?alt=media&token=aa34d030-8b9c-4903-8dcb-8b239f84f15f", 
+    imgAlt: "Planta de hierbabuena aromática", 
+    hint: "spearmint plant", 
+    href: "/cultivos/hierbabuena",
+    tags: ["Región: Todas", "Dificultad: Muy Fácil", "Aromática"]
   },
 ];
 
@@ -219,3 +219,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    

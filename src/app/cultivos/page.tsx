@@ -469,10 +469,8 @@ export default function CultivosPage() {
                       />
                      <p className="text-sm text-muted-foreground pt-2">{crop.description}</p>
                      <div className="flex flex-wrap gap-2 pt-2 border-t">
-                         {crop.pancoger && <Badge variant="secondary" className="bg-sky-100 text-sky-800"><Sprout className="mr-1 h-3 w-3" />Pancoger</Badge>}
-                         {crop.patrimonial && <Badge variant="secondary" className="bg-amber-100 text-amber-800"><Building className="mr-1 h-3 w-3" />Patrimonial</Badge>}
-                         {crop.sembrable_en_casa !== 'no' && <Badge variant="secondary" className="bg-teal-100 text-teal-800"><Home className="mr-1 h-3 w-3" />Para Casa</Badge>}
-                         {crop.educativo !== 'no' && <Badge variant="secondary" className="bg-indigo-100 text-indigo-800"><BookHeart className="mr-1 h-3 w-3" />Educativo</Badge>}
+                         <Badge variant="secondary" className="bg-sky-100 text-sky-800"><MapPin className="mr-1 h-3 w-3" />{crop.regionSlugs[0] ? capitalizeFirstLetter(crop.regionSlugs[0]) : 'Varias'}</Badge>
+                         <Badge variant="secondary" className="bg-amber-100 text-amber-800"><Sprout className="mr-1 h-3 w-3" />{crop.clima ? capitalizeFirstLetter(crop.clima) : 'N/A'}</Badge>
                      </div>
                   </CardContent>
                   <CardFooter className="flex-col items-start gap-2">
@@ -634,3 +632,5 @@ export default function CultivosPage() {
     </div>
   );
 }
+
+    
