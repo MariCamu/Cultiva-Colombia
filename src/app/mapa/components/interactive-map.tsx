@@ -110,13 +110,12 @@ const regionCenters: { [key: string]: [number, number] | undefined } = {
 
 // --- FUNCIONES AUXILIARES PARA LOS ÍCONOS PERSONALIZADOS ---
 const getDifficultyClass = (difficulty: 'Fácil' | 'Media' | 'Difícil' | string) => {
-    switch (difficulty) {
-        case 'Fácil': return 'map-marker-easy';
-        case 'Media': return 'map-marker-medium';
-        case 'Difícil': return 'map-marker-hard';
-        default: return 'map-marker-easy';
-    }
+    if (difficulty.toLowerCase().includes('fácil')) return 'map-marker-easy';
+    if (difficulty.toLowerCase().includes('media')) return 'map-marker-medium';
+    if (difficulty.toLowerCase().includes('difícil')) return 'map-marker-hard';
+    return 'map-marker-easy';
 };
+
 
 const createCropIcon = (crop: Crop) => {
     const IconComponent = crop.icon || Leaf;
