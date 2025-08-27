@@ -106,7 +106,11 @@
 
 @layer components {
     .map-marker {
-      @apply w-full h-full rounded-full shadow-lg cursor-pointer transition-transform duration-300 transform hover:scale-110 flex items-center justify-center;
+        @apply w-full h-full rounded-full shadow-lg cursor-pointer transition-transform duration-300 transform hover:scale-110 flex items-center justify-center;
+        border-radius: 50%; /* Fuerza el círculo perfecto */
+    }
+    .map-marker img {
+        border-radius: 50%; /* Fuerza el círculo perfecto para la imagen interior */
     }
     .map-marker-easy {
         @apply bg-green-500/80;
