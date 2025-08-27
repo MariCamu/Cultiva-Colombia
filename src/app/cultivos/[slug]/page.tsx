@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import type { CropTechnicalSheet, CultivationMethod } from '@/lib/crop-data-structure';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,9 +23,6 @@ interface CropDetailPageProps {
 }
 
 async function getCropBySlug(slug: string): Promise<CropTechnicalSheet | null> {
-  const cropsCollectionRef = collection(db, 'fichas_tecnicas_cultivos');
-  // Firestore document IDs cannot contain slashes and are case-sensitive.
-  // We assume the slug is the intended document ID.
   const docRef = doc(db, 'fichas_tecnicas_cultivos', slug);
   const docSnap = await getDoc(docRef);
 
@@ -37,21 +34,7 @@ async function getCropBySlug(slug: string): Promise<CropTechnicalSheet | null> {
     };
   }
   
-  // Fallback query if the slug is a field value instead of the document ID
-  const q = query(cropsCollectionRef, where('id', '==', slug));
-  const querySnapshot = await getDocs(q);
-
-  if (querySnapshot.empty) {
-    return null;
-  }
-
-  const doc = querySnapshot.docs[0];
-  const data = doc.data() as CropTechnicalSheet;
-
-  return {
-    id: doc.id,
-    ...data,
-  };
+  return null;
 }
 
 const MethodCard = ({ method }: { method: CultivationMethod }) => (
@@ -265,7 +248,7 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
                                 {crop.articulosRelacionados.map(id => (
                                     <li key={id}>
                                         <Link href={`/articulos/${id.replace(/_/g, '-')}`} className="text-primary hover:underline text-sm font-semibold">
-                                            {id.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                            {id.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}
                                         </Link>
                                     </li>
                                 ))}
