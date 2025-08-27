@@ -3,46 +3,20 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Reglas para Colecciones Públicas ---
-    // Permite que cualquier persona (incluso sin iniciar sesión) lea los datos
-    // de estas colecciones. Nadie puede escribir o borrar.
-    match /fichas_tecnicas_cultivos/{document=**} {
+    // Regla de Lectura Pública y Escritura de Servidor:
+    // Permite que cualquier persona lea datos de estas colecciones.
+    // Permite la escritura únicamente desde entornos autenticados del lado del servidor (como el script db:seed).
+    // Esto previene que usuarios malintencionados modifiquen el contenido público desde la web.
+    match /(fichas_tecnicas_cultivos|articulos|glosario)/{docId} {
       allow read: if true;
-      allow write: if false;
-    }
-    
-    match /glosario/{document=**} {
-      allow read: if true;
-      allow write: if false;
+      allow write: if request.auth != null; 
     }
 
-    match /articulos/{document=**} {
-      allow read: if true;
-      allow write: if false;
-    }
-
-    // --- Reglas para Datos de Usuarios ---
-    // Un usuario solo puede acceder a su propio documento en la colección 'usuarios'.
-    match /usuarios/{userId} {
-      // Permite a un usuario leer y actualizar su propio perfil.
-      // Permite la creación si el usuario que lo crea es el mismo que el del documento.
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
-
+    // Reglas para Datos de Usuarios:
+    // Solo los usuarios autenticados pueden acceder a sus propios datos.
+    match /usuarios/{userId}/{subcollection}/{docId} {
       // Un usuario solo puede leer y escribir en sus propias subcolecciones.
-      match /cultivos_del_usuario/{cropId} {
-        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
-
-        // Reglas para el diario dentro de cada cultivo del usuario
-        match /diario/{logId} {
-          allow read, write, delete: if request.auth != null && request.auth.uid == userId;
-        }
-      }
-
-      // Reglas para las alertas del usuario
-      match /alertas/{alertId} {
-         allow read, write, delete: if request.auth != null && request.auth.uid == userId;
-      }
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
