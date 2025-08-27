@@ -129,22 +129,22 @@ export default function SanidadVegetalPage() {
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredPests.map(pest => (
-                    <Card key={pest.id} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+                    <Card key={pest.id} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow bg-card">
                         <Image
                             src={pest.imageUrl}
                             alt={`Imagen de ${pest.nombreComun}`}
                             width={400}
                             height={250}
-                            className="w-full h-48 object-cover"
+                            className="w-full h-40 object-cover"
                             data-ai-hint={pest.dataAiHint}
                         />
                         <CardHeader>
                             <CardTitle className="text-xl font-nunito font-bold flex items-center gap-2">
                                 <Bug className="h-5 w-5 text-primary" /> {pest.nombreComun}
                             </CardTitle>
-                            <Badge variant={pest.tipo.toLowerCase().includes('insecto') ? 'destructive' : 'secondary'} className="w-fit capitalize">{pest.tipo}</Badge>
                         </CardHeader>
-                        <CardContent className="flex-grow">
+                        <CardContent className="flex-grow space-y-2">
+                             <Badge variant={pest.tipo.toLowerCase().includes('insecto') ? 'destructive' : 'secondary'} className="w-fit capitalize">{pest.tipo}</Badge>
                             <p className="text-sm text-muted-foreground line-clamp-3">{pest.descripcion}</p>
                         </CardContent>
                         <CardFooter>
