@@ -57,8 +57,8 @@ interface Crop {
     id: string;
     name: string;
     difficulty: 'Fácil' | 'Media' | 'Difícil' | string;
-    type: 'Hortaliza' | 'Fruta' | 'Aromática' | 'Grano' | 'Tubérculo' | 'Leguminosa' | string;
-    space: 'Maceta pequeña' | 'Maceta grande' | 'Jardín' | string;
+    type: string;
+    space: string; // Placeholder field for now
     position: [number, number]; // [lat, lng]
     icon: React.ElementType;
     regionSlugs: string[]; // Para filtrar por región
@@ -86,7 +86,7 @@ async function getCropsForMap(): Promise<Crop[]> {
                 name: data.nombre,
                 difficulty: data.dificultad,
                 type: data.tipo_planta,
-                space: 'Jardín', // Placeholder
+                space: 'Jardín', // Placeholder, as this data is not in the main sheet yet
                 position: [geoPoint.latitude, geoPoint.longitude],
                 icon: getCropIcon(data.tipo_planta),
                 regionSlugs: data.region.principal.map(r => r.toLowerCase()),
@@ -110,10 +110,11 @@ const regionCenters: { [key: string]: [number, number] | undefined } = {
 
 // --- FUNCIONES AUXILIARES PARA LOS ÍCONOS PERSONALIZADOS ---
 const getDifficultyClass = (difficulty: 'Fácil' | 'Media' | 'Difícil' | string) => {
-    if (difficulty.toLowerCase().includes('fácil')) return 'map-marker-easy';
-    if (difficulty.toLowerCase().includes('media')) return 'map-marker-medium';
-    if (difficulty.toLowerCase().includes('difícil')) return 'map-marker-hard';
-    return 'map-marker-easy';
+    const lowerCaseDifficulty = difficulty.toLowerCase();
+    if (lowerCaseDifficulty.includes('fácil')) return 'map-marker-easy';
+    if (lowerCaseDifficulty.includes('media')) return 'map-marker-medium';
+    if (lowerCaseDifficulty.includes('difícil')) return 'map-marker-hard';
+    return 'map-marker-easy'; // Default to easy if no match
 };
 
 
@@ -148,7 +149,7 @@ export function InteractiveMap() {
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [spaceFilter, setSpaceFilter] = useState<string>('all');
     const [activeRegionFilter, setActiveRegionFilter] = useState<string>('all');
-    const [filteredCrops, setFilteredCrops] = useState<Crop[]>([]);
+    
     const [mapCenter, setMapCenter] = useState<[number, number]>(regionCenters.all as [number, number]);
     const [mapZoom, setMapZoom] = useState<number>(6);
 
@@ -166,7 +167,6 @@ export function InteractiveMap() {
             try {
                 const cropsFromDb = await getCropsForMap();
                 setAllCrops(cropsFromDb);
-                setFilteredCrops(cropsFromDb); // Initially show all crops
             } catch (error) {
                 console.error("Error fetching map crops:", error);
             } finally {
@@ -176,28 +176,17 @@ export function InteractiveMap() {
         fetchCrops();
     }, []);
 
-    const handleFilterChange = () => {
-        let crops = allCrops;
-
-        if (activeRegionFilter !== 'all') {
-            crops = crops.filter(c => c.regionSlugs.includes(activeRegionFilter));
-        }
-        if (typeFilter !== 'all') {
-            crops = crops.filter(c => c.type === typeFilter);
-        }
-        if (spaceFilter !== 'all') {
-            crops = crops.filter(c => c.space === spaceFilter);
-        }
-        setFilteredCrops(crops);
-    };
+    const filteredCrops = allCrops.filter(crop => {
+        const typeMatch = typeFilter === 'all' || crop.type === typeFilter;
+        const spaceMatch = spaceFilter === 'all' || crop.space === spaceFilter;
+        const regionMatch = activeRegionFilter === 'all' || crop.regionSlugs.includes(activeRegionFilter);
+        return typeMatch && spaceMatch && regionMatch;
+    });
 
     const resetFilters = () => {
         setTypeFilter('all');
         setSpaceFilter('all');
-        setActiveRegionFilter('all');
-        setFilteredCrops(allCrops);
-        setMapCenter(regionCenters.all as [number, number]);
-        setMapZoom(6);
+        handleRegionQuickAccess('all'); // This will also reset the region filter and map view
     };
 
     const handleRegionQuickAccess = (regionSlug: string) => {
@@ -212,20 +201,16 @@ export function InteractiveMap() {
             setMapCenter([location.lat, location.lon]);
             setMapZoom(12);
             
+            // Reset filters to show all nearby crops
             setActiveRegionFilter('all'); 
             setTypeFilter('all');
             setSpaceFilter('all');
-            setFilteredCrops(allCrops);
             
         } catch (error: any) {
             console.error("Error al obtener ubicación:", error);
             alert(`No se pudo obtener tu ubicación: ${error.message}. Por favor, activa los permisos de geolocalización.`);
         }
     };
-
-    useEffect(() => {
-        handleFilterChange();
-    }, [typeFilter, spaceFilter, activeRegionFilter, allCrops]);
 
 
     return (
@@ -317,12 +302,10 @@ export function InteractiveMap() {
                                 <SelectTrigger id="type-filter"><SelectValue placeholder="Todos los tipos" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Todos los tipos</SelectItem>
-                                    <SelectItem value="Hortaliza">Hortalizas</SelectItem>
-                                    <SelectItem value="Fruta">Frutas</SelectItem>
-                                    <SelectItem value="Aromática">Aromáticas</SelectItem>
-                                    <SelectItem value="Grano">Granos</SelectItem>
-                                    <SelectItem value="Tubérculo">Tubérculos</SelectItem>
-                                    <SelectItem value="Leguminosa">Leguminosas</SelectItem>
+                                    {/* Dynamically get unique types from crops */}
+                                    {[...new Set(allCrops.map(c => c.type))].sort().map(type => (
+                                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -332,9 +315,9 @@ export function InteractiveMap() {
                                 <SelectTrigger id="space-filter"><SelectValue placeholder="Todos los espacios" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">Todos los espacios</SelectItem>
-                                    <SelectItem value="Maceta pequeña">Maceta pequeña</SelectItem>
-                                    <SelectItem value="Maceta grande">Maceta grande</SelectItem>
-                                    <SelectItem value="Jardín">Jardín</SelectItem>
+                                    {[...new Set(allCrops.map(c => c.space))].sort().map(space => (
+                                        <SelectItem key={space} value={space}>{space}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
