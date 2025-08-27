@@ -42,7 +42,7 @@ interface Crop {
     name: string;
     difficulty: 'Fácil' | 'Media' | 'Difícil' | string;
     type: string;
-    space: 'Maceta pequeña (1–3 L)' | 'Maceta mediana (4–10 L)' | 'Maceta grande o jardín (10+ L)';
+    space: 'Maceta pequeña (1–3 L)' | 'Maceta mediana (4–10 L)' | 'Maceta grande (10+ L)' | 'Jardín';
     position: [number, number]; // [lat, lng]
     imageUrl: string;
     regionSlugs: string[]; // Para filtrar por región
@@ -61,13 +61,15 @@ async function getCropsForMap(): Promise<Crop[]> {
         if (data.posicion && (data.posicion as GeoPoint).latitude) {
             const geoPoint = data.posicion as GeoPoint;
             
-            let spaceRequired: Crop['space'] = 'Maceta grande o jardín (10+ L)'; // Default
+            let spaceRequired: Crop['space'];
             if (data.tags.includes('maceta_pequena')) {
                 spaceRequired = 'Maceta pequeña (1–3 L)';
             } else if (data.tags.includes('maceta_mediana')) {
                 spaceRequired = 'Maceta mediana (4–10 L)';
             } else if (data.tags.includes('maceta_grande')) {
-                 spaceRequired = 'Maceta grande o jardín (10+ L)';
+                 spaceRequired = 'Maceta grande (10+ L)';
+            } else {
+                spaceRequired = 'Jardín'; // Default for those without specific pot tags
             }
 
             crops.push({
@@ -153,7 +155,8 @@ const spaceOptions = [
     { value: 'all', label: 'Todos los Espacios' },
     { value: 'Maceta pequeña (1–3 L)', label: 'Maceta pequeña' },
     { value: 'Maceta mediana (4–10 L)', label: 'Maceta mediana' },
-    { value: 'Maceta grande o jardín (10+ L)', label: 'Maceta grande / Jardín' },
+    { value: 'Maceta grande (10+ L)', label: 'Maceta grande' },
+    { value: 'Jardín', label: 'Jardín' },
 ];
 
 

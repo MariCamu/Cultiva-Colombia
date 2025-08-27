@@ -79,7 +79,7 @@ export interface CropTechnicalSheet {
   descripcion: string;
   tags: string[];
   dificultad: 'Fácil' | 'Media' | 'Difícil' | string;
-  espacioRequerido: 'Maceta pequeña (1–3 L)' | 'Maceta mediana (4–10 L)' | 'Maceta grande o jardín (10+ L)';
+  espacioRequerido: 'Maceta pequeña (1–3 L)' | 'Maceta mediana (4–10 L)' | 'Maceta grande (10+ L)' | 'Jardín';
   clima: {
     clase: string[];
   };
