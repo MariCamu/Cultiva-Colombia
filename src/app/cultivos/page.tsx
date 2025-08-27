@@ -8,11 +8,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, AlertCircle, CheckCircle, HelpCircle, LocateFixed, Star, Filter, MessageSquareText, PlusCircle, Wheat, BookHeart, Building, Home, Sprout, Search, ExternalLink } from 'lucide-react';
+import { MapPin, AlertCircle, HelpCircle, Star, Filter, PlusCircle, Wheat, BookHeart, Building, Home, Sprout, Search, ExternalLink } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/context/auth-context';
-import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { AddCropDialog } from './components/add-crop-dialog';
 import type { SampleCrop } from '@/models/crop-model';
@@ -46,6 +44,15 @@ async function getSampleCrops(): Promise<SampleCrop[]> {
     if (harvestDays <= 60) durationLabel = 'Corta (1–2 meses)';
     if (harvestDays > 150) durationLabel = 'Larga (6+ meses)';
 
+    let spaceRequired: SampleCrop['spaceRequired'] = 'Jardín'; // Default to Jardín
+    if (data.tags.includes('maceta_pequena')) {
+        spaceRequired = 'Maceta pequeña (1–3 L)';
+    } else if (data.tags.includes('maceta_mediana')) {
+        spaceRequired = 'Maceta mediana (4–10 L)';
+    } else if (data.tags.includes('maceta_grande')) {
+        spaceRequired = 'Maceta grande (10+ L)';
+    }
+
     return {
       id: doc.id,
       name: data.nombre,
@@ -55,7 +62,7 @@ async function getSampleCrops(): Promise<SampleCrop[]> {
       dataAiHint: 'crop field',
       clima: data.clima.clase[0] as SampleCrop['clima'],
       duration: durationLabel,
-      spaceRequired: data.espacioRequerido as SampleCrop['spaceRequired'],
+      spaceRequired: spaceRequired,
       plantType: data.tipo_planta as SampleCrop['plantType'],
       difficulty: difficultyLabel,
       datos_programaticos: data.datos_programaticos,
@@ -240,9 +247,10 @@ export default function CultivosPage() {
     if (activeRegionSlug && !crop.regionSlugs.includes(activeRegionSlug)) return false;
     if (selectedClima && crop.clima.toLowerCase() !== selectedClima.toLowerCase()) return false;
     if (selectedDuration && crop.duration !== selectedDuration) return false;
-    if (selectedSpace && crop.spaceRequired !== selectedSpace) return false;
+    // Special handling for 'Jardín' filter
+    if (selectedSpace && selectedSpace !== 'Jardín' && crop.spaceRequired !== selectedSpace) return false;
     if (selectedPlantType && crop.plantType !== selectedPlantType) return false;
-    if (selectedDifficulty && crop.difficulty.toString() !== selectedDifficulty) return false;
+    if (selectedDifficulty && crop.difficulty !== selectedDifficulty) return false;
     return true;
   });
 

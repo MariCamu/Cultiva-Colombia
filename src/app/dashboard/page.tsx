@@ -454,7 +454,7 @@ function DashboardContent() {
                 // Schedule next watering 2 days from today
                 const plantedDate = startOfDay(new Date(cropToUpdate.fecha_plantacion.seconds * 1000));
                 const daysSincePlanted = differenceInDays(startOfDay(new Date()), plantedDate);
-                const nextDueInDays = daysSincePlanted + 2;
+                const nextDueInDays = daysSincePlanted + cropToUpdate.nextTask.dueInDays; // Use dynamic frequency
                 batch.update(cropRef, { 'nextTask.dueInDays': nextDueInDays });
 
                 // Add automatic log entry to journal
@@ -521,7 +521,7 @@ function DashboardContent() {
                     description: `Regar ${crop.nombre_cultivo_personal}`,
                     type: 'riego'
                 });
-                currentDueDay += 2; // Assuming watering is every 2 days for this simulation
+                currentDueDay += crop.nextTask.dueInDays; // Use dynamic frequency
             }
         }
         
@@ -965,5 +965,3 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
-
-    

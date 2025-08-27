@@ -5,8 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2, Upload, FlaskConical, Sprout, ShieldCheck, ShieldAlert, List, CloudRain } from 'lucide-react';
+import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2, FlaskConical, Sprout, ShieldCheck, ShieldAlert, List, CloudRain, Info } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,11 +17,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/context/auth-context';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, deleteDoc, type Timestamp, type DocumentData } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, deleteDoc, type Timestamp, type DocumentData, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { fetchWeatherForecast } from '@/services/weatherService';
 import { willItRainSoon, type WeatherData } from '@/lib/weather-utils';
+import type { CropTechnicalSheet, LifeCycleStage } from '@/lib/crop-data-structure';
+import { differenceInDays } from 'date-fns';
 
 
 interface LogEntry {
@@ -124,6 +125,10 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
 
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [isLogLoading, setIsLogLoading] = useState(true);
+  const [technicalSheet, setTechnicalSheet] = useState<CropTechnicalSheet | null>(null);
+  const [isSheetLoading, setIsSheetLoading] = useState(true);
+  const [currentLifeCycleStage, setCurrentLifeCycleStage] = useState<LifeCycleStage | null>(null);
+
   
   const [newNote, setNewNote] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
@@ -132,9 +137,41 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(() => {
-    if (!user || !crop.id) return;
+  const plantedDate = crop.fecha_plantacion ? new Date((crop.fecha_plantacion as Timestamp).seconds * 1000) : new Date();
+  const daysSincePlanted = Math.max(0, differenceInDays(new Date(), plantedDate));
+  const remainingDays = Math.max(0, crop.daysToHarvest - daysSincePlanted);
+  const progress = crop.daysToHarvest > 0 ? Math.min(Math.round((daysSincePlanted / crop.daysToHarvest) * 100), 100) : 0;
 
+  useEffect(() => {
+    if (!user || !crop.id || !crop.ficha_cultivo_id) return;
+    
+    // Fetch technical sheet
+    const fetchTechnicalSheet = async () => {
+      setIsSheetLoading(true);
+      const sheetRef = doc(db, 'fichas_tecnicas_cultivos', crop.ficha_cultivo_id);
+      const docSnap = await getDoc(sheetRef);
+      if (docSnap.exists()) {
+        const sheetData = docSnap.data() as CropTechnicalSheet;
+        setTechnicalSheet(sheetData);
+
+        // Determine current life cycle stage
+        let daysAccumulated = 0;
+        for (const stage of sheetData.cicloVida.sort((a,b) => a.orden - b.orden)) {
+            daysAccumulated += stage.duracion_dias_tipico || 0;
+            if (daysSincePlanted <= daysAccumulated) {
+                setCurrentLifeCycleStage(stage);
+                break;
+            }
+        }
+
+      } else {
+        console.error("No such technical sheet!");
+      }
+      setIsSheetLoading(false);
+    };
+    fetchTechnicalSheet();
+
+    // Fetch log entries (journal)
     setIsLogLoading(true);
     const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'diario');
     const q = query(logCollectionRef, orderBy('date', 'desc'));
@@ -149,9 +186,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         } as LogEntry;
       });
 
-      // Filter out entries that don't have a valid date yet to prevent crashes
       const validEntries = entries.filter(e => e.date && typeof e.date.seconds === 'number');
-
       validEntries.sort((a,b) => b.date.seconds - a.date.seconds);
 
       setLogEntries(validEntries);
@@ -163,7 +198,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     });
 
     return () => unsubscribe();
-  }, [crop.id, user, toast]);
+  }, [crop.id, crop.ficha_cultivo_id, user, toast, daysSincePlanted]);
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -252,11 +287,6 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     }
   };
   
-  const plantedDate = crop.fecha_plantacion ? new Date((crop.fecha_plantacion as Timestamp).seconds * 1000) : new Date();
-  const daysSincePlanted = Math.max(0, Math.floor((new Date().getTime() - plantedDate.getTime()) / (1000 * 3600 * 24)));
-  const remainingDays = Math.max(0, crop.daysToHarvest - daysSincePlanted);
-  const progress = crop.daysToHarvest > 0 ? Math.min(Math.round((daysSincePlanted / crop.daysToHarvest) * 100), 100) : 0;
-
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -287,7 +317,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
                             {crop.fecha_plantacion && (
-                                <p><strong>Fecha de Siembra:</strong> {new Date((crop.fecha_plantacion as Timestamp).seconds * 1000).toLocaleDateString()}</p>
+                                <p><strong>Fecha de Siembra:</strong> {plantedDate.toLocaleDateString()}</p>
                             )}
                             <p><strong>Cosecha Estimada en:</strong> {formatRemainingDays(remainingDays)}</p>
                             <div>
@@ -315,6 +345,20 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                 <CardContent className="flex-grow overflow-hidden">
                                     <ScrollArea className="h-full max-h-[40vh] md:max-h-none pr-4">
                                         <WeatherRecommendation />
+
+                                        {currentLifeCycleStage && (
+                                            <Alert className="mb-4 bg-primary/10 border-primary/20">
+                                                <Info className="h-4 w-4 text-primary" />
+                                                <AlertTitle className="text-primary font-bold">Estás en la etapa: {currentLifeCycleStage.etapa}</AlertTitle>
+                                                <AlertDescription className="text-primary/90 space-y-1 mt-2 text-xs">
+                                                   <p><strong>Notas para esta etapa:</strong> {currentLifeCycleStage.notas}</p>
+                                                   <p><strong>Labores recomendadas:</strong> {currentLifeCycleStage.labores.join(', ')}</p>
+                                                   {typeof currentLifeCycleStage.alertas_plagas === 'string' && currentLifeCycleStage.alertas_plagas && <p><strong>Plagas comunes:</strong> {currentLifeCycleStage.alertas_plagas}</p>}
+                                                   {Array.isArray(currentLifeCycleStage.alertas_plagas) && currentLifeCycleStage.alertas_plagas.length > 0 && <p><strong>Plagas comunes:</strong> {currentLifeCycleStage.alertas_plagas.join(', ')}</p>}
+                                                </AlertDescription>
+                                            </Alert>
+                                        )}
+
                                         <div className="space-y-6">
                                             {isLogLoading && Array.from({ length: 3 }).map((_, i) => (
                                                 <div key={i} className="flex items-start gap-4">
@@ -412,20 +456,32 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                         </TabsContent>
 
                         <TabsContent value="datasheet" className="flex-grow overflow-auto mt-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-xl">Ficha Técnica (Ejemplo)</CardTitle>
-                                    <CardDescription>Información general sobre el cultivo de {crop.nombre_cultivo_personal}.</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-2 text-sm">
-                                    <p><strong>Especie:</strong> <i>Solanum lycopersicum var. cerasiforme</i></p>
-                                    <p><strong>Familia:</strong> Solanaceae</p>
-                                    <p><strong>Clima:</strong> Templado a cálido.</p>
-                                    <p><strong>Exposición Solar:</strong> Pleno sol (mínimo 6 horas diarias).</p>
-                                    <p><strong>Riego:</strong> Frecuente y regular, evitando encharcamiento.</p>
-                                    <p><strong>Suelo:</strong> Rico en materia orgánica, bien drenado.</p>
-                                </CardContent>
-                            </Card>
+                             {isSheetLoading ? (
+                                <Card>
+                                    <CardHeader><Skeleton className="h-6 w-1/2" /></CardHeader>
+                                    <CardContent className="space-y-2">
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-3/4" />
+                                    </CardContent>
+                                </Card>
+                            ) : technicalSheet ? (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-xl">Ficha Técnica de {technicalSheet.nombre}</CardTitle>
+                                        <CardDescription>{technicalSheet.descripcion}</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2 text-sm">
+                                        <p><strong>Especie:</strong> <i>{technicalSheet.nombreCientifico}</i></p>
+                                        <p><strong>Familia:</strong> {technicalSheet.tipo_planta}</p>
+                                        <p><strong>Clima Ideal:</strong> {technicalSheet.clima.clase.join(', ')}</p>
+                                        <p><strong>Exposición Solar:</strong> {technicalSheet.tecnica.luz_solar}</p>
+                                        <p><strong>Riego:</strong> {technicalSheet.tecnica.riego}</p>
+                                        <p><strong>Suelo:</strong> {technicalSheet.tecnica.suelo.textura}, {technicalSheet.tecnica.suelo.drenaje}.</p>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                <p>No se encontró la ficha técnica.</p>
+                            )}
                         </TabsContent>
                     </Tabs>
                 </div>
