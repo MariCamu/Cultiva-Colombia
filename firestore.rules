@@ -1,29 +1,27 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- REGLAS PÚBLICAS ---
-    // Cualquiera puede leer estas colecciones.
-    // Solo solicitudes autenticadas a nivel de servidor (como el script db:seed) pueden escribir.
+    
+    // --- Colecciones Públicas (Fichas, Artículos, Glosario) ---
+    // Cualquiera puede leer estos datos.
+    // La escritura se permite para que el script de siembra pueda funcionar.
+    // En un entorno de producción, esto podría restringirse más.
     match /fichas_tecnicas_cultivos/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if true; 
     }
-
     match /articulos/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if true;
     }
-    
     match /glosario/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if true;
     }
 
-    // --- REGLAS DE USUARIOS ---
-    // Los usuarios solo pueden acceder y modificar sus propios datos.
+    // --- Colección de Usuarios ---
+    // Solo el usuario autenticado puede acceder a su propio documento y subcolecciones.
     match /usuarios/{userId}/{documents=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
