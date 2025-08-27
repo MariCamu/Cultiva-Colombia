@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2, FlaskConical, Sprout, ShieldCheck, ShieldAlert, List, CloudRain, Info } from 'lucide-react';
+import { Calendar, Droplet, Sun, Zap, NotebookText, Camera, Trash2, FlaskConical, Sprout, ShieldCheck, ShieldAlert, List, CloudRain, Info, ExternalLink } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,9 +24,10 @@ import { fetchWeatherForecast } from '@/services/weatherService';
 import { willItRainSoon, type WeatherData } from '@/lib/weather-utils';
 import type { CropTechnicalSheet, LifeCycleStage } from '@/lib/crop-data-structure';
 import { differenceInDays } from 'date-fns';
+import Link from 'next/link';
 
 // Helper to make technical terms more human-readable
-const humanizeTerm = (term: string) => {
+const humanizeTerm = (term: string | null | undefined) => {
     if (!term) return '';
     return term.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 };
@@ -170,7 +171,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         }
 
       } else {
-        console.error("No such technical sheet!");
+        console.error("No such technical sheet!", crop.ficha_cultivo_id);
       }
       setIsSheetLoading(false);
     };
@@ -330,6 +331,14 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
                                 <Progress value={progress} />
                             </div>
                         </CardContent>
+                        <CardFooter>
+                           <Button asChild variant="outline" size="sm" className="w-full">
+                                <Link href={`/cultivos/${crop.ficha_cultivo_id}`}>
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    Ver Ficha Técnica Completa
+                                </Link>
+                           </Button>
+                        </CardFooter>
                     </Card>
                 </div>
 

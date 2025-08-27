@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
-import type { CropTechnicalSheet, CultivationMethod } from '@/lib/crop-data-structure';
+import type { CropTechnicalSheet, CultivationMethod, LifeCycleStage } from '@/lib/crop-data-structure';
 import type { Article } from '@/models/article-model';
 import { doc, getDoc, collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,11 +18,17 @@ import type { SampleCrop } from '@/models/crop-model';
 import { AddCropDialog } from '../../components/add-crop-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Helper to make technical terms more human-readable
 const humanizeTerm = (term: string | null | undefined) => {
     if (!term) return '';
-    return term.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+    const formatted = term.replace(/_/g, ' ');
+    // Capitalize only if it's not a single word (like 'Jardín')
+    if (formatted.includes(' ')) {
+        return formatted.replace(/\b\w/g, char => char.toUpperCase());
+    }
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 };
 
 
@@ -131,6 +137,56 @@ const MethodCard = ({ method }: { method: CultivationMethod }) => (
   </Card>
 );
 
+const LifeCycleTimeline = ({ stages }: { stages: LifeCycleStage[] }) => {
+    if (!stages || stages.length === 0) return null;
+
+    const sortedStages = stages.sort((a, b) => a.orden - b.orden);
+
+    return (
+        <TooltipProvider>
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2"><Sprout className="h-5 w-5 text-primary"/>Ciclo de Vida</CardTitle>
+                <CardDescription>Pasa el mouse sobre cada etapa para ver los detalles.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="relative w-full py-4">
+                    {/* Timeline bar */}
+                    <div className="absolute left-0 top-1/2 w-full h-0.5 bg-border -translate-y-1/2"></div>
+                    
+                    <div className="relative flex justify-between">
+                        {sortedStages.map((stage, index) => (
+                            <Tooltip key={index}>
+                                <TooltipTrigger asChild>
+                                    <div className="relative z-10 flex flex-col items-center">
+                                        <div className="h-5 w-5 bg-primary rounded-full border-2 border-background shadow-md flex items-center justify-center cursor-pointer hover:scale-125 transition-transform">
+                                           <span className="text-xs font-bold text-primary-foreground">{stage.orden}</span>
+                                        </div>
+                                        <p className="text-xs mt-2 font-semibold text-center absolute top-full pt-1">{stage.etapa}</p>
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" className="max-w-xs p-4">
+                                    <div className="space-y-2">
+                                        <p className="font-nunito font-bold text-base">{stage.orden}. {stage.etapa}</p>
+                                        <p className="text-sm text-muted-foreground"><strong className="text-foreground">Duración:</strong> {stage.duracion_dias_tipico} días</p>
+                                        <p className="text-sm text-muted-foreground"><strong className="text-foreground">Notas:</strong> {stage.notas}</p>
+                                        <p className="text-sm text-muted-foreground"><strong className="text-foreground">Labores:</strong> {stage.labores.join(', ')}</p>
+                                        {stage.alertas_plagas && (Array.isArray(stage.alertas_plagas) ? stage.alertas_plagas.length > 0 : stage.alertas_plagas) &&
+                                            <p className="text-sm text-destructive"><strong className="text-destructive">Alertas:</strong> {Array.isArray(stage.alertas_plagas) ? stage.alertas_plagas.map(p => humanizeTerm(p)).join(', ') : humanizeTerm(stage.alertas_plagas as string)}</p>
+                                        }
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
+                        ))}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+        </TooltipProvider>
+    );
+};
+
+
 export function CropDetailClient({
   crop,
   sampleCrop,
@@ -222,22 +278,7 @@ export function CropDetailClient({
                 <AccordionTrigger className="text-xl">Ciclo de Vida y Datos Técnicos</AccordionTrigger>
                 <AccordionContent>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2"><Sprout className="h-5 w-5 text-primary"/>Ciclo de Vida</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {crop.cicloVida.sort((a, b) => a.orden - b.orden).map((etapa, i) => (
-                                    <div key={i} className="flex items-start gap-4 p-3 bg-muted/50 rounded-lg">
-                                        <div className="flex-shrink-0 bg-primary/10 text-primary font-bold rounded-full h-8 w-8 flex items-center justify-center text-lg">{etapa.orden}</div>
-                                        <div>
-                                            <p className="font-semibold">{etapa.etapa} <span className="text-muted-foreground font-normal">({etapa.duracion_dias_tipico} días)</span></p>
-                                            <p className="text-sm text-muted-foreground">{etapa.notas}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </CardContent>
-                        </Card>
+                        <LifeCycleTimeline stages={crop.cicloVida} />
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-lg">Datos Técnicos</CardTitle>

@@ -25,7 +25,7 @@ interface SimplifiedItem {
 
 // --- HELPER FUNCTIONS ---
 
-const createSlug = (text: string) => {
+const createSlug = (text: string): string => {
   if (!text) return '';
   const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;'
   const b = 'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz------'
@@ -35,20 +35,23 @@ const createSlug = (text: string) => {
     .replace(/\s+/g, '-') // Replace spaces with -
     .replace(p, c => b.charAt(a.indexOf(c))) // Replace special characters
     .replace(/&/g, '-and-') // Replace & with 'and'
-    .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-    .replace(/\-\-+/g, '-') // Replace multiple - with single -
+    .replace(/[^\w-]+/g, '') // Remove all non-word chars
+    .replace(/--+/g, '-') // Replace multiple - with single -
     .replace(/^-+/, '') // Trim - from start of text
     .replace(/-+$/, '') // Trim - from end of text
 }
+
 
 async function getCropBySlug(slug: string): Promise<CropTechnicalSheet | null> {
   const docRef = doc(db, 'fichas_tecnicas_cultivos', slug);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
+    // Make sure to include the document ID in the returned object
     return { id: docSnap.id, ...(docSnap.data() as CropTechnicalSheet) };
   }
   return null;
 }
+
 
 async function getRelatedCrops(cropSlugs: string[]): Promise<SimplifiedItem[]> {
   if (!cropSlugs || cropSlugs.length === 0) return [];
@@ -88,7 +91,7 @@ async function getRelatedArticles(articleSlugs: string[]): Promise<SimplifiedIte
 export default async function CropDetailPage({ params }: CropDetailPageProps) {
     const crop = await getCropBySlug(params.slug);
     
-    if (!crop) {
+    if (!crop || !crop.id) {
         notFound();
     }
     
@@ -100,7 +103,7 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
 
     // Adapt data for AddCropDialog
     const sampleCrop: SampleCrop = {
-        id: crop.id || params.slug,
+        id: crop.id,
         name: crop.nombre,
         description: crop.descripcion,
         regionSlugs: crop.region.principal.map(r => r.toLowerCase()),
