@@ -451,18 +451,22 @@ function DashboardContent() {
             const cropToUpdate = userCrops.find(c => c.id === alert.cropId);
 
             if (cropToUpdate) {
-                // Schedule next watering 2 days from today
                 const plantedDate = startOfDay(new Date(cropToUpdate.fecha_plantacion.seconds * 1000));
+                // CORRECT LOGIC: Calculate days from planting to today, then add the frequency.
                 const daysSincePlanted = differenceInDays(startOfDay(new Date()), plantedDate);
-                const nextDueInDays = daysSincePlanted + cropToUpdate.nextTask.dueInDays; // Use dynamic frequency
-                batch.update(cropRef, { 'nextTask.dueInDays': nextDueInDays });
+                const nextDueInDays = daysSincePlanted + cropToUpdate.datos_programaticos.frecuencia_riego_dias;
+                
+                batch.update(cropRef, { 
+                    'nextTask.dueInDays': nextDueInDays,
+                    'lastNote': 'Riego registrado hoy.' // Update last note
+                });
 
                 // Add automatic log entry to journal
                 const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', alert.cropId, 'diario');
-                const logDocRef = doc(logCollectionRef); // Create a new doc with a random ID
+                const logDocRef = doc(logCollectionRef);
                 batch.set(logDocRef, {
                     type: 'water',
-                    content: 'Riego registrado.',
+                    content: 'Riego registrado a través de alerta.',
                     date: serverTimestamp(),
                 });
             }
@@ -512,8 +516,9 @@ function DashboardContent() {
             type: 'siembra'
         });
 
-        // Generate next 2 watering tasks
+        // Generate next 2 watering tasks based on frequency
         let currentDueDay = crop.nextTask.dueInDays;
+        const wateringFrequency = crop.datos_programaticos.frecuencia_riego_dias;
         for (let i = 0; i < 2; i++) {
             if (currentDueDay < crop.daysToHarvest) {
                 tasks.push({
@@ -521,7 +526,7 @@ function DashboardContent() {
                     description: `Regar ${crop.nombre_cultivo_personal}`,
                     type: 'riego'
                 });
-                currentDueDay += crop.nextTask.dueInDays; // Use dynamic frequency
+                currentDueDay += wateringFrequency;
             }
         }
         

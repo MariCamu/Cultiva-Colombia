@@ -137,52 +137,58 @@ const MethodCard = ({ method }: { method: CultivationMethod }) => (
   </Card>
 );
 
-const LifeCycleTimeline = ({ stages }: { stages: LifeCycleStage[] }) => {
+const LifeCycleCard = ({ stages }: { stages: LifeCycleStage[] }) => {
     if (!stages || stages.length === 0) return null;
 
     const sortedStages = stages.sort((a, b) => a.orden - b.orden);
 
     return (
-        <TooltipProvider>
         <Card>
             <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2"><Sprout className="h-5 w-5 text-primary"/>Ciclo de Vida</CardTitle>
-                <CardDescription>Pasa el mouse sobre cada etapa para ver los detalles.</CardDescription>
+                <CardTitle className="text-lg flex items-center gap-2"><Sprout className="h-5 w-5 text-primary"/>Ciclo de Vida del Cultivo</CardTitle>
+                <CardDescription>Despliega cada etapa para ver los detalles, labores y posibles alertas.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="relative w-full py-4">
-                    {/* Timeline bar */}
-                    <div className="absolute left-0 top-1/2 w-full h-0.5 bg-border -translate-y-1/2"></div>
-                    
-                    <div className="relative flex justify-between">
-                        {sortedStages.map((stage, index) => (
-                            <Tooltip key={index}>
-                                <TooltipTrigger asChild>
-                                    <div className="relative z-10 flex flex-col items-center">
-                                        <div className="h-5 w-5 bg-primary rounded-full border-2 border-background shadow-md flex items-center justify-center cursor-pointer hover:scale-125 transition-transform">
-                                           <span className="text-xs font-bold text-primary-foreground">{stage.orden}</span>
+                <Accordion type="single" collapsible className="w-full">
+                    {sortedStages.map((stage, index) => (
+                        <AccordionItem value={`stage-${index}`} key={index}>
+                            <AccordionTrigger className="text-xl">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex-shrink-0 bg-primary/10 text-primary font-bold rounded-full h-10 w-10 flex items-center justify-center text-lg">{stage.orden}</div>
+                                    <div className="text-left">
+                                        <p className="font-nunito font-bold">{stage.etapa}</p>
+                                        <p className="text-sm font-sans font-normal text-muted-foreground">Duración: {stage.duracion_dias_tipico} días aprox.</p>
+                                    </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="space-y-4">
+                               <p className="text-base text-muted-foreground">{stage.notas}</p>
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                   <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                                        <StepForward className="h-5 w-5 text-primary mt-1 flex-shrink-0"/>
+                                        <div>
+                                            <p className="font-nunito font-semibold">Labores Principales</p>
+                                            <ul className="list-disc list-inside text-muted-foreground text-sm">
+                                                {stage.labores.map((labor, i) => <li key={i}>{labor}</li>)}
+                                            </ul>
                                         </div>
-                                        <p className="text-xs mt-2 font-semibold text-center absolute top-full pt-1">{stage.etapa}</p>
                                     </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom" className="max-w-xs p-4">
-                                    <div className="space-y-2">
-                                        <p className="font-nunito font-bold text-base">{stage.orden}. {stage.etapa}</p>
-                                        <p className="text-sm text-muted-foreground"><strong className="text-foreground">Duración:</strong> {stage.duracion_dias_tipico} días</p>
-                                        <p className="text-sm text-muted-foreground"><strong className="text-foreground">Notas:</strong> {stage.notas}</p>
-                                        <p className="text-sm text-muted-foreground"><strong className="text-foreground">Labores:</strong> {stage.labores.join(', ')}</p>
-                                        {stage.alertas_plagas && (Array.isArray(stage.alertas_plagas) ? stage.alertas_plagas.length > 0 : stage.alertas_plagas) &&
-                                            <p className="text-sm text-destructive"><strong className="text-destructive">Alertas:</strong> {Array.isArray(stage.alertas_plagas) ? stage.alertas_plagas.map(p => humanizeTerm(p)).join(', ') : humanizeTerm(stage.alertas_plagas as string)}</p>
-                                        }
-                                    </div>
-                                </TooltipContent>
-                            </Tooltip>
-                        ))}
-                    </div>
-                </div>
+                                    {stage.alertas_plagas && (Array.isArray(stage.alertas_plagas) ? stage.alertas_plagas.length > 0 : stage.alertas_plagas) &&
+                                        <div className="flex items-start gap-3 p-3 bg-destructive/10 rounded-lg text-destructive">
+                                            <AlertTriangle className="h-5 w-5 mt-1 flex-shrink-0"/>
+                                            <div>
+                                                <p className="font-nunito font-semibold">Alertas Comunes</p>
+                                                <p className="text-sm">{Array.isArray(stage.alertas_plagas) ? stage.alertas_plagas.map(p => humanizeTerm(p)).join(', ') : humanizeTerm(stage.alertas_plagas as string)}</p>
+                                            </div>
+                                        </div>
+                                    }
+                               </div>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
             </CardContent>
         </Card>
-        </TooltipProvider>
     );
 };
 
@@ -278,7 +284,7 @@ export function CropDetailClient({
                 <AccordionTrigger className="text-xl">Ciclo de Vida y Datos Técnicos</AccordionTrigger>
                 <AccordionContent>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
-                        <LifeCycleTimeline stages={crop.cicloVida} />
+                        <LifeCycleCard stages={crop.cicloVida} />
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-lg">Datos Técnicos</CardTitle>

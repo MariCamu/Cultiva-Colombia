@@ -54,6 +54,13 @@ export interface UserCrop {
    * This is also used to create the very first entry in the crop's journal.
    */
   notas_progreso_inicial?: string;
+  
+  // This field is added to carry the real programmatic data from the main sheet
+  // It is NOT stored in the user's crop document, but attached on the client-side.
+  datos_programaticos: {
+    frecuencia_riego_dias: number;
+    dias_para_cosecha: number;
+  };
 }
 
 // --- USER ALERT STRUCTURE ---

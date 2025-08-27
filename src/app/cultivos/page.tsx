@@ -271,7 +271,7 @@ export default function CultivosPage() {
     if (selectedClima && crop.clima.toLowerCase() !== selectedClima.toLowerCase()) return false;
     if (selectedDuration && crop.duration !== selectedDuration) return false;
     
-    if (selectedSpace === 'jardin') return true; // Show all for 'jardin'
+    if (selectedSpace === 'jardin') return true;
     if (selectedSpace && crop.tags && !crop.tags.includes(selectedSpace)) return false;
 
     if (selectedPlantType && crop.plantType !== selectedPlantType) return false;
