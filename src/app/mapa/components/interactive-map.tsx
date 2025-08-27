@@ -123,6 +123,7 @@ const createCropIcon = (crop: Crop) => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
+                borderWidth: '2px',
             }}
         >
             <img 
@@ -189,8 +190,17 @@ export function InteractiveMap() {
 
     const filteredCrops = allCrops.filter(crop => {
         const typeMatch = typeFilter === 'all' || crop.type === typeFilter;
-        const spaceMatch = spaceFilter === 'all' || crop.space === spaceFilter;
+        
+        let spaceMatch = true; // Default to true
+        if (spaceFilter !== 'all' && spaceFilter !== 'Jardín') {
+            spaceMatch = crop.space === spaceFilter;
+        } else if (spaceFilter === 'Jardín') {
+            // As per user feedback, "Jardín" should show all crops.
+            spaceMatch = true;
+        }
+
         const regionMatch = activeRegionFilter === 'all' || crop.regionSlugs.includes(activeRegionFilter);
+        
         return typeMatch && spaceMatch && regionMatch;
     });
 
