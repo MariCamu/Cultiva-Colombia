@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase';
 import type { CropTechnicalSheet, CultivationMethod } from '@/lib/crop-data-structure';
 import type { Article } from '@/models/article-model';
 import { doc, getDoc, collection, query, where, getDocs, documentId } from 'firebase/firestore';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor, MapPin, Info, ExternalLink, PlusCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
