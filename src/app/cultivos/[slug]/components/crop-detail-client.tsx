@@ -25,7 +25,7 @@ const humanizeTerm = (term: string | null | undefined) => {
     if (!term) return '';
     const formatted = term.replace(/_/g, ' ');
     // Capitalize only if it's not a single word (like 'Jardín')
-    if (formatted.includes(' ')) {
+    if (formatted.includes(' ') || formatted.toLowerCase() === 'jardín') {
         return formatted.replace(/\b\w/g, char => char.toUpperCase());
     }
     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
@@ -235,7 +235,7 @@ export function CropDetailClient({
           <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">{crop.tipo_planta}</Badge>
               <Badge variant="secondary">{crop.dificultad}</Badge>
-              {crop.clima.clase.map(c => <Badge key={c} variant="secondary">{c}</Badge>)}
+              {crop.clima.clase.map(c => <Badge key={c} variant="secondary">{humanizeTerm(c)}</Badge>)}
           </div>
           <p className="text-lg text-muted-foreground">{crop.descripcion}</p>
         </div>

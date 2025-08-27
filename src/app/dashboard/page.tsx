@@ -285,19 +285,19 @@ function DashboardContent() {
 
                 // Check for next task (riego/abono)
                 if (crop.nextTask) {
-                    const nextTaskDate = addDays(plantedDate, crop.nextTask.dueInDays);
-                     if (isPast(nextTaskDate) || isToday(nextTaskDate)) {
-                        const taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}_${crop.nextTask.dueInDays}`;
-                        const alertDocRef = doc(alertsCollectionRef, taskId);
-                        const alertDoc = await getDoc(alertDocRef);
-                        if (!alertDoc.exists()) {
+                    const daysSincePlanted = differenceInDays(today, plantedDate);
+                    if (daysSincePlanted >= crop.nextTask.dueInDays) {
+                         const taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}_${crop.nextTask.dueInDays}`;
+                         const alertDocRef = doc(alertsCollectionRef, taskId);
+                         const alertDoc = await getDoc(alertDocRef);
+                         if (!alertDoc.exists()) {
                              const alertType = crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : 'abono';
                              batch.set(alertDocRef, {
                                 cropId: crop.id, cropName: crop.nombre_cultivo_personal,
                                 message: `Es hora de "${crop.nextTask.name}" tu cultivo de ${crop.nombre_cultivo_personal}.`,
                                 type: alertType, date: serverTimestamp(), isRead: false,
                             });
-                        }
+                         }
                     }
                 }
             }
@@ -451,10 +451,10 @@ function DashboardContent() {
             const cropToUpdate = userCrops.find(c => c.id === alert.cropId);
 
             if (cropToUpdate) {
+                // CORRECTED LOGIC: Calculate next due date from today
                 const plantedDate = startOfDay(new Date(cropToUpdate.fecha_plantacion.seconds * 1000));
-                // CORRECT LOGIC: Calculate days from planting to today, then add the frequency.
-                const daysSincePlanted = differenceInDays(startOfDay(new Date()), plantedDate);
-                const nextDueInDays = daysSincePlanted + cropToUpdate.datos_programaticos.frecuencia_riego_dias;
+                const daysSincePlantedToday = differenceInDays(startOfDay(new Date()), plantedDate);
+                const nextDueInDays = daysSincePlantedToday + cropToUpdate.datos_programaticos.frecuencia_riego_dias;
                 
                 batch.update(cropRef, { 
                     'nextTask.dueInDays': nextDueInDays,
