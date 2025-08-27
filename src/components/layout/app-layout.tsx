@@ -4,7 +4,7 @@
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Bot, LogOut, LayoutDashboard, UserPlus, LogIn, BookText } from 'lucide-react'; 
+import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Bot, LogOut, LayoutDashboard, UserPlus, LogIn, BookText, ShieldHalf } from 'lucide-react'; 
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ const navItems = [
   { href: '/cultivos', label: 'Cultivos', icon: Leaf, protected: false },
   { href: '/guias', label: 'Guías', icon: BookOpen, protected: false },
   { href: '/glosario', label: 'Glosario', icon: BookText, protected: false },
+  { href: '/sanidad-vegetal', label: 'Sanidad Vegetal', icon: ShieldHalf, protected: false },
   { href: '/test', label: 'Test', icon: Lightbulb, protected: false },
   { href: '/deteccion-ia', label: 'Detección IA', icon: Bot, protected: false },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, protected: true },

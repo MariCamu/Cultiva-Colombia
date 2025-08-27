@@ -89,6 +89,7 @@ export interface CropTechnicalSheet {
   };
   compatibilidades: string[];
   incompatibilidades: string[];
+  plagasComunes?: string[]; // Array of pest slugs
   posicion: any; // Using 'any' for seeding flexibility with {lat, lon} object before converting to GeoPoint
   imagenes: ImageWithAttribution[];
   articulosRelacionados: string[];
