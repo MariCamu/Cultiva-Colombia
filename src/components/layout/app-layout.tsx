@@ -223,12 +223,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <p>
                 © {new Date().getFullYear()} Cultiva Colombia. Todos los derechos reservados.
             </p>
-            <div className="mt-2 space-x-2">
-                <span className="font-semibold">Atribuciones de imágenes:</span>
-                <a href="https://www.freepik.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Freepik</a>
-                <span>,</span>
-                <a href="https://pixabay.com/es/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Pixabay</a>
-            </div>
         </div>
       </footer>
     </div>
@@ -292,3 +286,5 @@ function AuthButtons() {
         </div>
     );
 }
+
+    

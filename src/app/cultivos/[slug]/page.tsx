@@ -7,14 +7,14 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import type { CropTechnicalSheet, CultivationMethod } from '@/lib/crop-data-structure';
-import { doc, getDoc } from 'firebase/firestore';
+import type { Article } from '@/models/article-model';
+import { doc, getDoc, collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor, MapPin, Info } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor, MapPin, Info, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
 
 interface CropDetailPageProps {
   params: {
@@ -22,20 +22,84 @@ interface CropDetailPageProps {
   };
 }
 
+interface SimplifiedItem {
+    id: string;
+    slug: string;
+    name: string;
+    imageUrl: string;
+    summary?: string; // For articles
+    dataAiHint?: string; // For articles
+}
+
+// --- NEW HELPER FUNCTIONS ---
+
 async function getCropBySlug(slug: string): Promise<CropTechnicalSheet | null> {
   const docRef = doc(db, 'fichas_tecnicas_cultivos', slug);
   const docSnap = await getDoc(docRef);
-
   if (docSnap.exists()) {
-    const data = docSnap.data() as CropTechnicalSheet;
-    return {
-        id: docSnap.id,
-        ...data,
-    };
+    return { id: docSnap.id, ...(docSnap.data() as CropTechnicalSheet) };
   }
-  
   return null;
 }
+
+async function getRelatedCrops(cropSlugs: string[]): Promise<SimplifiedItem[]> {
+  if (!cropSlugs || cropSlugs.length === 0) return [];
+  const cropsRef = collection(db, 'fichas_tecnicas_cultivos');
+  const q = query(cropsRef, where(documentId(), 'in', cropSlugs));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => {
+    const data = doc.data() as CropTechnicalSheet;
+    return {
+      id: doc.id,
+      slug: doc.id,
+      name: data.nombre,
+      imageUrl: data.imagenes?.[0]?.url || 'https://placehold.co/300x200',
+    };
+  });
+}
+
+async function getRelatedArticles(articleSlugs: string[]): Promise<SimplifiedItem[]> {
+  if (!articleSlugs || articleSlugs.length === 0) return [];
+  const articlesRef = collection(db, 'articulos');
+  const q = query(articlesRef, where('slug', 'in', articleSlugs));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => {
+    const data = doc.data() as Article;
+    return {
+      id: doc.id,
+      slug: data.slug,
+      name: data.title,
+      summary: data.summary,
+      imageUrl: data.imageUrl,
+      dataAiHint: data.dataAiHint,
+    };
+  });
+}
+
+// --- CARD COMPONENTS ---
+
+const ItemCard = ({ item, type }: { item: SimplifiedItem; type: 'crop' | 'article' }) => (
+  <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+    <Image
+      src={item.imageUrl}
+      alt={`Imagen para ${item.name}`}
+      width={400}
+      height={250}
+      className="w-full h-32 object-cover"
+      data-ai-hint={item.dataAiHint || 'crop field'}
+    />
+    <CardHeader className="flex-grow p-4">
+      <CardTitle className="text-md font-nunito font-bold">{item.name}</CardTitle>
+    </CardHeader>
+    <CardContent className="p-4 pt-0">
+      <Button asChild variant="outline" size="sm">
+        <Link href={`/${type === 'crop' ? 'cultivos' : 'articulos'}/${item.slug}`}>
+            {type === 'crop' ? 'Ver Ficha' : 'Leer Más'} <ExternalLink className="ml-2 h-3 w-3" />
+        </Link>
+      </Button>
+    </CardContent>
+  </Card>
+);
 
 const MethodCard = ({ method }: { method: CultivationMethod }) => (
   <Card className="bg-background/50">
@@ -47,12 +111,12 @@ const MethodCard = ({ method }: { method: CultivationMethod }) => (
     </CardHeader>
     <CardContent>
       <ol className="space-y-4">
-        {method.pasos.sort((a, b) => a.orden - b.orden).map((paso, index) => (
+        {method.pasos.sort((a, b) => (a.orden || a.step) - (b.orden || b.step)).map((paso, index) => (
           <li key={index} className="flex items-start gap-4">
-            <div className="flex-shrink-0 bg-primary/10 text-primary font-bold rounded-full h-8 w-8 flex items-center justify-center text-lg">{paso.orden}</div>
+            <div className="flex-shrink-0 bg-primary/10 text-primary font-bold rounded-full h-8 w-8 flex items-center justify-center text-lg">{(paso.orden || paso.step)}</div>
             <div className="flex-grow">
                 <p className="font-nunito font-bold">{paso.titulo}</p>
-                <p className="text-muted-foreground pt-1">{paso.descripcion}</p>
+                <p className="text-muted-foreground pt-1">{paso.descripcion || paso.instruccion}</p>
             </div>
           </li>
         ))}
@@ -61,24 +125,40 @@ const MethodCard = ({ method }: { method: CultivationMethod }) => (
   </Card>
 );
 
-
 export default function CropDetailPage({ params }: CropDetailPageProps) {
   const [crop, setCrop] = useState<CropTechnicalSheet | null>(null);
+  const [compatibleCrops, setCompatibleCrops] = useState<SimplifiedItem[]>([]);
+  const [incompatibleCrops, setIncompatibleCrops] = useState<SimplifiedItem[]>([]);
+  const [relatedArticles, setRelatedArticles] = useState<SimplifiedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCrop = async () => {
+    const fetchAllData = async () => {
       setIsLoading(true);
       const fetchedCrop = await getCropBySlug(params.slug);
+      
       if (!fetchedCrop) {
         notFound();
-      } else {
-        setCrop(fetchedCrop);
+        return;
       }
+      
+      setCrop(fetchedCrop);
+      
+      // Fetch related data in parallel
+      const [compat, incompat, articles] = await Promise.all([
+        getRelatedCrops(fetchedCrop.compatibilidades || []),
+        getRelatedCrops(fetchedCrop.incompatibilidades || []),
+        getRelatedArticles(fetchedCrop.articulosRelacionados || [])
+      ]);
+      
+      setCompatibleCrops(compat);
+      setIncompatibleCrops(incompat);
+      setRelatedArticles(articles);
+      
       setIsLoading(false);
     };
 
-    fetchCrop();
+    fetchAllData();
   }, [params.slug]);
 
   if (isLoading) {
@@ -209,27 +289,27 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
             <AccordionItem value="item-2">
                 <AccordionTrigger className="text-xl">Asociaciones y Regiones</AccordionTrigger>
                 <AccordionContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5 text-green-600"/>Cultivos Amigables</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex flex-wrap gap-2">
-                                    {crop.compatibilidades.map(compat => <Badge key={compat} variant="outline" className="bg-green-100 text-green-800">{compat}</Badge>)}
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-red-600"/>Cultivos a Evitar</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex flex-wrap gap-2">
-                                    {crop.incompatibilidades.map(incompat => <Badge key={incompat} variant="outline" className="bg-red-100 text-red-800">{incompat}</Badge>)}
-                                </div>
-                            </CardContent>
-                        </Card>
+                     <div className="space-y-8 mt-4">
+                        {compatibleCrops.length > 0 && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5 text-green-600"/>Cultivos Amigables</CardTitle>
+                                </CardHeader>
+                                <CardContent className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {compatibleCrops.map(c => <ItemCard key={c.id} item={c} type="crop" />)}
+                                </CardContent>
+                            </Card>
+                        )}
+                         {incompatibleCrops.length > 0 && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-lg flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-red-600"/>Cultivos a Evitar</CardTitle>
+                                </CardHeader>
+                                <CardContent className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                     {incompatibleCrops.map(c => <ItemCard key={c.id} item={c} type="crop" />)}
+                                </CardContent>
+                            </Card>
+                        )}
                          <Card>
                             <CardHeader>
                                 <CardTitle className="text-lg flex items-center gap-2"><MapPin className="h-5 w-5 text-blue-600"/>Regiones Principales</CardTitle>
@@ -244,7 +324,7 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
                                 </div>
                             </CardContent>
                         </Card>
-                    </div>
+                     </div>
                 </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-3">
@@ -252,18 +332,16 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
                 <AccordionContent>
                      <Card className="mt-4">
                         <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2"><BookOpen className="h-5 w-5 text-amber-600"/>Artículos Relacionados</CardTitle>
+                            <CardTitle className="text-lg flex items-center gap-2"><BookOpen className="h-5 w-5 text-amber-600"/>Artículos para Aprender Más</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <ul className="space-y-2">
-                                {crop.articulosRelacionados.map(id => (
-                                    <li key={id}>
-                                        <Link href={`/articulos/${id.replace(/_/g, '-')}`} className="text-primary hover:underline text-sm font-semibold">
-                                            {id.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
+                             {relatedArticles.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                     {relatedArticles.map(a => <ItemCard key={a.id} item={a} type="article" />)}
+                                </div>
+                            ) : (
+                                <p className="text-muted-foreground text-sm">No hay artículos relacionados para este cultivo todavía.</p>
+                            )}
                         </CardContent>
                     </Card>
                 </AccordionContent>
