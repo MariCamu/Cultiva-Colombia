@@ -116,14 +116,14 @@ const getDifficultyClass = (difficulty: 'Fácil' | 'Media' | 'Difícil' | string
 const createCropIcon = (crop: Crop) => {
     const difficultyClass = getDifficultyClass(crop.difficulty);
     const iconHtml = ReactDOMServer.renderToString(
-      <div className={cn("map-marker", difficultyClass)}>
+      <div className={cn("map-marker p-1", difficultyClass)}>
         <img src={crop.imageUrl} alt={crop.name} className="w-full h-full object-cover rounded-full" />
       </div>
     );
 
     return new L.DivIcon({
         html: iconHtml,
-        className: '',
+        className: 'bg-transparent border-0',
         iconSize: [40, 40],
         iconAnchor: [20, 20],
         popupAnchor: [0, -20],

@@ -106,16 +106,16 @@
 
 @layer components {
     .map-marker {
-        @apply absolute p-2 rounded-full shadow-lg cursor-pointer transition-all duration-300 transform hover:scale-110;
+      @apply w-full h-full rounded-full shadow-lg cursor-pointer transition-transform duration-300 transform hover:scale-110 flex items-center justify-center;
     }
     .map-marker-easy {
-        @apply bg-green-500/30;
+        @apply bg-green-500/80;
     }
     .map-marker-medium {
-        @apply bg-yellow-500/30;
+        @apply bg-yellow-500/80;
     }
     .map-marker-hard {
-        @apply bg-red-500/30;
+        @apply bg-red-500/80;
     }
     .map-marker-icon {
         @apply drop-shadow-md;
