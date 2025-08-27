@@ -18,9 +18,54 @@ import { AddCropDialog } from './components/add-crop-dialog';
 import type { SampleCrop } from '@/models/crop-model';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
+import { collection, getDocs, query, type DocumentData } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { CropTechnicalSheet } from '@/lib/crop-data-structure';
 
-// NOTE: sampleCropsData has been removed as the app will now fetch data from Firestore.
-// The component is now prepared to handle an empty state while the database is being populated.
+// --- NUEVA FUNCIÓN PARA OBTENER DATOS DE FIRESTORE ---
+async function getSampleCrops(): Promise<SampleCrop[]> {
+  const cropsCollectionRef = collection(db, 'fichas_tecnicas_cultivos');
+  const q = query(cropsCollectionRef);
+  const querySnapshot = await getDocs(q);
+  
+  const crops = querySnapshot.docs.map(doc => {
+    const data = doc.data() as CropTechnicalSheet;
+    
+    // Mapeo de dificultad de texto a número
+    let difficultyScore = 3; // Default a Medio
+    if (data.dificultad === 'Fácil') difficultyScore = 2;
+    if (data.dificultad === 'Muy Fácil') difficultyScore = 1;
+    if (data.dificultad === 'Difícil') difficultyScore = 4;
+    if (data.dificultad === 'Muy Difícil') difficultyScore = 5;
+
+    return {
+      id: doc.id,
+      name: data.nombre,
+      description: data.descripcion,
+      regionSlugs: data.region.principal.map(r => r.toLowerCase()),
+      imageUrl: data.imagenes?.[0]?.url || 'https://placehold.co/300x200.png',
+      dataAiHint: 'crop field',
+      clima: data.clima.clase[0] as SampleCrop['clima'], // Toma el primer clima como principal
+      // Los siguientes campos son placeholders ya que no están en la nueva estructura
+      estimatedPrice: 'Precio moderado', 
+      duration: 'Media (3–5 meses)',
+      spaceRequired: 'Maceta mediana (4–10 L)',
+      plantType: data.tipo_planta as SampleCrop['plantType'],
+      difficulty: difficultyScore as SampleCrop['difficulty'],
+      datos_programaticos: data.datos_programaticos,
+      lifeCycle: data.cicloVida.map(etapa => ({ name: etapa.etapa })),
+      // Estos campos no existen en la nueva estructura, se ponen como false
+      pancoger: data.tags.includes('pancoger'),
+      patrimonial: data.tags.includes('patrimonial'),
+      sembrable_en_casa: 'sí',
+      educativo: 'no',
+    } as SampleCrop;
+  });
+
+  return crops;
+}
+
 
 const regionBoundingBoxes = [
   { slug: 'insular', name: 'Insular', bounds: { minLat: 12.0, maxLat: 16.5, minLng: -82.0, maxLng: -78.0 } },
@@ -52,10 +97,10 @@ type FilterSource = 'manual' | 'url' | 'geo' | 'none';
 const regionOptions = regionBoundingBoxes.map(r => ({ value: r.slug, label: r.name }));
 const climaOptions = [
     { value: 'all', label: 'Todos los Climas' },
-    { value: 'Frío', label: 'Frío (10–17 °C)' },
-    { value: 'Templado', label: 'Templado (18–23 °C)' },
-    { value: 'Cálido', label: 'Cálido (24–30 °C)' },
-    { value: 'Muy cálido', label: 'Muy cálido (>30 °C)' },
+    { value: 'frio', label: 'Frío (10–17 °C)' },
+    { value: 'templado', label: 'Templado (18–23 °C)' },
+    { value: 'calido', label: 'Cálido (24–30 °C)' },
+    { value: 'muy calido', label: 'Muy cálido (>30 °C)' },
 ];
 // Note: These filter options will be dynamically generated from Firestore data in a future implementation.
 // For now, they are hardcoded based on the initial sample data.
@@ -158,11 +203,19 @@ export default function CultivosPage() {
   const [filterSource, setFilterSource] = useState<FilterSource>('none');
   const [userHasInteracted, setUserHasInteracted] = useState(false);
 
-  // TODO: Implement fetching from Firestore
   useEffect(() => {
-    // This is where you would fetch data from Firestore and populate `allCrops`
-    // For now, it will be empty.
-    setIsLoading(false); 
+    const fetchCrops = async () => {
+        setIsLoading(true);
+        try {
+            const cropsFromDb = await getSampleCrops();
+            setAllCrops(cropsFromDb);
+        } catch (error) {
+            console.error("Error fetching crops from Firestore:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchCrops();
   }, []);
 
   // Update URL from state changes
@@ -257,7 +310,7 @@ export default function CultivosPage() {
     if (activeRegionSlug && !crop.regionSlugs.includes(activeRegionSlug)) {
       return false;
     }
-     if (selectedClima && crop.clima.clase[0] !== selectedClima) { // Note: adapted for new structure
+     if (selectedClima && crop.clima.toLowerCase() !== selectedClima.toLowerCase()) {
       return false;
     }
     if (selectedPrice && crop.estimatedPrice !== selectedPrice) {
@@ -338,6 +391,108 @@ export default function CultivosPage() {
   const createSlug = (name: string) => {
     return name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
   }
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-40 w-full rounded-md mb-4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6 mt-2" />
+              </CardContent>
+              <CardFooter className="flex-col gap-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    if (displayedCrops.length === 0) {
+      return (
+        <Alert variant="default" className="mt-4">
+          <HelpCircle className="h-4 w-4" />
+          <AlertTitle className="font-nunito font-semibold">No se encontraron cultivos</AlertTitle>
+          <AlertDescription>
+            No se encontraron cultivos que coincidan con los filtros o la búsqueda. A medida que añadas datos a Firestore, aparecerán aquí.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {displayedCrops.map((crop) => {
+           const TypeIcon = getCropTypeIcon(crop.plantType);
+           const difficultyStyles = getDifficultyStyles(crop.difficulty);
+           const difficultyText = crop.difficulty <= 2 ? 'Fácil' : crop.difficulty <=4 ? 'Media' : 'Difícil';
+           const slug = createSlug(crop.name);
+           
+           return (
+              <Card key={crop.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+                  <CardHeader>
+                      <div className="flex items-center gap-4">
+                          <div className={cn("p-3 rounded-full", difficultyStyles.iconBg)}>
+                              <TypeIcon className={cn("h-6 w-6", difficultyStyles.iconText)} />
+                          </div>
+                          <div>
+                              <CardTitle className="text-xl font-nunito font-bold">{crop.name}</CardTitle>
+                              <Badge variant="outline" className={cn("mt-1 w-fit font-nunito", difficultyStyles.badge)}>
+                                Dificultad: {difficultyText}
+                              </Badge>
+                          </div>
+                      </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-3 pt-0">
+                     <Image
+                        src={crop.imageUrl}
+                        alt={crop.name}
+                        width={300}
+                        height={200}
+                        className="w-full h-40 object-cover rounded-md"
+                        data-ai-hint={crop.dataAiHint}
+                      />
+                     <p className="text-sm text-muted-foreground pt-2">{crop.description}</p>
+                     <div className="flex flex-wrap gap-2 pt-2 border-t">
+                         {crop.pancoger && <Badge variant="secondary" className="bg-sky-100 text-sky-800"><Sprout className="mr-1 h-3 w-3" />Pancoger</Badge>}
+                         {crop.patrimonial && <Badge variant="secondary" className="bg-amber-100 text-amber-800"><Building className="mr-1 h-3 w-3" />Patrimonial</Badge>}
+                         {crop.sembrable_en_casa !== 'no' && <Badge variant="secondary" className="bg-teal-100 text-teal-800"><Home className="mr-1 h-3 w-3" />Para Casa</Badge>}
+                         {crop.educativo !== 'no' && <Badge variant="secondary" className="bg-indigo-100 text-indigo-800"><BookHeart className="mr-1 h-3 w-3" />Educativo</Badge>}
+                     </div>
+                  </CardContent>
+                  <CardFooter className="flex-col items-start gap-2">
+                      <Button asChild className="w-full">
+                          <Link href={`/cultivos/${slug}`}>
+                              Ver Ficha Completa <ExternalLink className="ml-2 h-4 w-4" />
+                          </Link>
+                      </Button>
+                     <AddCropDialog crop={crop}>
+                       <Button className="w-full" variant="outline">
+                         <PlusCircle className="mr-2 h-4 w-4" />
+                         Añadir a mi Dashboard
+                       </Button>
+                     </AddCropDialog>
+                  </CardFooter>
+              </Card>
+           );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -471,72 +626,7 @@ export default function CultivosPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {displayedCrops.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {displayedCrops.map((crop) => {
-                 const TypeIcon = getCropTypeIcon(crop.plantType);
-                 const difficultyStyles = getDifficultyStyles(crop.difficulty);
-                 const difficultyText = crop.difficulty <= 2 ? 'Fácil' : crop.difficulty <=4 ? 'Media' : 'Difícil';
-                 const slug = createSlug(crop.name);
-                 
-                 return (
-                    <Card key={crop.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-                        <CardHeader>
-                            <div className="flex items-center gap-4">
-                                <div className={cn("p-3 rounded-full", difficultyStyles.iconBg)}>
-                                    <TypeIcon className={cn("h-6 w-6", difficultyStyles.iconText)} />
-                                </div>
-                                <div>
-                                    <CardTitle className="text-xl font-nunito font-bold">{crop.name}</CardTitle>
-                                    <Badge variant="outline" className={cn("mt-1 w-fit font-nunito", difficultyStyles.badge)}>
-                                      Dificultad: {difficultyText}
-                                    </Badge>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="flex-grow space-y-3 pt-0">
-                           <Image
-                              src={crop.imageUrl}
-                              alt={crop.name}
-                              width={300}
-                              height={200}
-                              className="w-full h-40 object-cover rounded-md"
-                              data-ai-hint={crop.dataAiHint}
-                            />
-                           <p className="text-sm text-muted-foreground pt-2">{crop.description}</p>
-                           <div className="flex flex-wrap gap-2 pt-2 border-t">
-                               {crop.pancoger && <Badge variant="secondary" className="bg-sky-100 text-sky-800"><Sprout className="mr-1 h-3 w-3" />Pancoger</Badge>}
-                               {crop.patrimonial && <Badge variant="secondary" className="bg-amber-100 text-amber-800"><Building className="mr-1 h-3 w-3" />Patrimonial</Badge>}
-                               {crop.sembrable_en_casa !== 'no' && <Badge variant="secondary" className="bg-teal-100 text-teal-800"><Home className="mr-1 h-3 w-3" />Para Casa</Badge>}
-                               {crop.educativo !== 'no' && <Badge variant="secondary" className="bg-indigo-100 text-indigo-800"><BookHeart className="mr-1 h-3 w-3" />Educativo</Badge>}
-                           </div>
-                        </CardContent>
-                        <CardFooter className="flex-col items-start gap-2">
-                            <Button asChild className="w-full">
-                                <Link href={`/cultivos/${slug}`}>
-                                    Ver Ficha Completa <ExternalLink className="ml-2 h-4 w-4" />
-                                </Link>
-                            </Button>
-                           <AddCropDialog crop={crop}>
-                             <Button className="w-full" variant="outline">
-                               <PlusCircle className="mr-2 h-4 w-4" />
-                               Añadir a mi Dashboard
-                             </Button>
-                           </AddCropDialog>
-                        </CardFooter>
-                    </Card>
-                 );
-              })}
-            </div>
-          ) : (
-             <Alert variant="default" className="mt-4">
-                <HelpCircle className="h-4 w-4" />
-                <AlertTitle className="font-nunito font-semibold">{isLoading ? 'Cargando Cultivos...' : 'No se encontraron cultivos'}</AlertTitle>
-                <AlertDescription>
-                 {isLoading ? 'Por favor espera mientras cargamos los datos desde la base de datos.' : 'No se encontraron cultivos que coincidan con los filtros o la búsqueda. A medida que añadas datos a Firestore, aparecerán aquí.'}
-                </AlertDescription>
-            </Alert>
-          )}
+          {renderContent()}
         </CardContent>
       </Card>
 
