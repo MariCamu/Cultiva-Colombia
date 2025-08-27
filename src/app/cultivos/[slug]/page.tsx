@@ -25,6 +25,10 @@ interface SimplifiedItem {
 
 // --- HELPER FUNCTIONS ---
 
+const createSlug = (name: string) => {
+    return name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+};
+
 async function getCropBySlug(slug: string): Promise<CropTechnicalSheet | null> {
   const docRef = doc(db, 'fichas_tecnicas_cultivos', slug);
   const docSnap = await getDoc(docRef);
@@ -43,9 +47,10 @@ async function getRelatedCrops(cropSlugs: string[]): Promise<SimplifiedItem[]> {
     const data = doc.data() as CropTechnicalSheet;
     return {
       id: doc.id,
-      slug: doc.id,
+      slug: createSlug(data.nombre), // Use consistent slug generation
       name: data.nombre,
       imageUrl: data.imagenes?.[0]?.url || 'https://placehold.co/300x200',
+      dataAiHint: 'crop field',
     };
   });
 }
@@ -75,7 +80,7 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
         notFound();
     }
     
-    // FIX: Convert Firestore GeoPoint to a plain object before passing to client component
+    // Convert Firestore GeoPoint to a plain object before passing to client component
     if (crop.posicion && typeof (crop.posicion as GeoPoint).latitude === 'number') {
         const geoPoint = crop.posicion as GeoPoint;
         crop.posicion = { lat: geoPoint.latitude, lon: geoPoint.longitude };

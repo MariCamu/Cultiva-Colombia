@@ -165,7 +165,7 @@ export function CropDetailClient({
             <AccordionItem value="item-1">
                 <AccordionTrigger className="text-xl">Datos Técnicos y Ciclo de Vida</AccordionTrigger>
                 <AccordionContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-lg flex items-center gap-2"><Sprout className="h-5 w-5 text-primary"/>Ciclo de Vida</CardTitle>
@@ -184,7 +184,7 @@ export function CropDetailClient({
                                 </ul>
                             </CardContent>
                         </Card>
-                        <Card className="lg:col-span-2">
+                        <Card>
                             <CardHeader>
                                 <CardTitle className="text-lg">Datos Técnicos</CardTitle>
                             </CardHeader>

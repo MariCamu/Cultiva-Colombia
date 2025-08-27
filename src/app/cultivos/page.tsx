@@ -23,6 +23,11 @@ import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { CropTechnicalSheet } from '@/lib/crop-data-structure';
 
+// --- HELPER FUNCTION ---
+const createSlug = (name: string) => {
+  return name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+}
+
 // --- NUEVA FUNCIÓN PARA OBTENER DATOS DE FIRESTORE ---
 async function getSampleCrops(): Promise<SampleCrop[]> {
   const cropsCollectionRef = collection(db, 'fichas_tecnicas_cultivos');
@@ -388,10 +393,6 @@ export default function CultivosPage() {
       setActiveRegionName(regionName);
   };
   
-  const createSlug = (name: string) => {
-    return name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-  }
-
   const renderContent = () => {
     if (isLoading) {
       return (
