@@ -11,66 +11,61 @@ import type { CropTechnicalSheet } from './crop-data-structure';
 import type { Pest } from '@/models/pest-model';
 
 // INSTRUCCIONES:
-// 1. Pega tus datos en las variables `fichasTecnicasCultivos` y `pestsAndDiseasesData`.
+// 1. Pega tus datos en la variable `pestsAndDiseasesData`.
 //    Asegúrate de que cada item es un objeto {} dentro del array [], separado por comas.
-//    Los ejemplos a continuación son la plantilla perfecta a seguir.
+//    El ejemplo a continuación usa exactamente la estructura de columnas que proporcionaste.
 // 2. Abre la terminal y ejecuta el comando: `npm run db:seed`
 // 3. ¡Listo! Tus colecciones 'fichas_tecnicas_cultivos' y 'plagas_y_enfermedades' en Firestore se llenarán.
 
-const pestsAndDiseasesData: Partial<Pest>[] = [
+const pestsAndDiseasesData: Omit<Pest, 'slug' | 'imageUrl' | 'dataAiHint'>[] = [
+  // EJEMPLO - REEMPLAZA ESTO CON TUS DATOS
   {
     id: "pulgon",
-    nombre: "Pulgón",
-    nombreCientifico: "Aphididae",
+    nombreComun: "Pulgón",
+    nombreCientifico: "Aphididae spp.",
+    tipo: "insecto",
     descripcion: "Pequeños insectos chupadores de savia que se agrupan en los brotes tiernos y envés de las hojas, debilitando la planta y pudiendo transmitir virus. Secretan una melaza pegajosa que atrae hormigas y favorece el hongo negrilla.",
-    tipo: "Plaga",
-    imageUrl: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Plagas%2Fpulgon.jpg?alt=media&token=e1f7b055-0af2-430c-9c7b-839e55a33116",
-    dataAiHint: "aphids on plant",
-    cultivosAfectados: ["tomate_cherry", "lechuga", "pimenton", "fresa", "frijol"],
+    danos: "Enrulado de hojas, clorosis (amarillamiento), retraso del crecimiento, y aparición de fumagina (hongo negro) sobre la melaza que secretan. Son importantes vectores de virus.",
+    cultivosAfectados: ["tomate-cherry", "lechuga", "pimenton", "fresa", "frijol"],
     prevencion: [
       "Fomentar la presencia de mariquitas, su depredador natural.",
       "Revisar periódicamente el envés de las hojas.",
       "Evitar el exceso de abonos nitrogenados que provocan un crecimiento demasiado tierno.",
       "Plantar aromáticas repelentes como la albahaca o la hierbabuena cerca de los cultivos sensibles."
     ],
-    solucionOrganica: [
-      {
-        titulo: "Jabón Potásico",
-        descripcion: "Diluir 1-2% de jabón potásico en agua (10-20 ml por litro) y pulverizar directamente sobre las colonias, preferiblemente al atardecer. El jabón disuelve su capa protectora, eliminándolos por contacto."
-      },
-      {
-        titulo: "Aceite de Neem",
-        descripcion: "Mezclar 3-5 ml de aceite de Neem con 1 litro de agua y unas gotas de jabón como emulsionante. Pulverizar cada 7-10 días como preventivo o cada 3-4 días como tratamiento. Actúa como insecticida y repelente."
-      }
-    ]
+    solucion: "Aplicar jabón potásico o aceite de Neem. Liberar depredadores naturales como mariquitas. Retirar manualmente los focos iniciales."
   },
   {
     id: "mildiu-polvoroso",
-    nombre: "Mildiu Polvoroso (Oídio)",
+    nombreComun: "Mildiu Polvoroso (Oídio)",
     nombreCientifico: "Erysiphales",
+    tipo: "hongo",
     descripcion: "Enfermedad fúngica que se manifiesta como un polvo blanco o ceniciento en hojas, tallos y a veces frutos. Limita la fotosíntesis, debilita la planta y puede causar la caída prematura de las hojas.",
-    tipo: "Enfermedad",
-    imageUrl: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Plagas%2Fo%C3%ADdio.jpg?alt=media&token=8557c61d-7649-43c2-ab4c-d9c0850220c5",
-    dataAiHint: "powdery mildew leaf",
-    cultivosAfectados: ["calabacin", "pepino_cohombro", "tomate_cherry", "fresa"],
+    danos: "Manchas pulverulentas blancas en hojas que se extienden, causando amarillamiento, deformación y caída prematura. Reduce la capacidad de fotosíntesis y debilita la planta.",
+    cultivosAfectados: ["calabacin", "pepino-cohombro", "tomate-cherry", "fresa"],
     prevencion: [
       "Asegurar una buena ventilación entre plantas, evitando cultivos demasiado densos.",
       "Regar directamente en la base de la planta, evitando mojar el follaje.",
       "Eliminar y destruir las hojas afectadas en cuanto se detecten.",
       "Realizar podas para mejorar la circulación de aire en el interior de la planta."
     ],
-    solucionOrganica: [
-      {
-        titulo: "Fungicida a base de Leche",
-        descripcion: "Mezclar 1 parte de leche (preferiblemente desnatada) con 9 partes de agua. Pulverizar sobre las hojas afectadas cada 7-10 días. Los aminoácidos de la leche actúan como fungicida y fortalecen la planta."
-      },
-      {
-        titulo: "Bicarbonato de Sodio",
-        descripcion: "Diluir una cucharadita de bicarbonato de sodio en un litro de agua, con unas gotas de jabón. Pulverizar sobre las hojas. El bicarbonato altera el pH de la superficie de la hoja, dificultando la proliferación del hongo."
-      }
-    ]
+    solucion: "Aplicar fungicidas a base de azufre, bicarbonato de sodio o una solución de leche y agua. Eliminar las partes afectadas para evitar su propagación."
   }
 ];
+
+// URLs de imágenes de ejemplo para añadir a los datos de siembra.
+// Asegúrate de que los IDs aquí coincidan con los IDs de tus datos.
+const pestImages: { [id: string]: { imageUrl: string; dataAiHint: string } } = {
+  pulgon: {
+    imageUrl: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Plagas%2Fpulgon.jpg?alt=media&token=e1f7b055-0af2-430c-9c7b-839e55a33116",
+    dataAiHint: "aphids on plant"
+  },
+  "mildiu-polvoroso": {
+    imageUrl: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Plagas%2Fo%C3%ADdio.jpg?alt=media&token=8557c61d-7649-43c2-ab4c-d9c0850220c5",
+    dataAiHint: "powdery mildew leaf"
+  }
+};
+
 
 const fichasTecnicasCultivos: Partial<CropTechnicalSheet>[] = [
   // COMIENZO DEL CULTIVO DE LECHUGA (PLANTILLA)
@@ -110,6 +105,7 @@ const fichasTecnicasCultivos: Partial<CropTechnicalSheet>[] = [
       "calabacin"
     ],
     "incompatibilidades": [],
+    "plagasComunes": ["pulgon", "mildiu-polvoroso"],
     "posicion": {
       "lat": 5.78,
       "lon": -73.118
@@ -565,10 +561,20 @@ async function seedPestsAndDiseases() {
   console.log(`Iniciando siembra de ${pestsAndDiseasesData.length} plagas y enfermedades...`);
 
   const batch = writeBatch(db);
-  pestsAndDiseasesData.forEach(pest => {
-    if (pest.id) {
-      const docRef = doc(collectionRef, pest.id);
-      batch.set(docRef, pest);
+  pestsAndDiseasesData.forEach(pestData => {
+    if (pestData.id) {
+      const docRef = doc(collectionRef, pestData.id);
+      const { id, ...dataToSet } = pestData;
+      
+      const completeData: Pest = {
+        ...dataToSet,
+        id: id,
+        slug: id,
+        imageUrl: pestImages[id]?.imageUrl || 'https://placehold.co/400x250.png',
+        dataAiHint: pestImages[id]?.dataAiHint || 'plant pest disease',
+      };
+      
+      batch.set(docRef, completeData);
     }
   });
 

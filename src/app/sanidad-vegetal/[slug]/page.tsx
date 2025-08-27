@@ -10,10 +10,9 @@ import { doc, getDoc, collection, query, where, getDocs, documentId } from 'fire
 import { notFound } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ChevronRight, Bug, ShieldHalf, Leaf, Microscope, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Bug, ShieldCheck, Leaf, Microscope, ExternalLink, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 interface PestPageProps {
   params: {
@@ -113,7 +112,7 @@ export default function PestPage({ params }: PestPageProps) {
             <nav className="hidden md:flex items-center text-sm font-nunito font-medium text-muted-foreground mb-4">
                 <Link href="/sanidad-vegetal" className="hover:text-primary">Sanidad Vegetal</Link>
                 <ChevronRight className="h-4 w-4 mx-1" />
-                <span className="text-foreground truncate">{pest.nombre}</span>
+                <span className="text-foreground truncate">{pest.nombreComun}</span>
             </nav>
             <Button asChild variant="ghost" className="md:hidden mb-4 -ml-4">
             <Link href="/sanidad-vegetal">
@@ -125,29 +124,39 @@ export default function PestPage({ params }: PestPageProps) {
       
         {/* Header */}
         <div className="space-y-4">
-            <h1 className="text-4xl font-nunito font-extrabold tracking-tight lg:text-5xl">{pest.nombre}</h1>
+            <h1 className="text-4xl font-nunito font-extrabold tracking-tight lg:text-5xl">{pest.nombreComun}</h1>
             {pest.nombreCientifico && <p className="text-xl text-muted-foreground font-sans italic">{pest.nombreCientifico}</p>}
-            <Badge variant={pest.tipo === 'Plaga' ? 'destructive' : 'secondary'} className="text-base">{pest.tipo}</Badge>
+            <Badge variant={pest.tipo.toLowerCase().includes('insecto') || pest.tipo.toLowerCase().includes('ácaro') ? 'destructive' : 'secondary'} className="text-base capitalize">{pest.tipo}</Badge>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             <Image
                 src={pest.imageUrl}
-                alt={`Imagen de ${pest.nombre}`}
+                alt={`Imagen de ${pest.nombreComun}`}
                 width={600}
                 height={400}
                 className="w-full h-auto object-cover rounded-xl shadow-lg"
                 data-ai-hint={pest.dataAiHint}
                 priority
             />
-            <Card className="bg-card/50">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Microscope className="h-5 w-5 text-primary" />Descripción</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">{pest.descripcion}</p>
-                </CardContent>
-            </Card>
+             <div className="space-y-6">
+                <Card className="bg-card/50">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Microscope className="h-5 w-5 text-primary" />Descripción</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground">{pest.descripcion}</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-destructive/5 border-destructive/20">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-destructive"><AlertTriangle className="h-5 w-5" />Daños Comunes</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground">{pest.danos}</p>
+                    </CardContent>
+                </Card>
+             </div>
         </div>
 
         {/* Prevention & Solution */}
@@ -158,21 +167,16 @@ export default function PestPage({ params }: PestPageProps) {
                 </CardHeader>
                 <CardContent>
                     <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                        {pest.prevencion.map((tip, index) => <li key={index}>{tip}</li>)}
+                        {Array.isArray(pest.prevencion) ? pest.prevencion.map((tip, index) => <li key={index}>{tip}</li>) : <li>{pest.prevencion}</li>}
                     </ul>
                 </CardContent>
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Bug className="h-5 w-5 text-red-600" />Soluciones Orgánicas</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><Bug className="h-5 w-5 text-red-600" />Solución Recomendada</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    {pest.solucionOrganica.map((sol, index) => (
-                        <div key={index}>
-                            <h4 className="font-nunito font-semibold text-foreground">{sol.titulo}</h4>
-                            <p className="text-sm text-muted-foreground">{sol.descripcion}</p>
-                        </div>
-                    ))}
+                <CardContent>
+                   <p className="text-muted-foreground">{pest.solucion}</p>
                 </CardContent>
             </Card>
         </div>
@@ -206,4 +210,3 @@ export default function PestPage({ params }: PestPageProps) {
     </article>
   );
 }
-

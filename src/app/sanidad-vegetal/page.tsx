@@ -77,9 +77,9 @@ export default function SanidadVegetalPage() {
         return pests.filter(pest => {
             const matchesCrop = selectedCrop === 'all' || pest.cultivosAfectados?.includes(selectedCrop);
             const matchesSearch = searchQuery.toLowerCase() === '' ||
-                normalizeText(pest.nombre).includes(normalizeText(searchQuery));
+                normalizeText(pest.nombreComun).includes(normalizeText(searchQuery));
             return matchesCrop && matchesSearch;
-        }).sort((a, b) => a.nombre.localeCompare(b.nombre));
+        }).sort((a, b) => a.nombreComun.localeCompare(b.nombreComun));
     }, [pests, searchQuery, selectedCrop]);
     
     const renderContent = () => {
@@ -132,7 +132,7 @@ export default function SanidadVegetalPage() {
                     <Card key={pest.id} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
                         <Image
                             src={pest.imageUrl}
-                            alt={`Imagen de ${pest.nombre}`}
+                            alt={`Imagen de ${pest.nombreComun}`}
                             width={400}
                             height={250}
                             className="w-full h-48 object-cover"
@@ -140,9 +140,9 @@ export default function SanidadVegetalPage() {
                         />
                         <CardHeader>
                             <CardTitle className="text-xl font-nunito font-bold flex items-center gap-2">
-                                <Bug className="h-5 w-5 text-primary" /> {pest.nombre}
+                                <Bug className="h-5 w-5 text-primary" /> {pest.nombreComun}
                             </CardTitle>
-                            <Badge variant={pest.tipo === 'Plaga' ? 'destructive' : 'secondary'} className="w-fit">{pest.tipo}</Badge>
+                            <Badge variant={pest.tipo.toLowerCase().includes('insecto') ? 'destructive' : 'secondary'} className="w-fit capitalize">{pest.tipo}</Badge>
                         </CardHeader>
                         <CardContent className="flex-grow">
                             <p className="text-sm text-muted-foreground line-clamp-3">{pest.descripcion}</p>
