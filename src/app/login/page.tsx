@@ -34,9 +34,10 @@ export default function LoginPage() {
 
       if (!userDoc.exists()) {
         await setDoc(userRef, {
-            nombre: user.displayName || email.split('@')[0], // Usar nombre de pantalla o parte del email
+            nombre: user.displayName || email.split('@')[0],
             email: user.email,
             fecha_registro: serverTimestamp(),
+            region: 'andina', // Default region
             preferencia_tema: 'cultiva_verde_default',
             harvestedCropsCount: 0,
             totalHarvestWeight: 0,
@@ -71,16 +72,21 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Crear documento del usuario en Firestore (o fusionar si ya existe)
       const userRef = doc(db, 'usuarios', user.uid);
-      await setDoc(userRef, {
-        nombre: user.displayName || '',
-        email: user.email,
-        fecha_registro: serverTimestamp(),
-        preferencia_tema: 'cultiva_verde_default',
-        harvestedCropsCount: 0,
-        totalHarvestWeight: 0,
-      }, { merge: true });
+      const userDoc = await getDoc(userRef);
+
+      // Only create a new doc if it doesn't exist, preserving existing region
+      if (!userDoc.exists()) {
+        await setDoc(userRef, {
+          nombre: user.displayName || '',
+          email: user.email,
+          fecha_registro: serverTimestamp(),
+          region: 'andina', // Default region for new Google sign-ins
+          preferencia_tema: 'cultiva_verde_default',
+          harvestedCropsCount: 0,
+          totalHarvestWeight: 0,
+        }, { merge: true });
+      }
 
       toast({
           title: "Inicio de Sesión con Google Exitoso",

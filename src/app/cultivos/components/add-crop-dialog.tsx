@@ -17,10 +17,11 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import type { SampleCrop } from '@/models/crop-model';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 interface AddCropDialogProps {
   crop: SampleCrop;
@@ -34,9 +35,13 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
   const [initialNotes, setInitialNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  
+  const userRegion = userProfile?.region;
+  const isCropInUserRegion = userRegion && crop.regionSlugs.includes(userRegion.toLowerCase());
+  const showRegionWarning = userRegion && !isCropInUserRegion;
 
   const handleAddCrop = async (event: FormEvent) => {
     event.preventDefault();
@@ -62,14 +67,14 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
       ficha_cultivo_id: crop.id,
       nombre_cultivo_personal: crop.name,
       fecha_plantacion: plantingDate,
-      imageUrl: crop.imageUrl, // This should be updated if the data structure changes to an object
+      imageUrl: crop.imageUrl,
       dataAiHint: crop.dataAiHint,
       daysToHarvest: crop.datos_programaticos.dias_para_cosecha,
       estado_actual_cultivo: currentStage,
       notas_progreso_inicial: initialNotes,
       nextTask: { 
         name: 'Regar', 
-        dueInDays: crop.datos_programaticos.frecuencia_riego_dias, // Use programmatic data
+        dueInDays: crop.datos_programaticos.frecuencia_riego_dias,
         iconName: 'Droplets' 
       },
       lastNote: initialNotes || `¡Cultivo de ${crop.name} recién añadido!`,
@@ -80,7 +85,6 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
       const userCropsCollection = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario');
       const docRef = await addDoc(userCropsCollection, dataToAdd);
 
-      // Add first journal entry
       if(initialNotes.trim() !== '') {
           const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', docRef.id, 'diario');
           await addDoc(logCollectionRef, {
@@ -94,7 +98,7 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
         title: "¡Cultivo Añadido!",
         description: `${crop.name} ha sido añadido a tu dashboard.`,
       });
-      setOpen(false); // Close dialog
+      setOpen(false);
       router.push('/dashboard');
     } catch (error: any) {
       console.error("Error al añadir cultivo al dashboard:", error);
@@ -131,6 +135,17 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
           />
           <p className="font-bold text-lg">{crop.name}</p>
         </div>
+
+        {showRegionWarning && (
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Cultivo no ideal para tu región</AlertTitle>
+                <AlertDescription>
+                   Este cultivo no es óptimo para tu región ({userRegion}). ¿Estás seguro de que quieres continuar?
+                </AlertDescription>
+            </Alert>
+        )}
+
         <form onSubmit={handleAddCrop} className="space-y-4">
           <div>
             <Label htmlFor="planting-date">Fecha de Plantación/Inicio de Seguimiento</Label>

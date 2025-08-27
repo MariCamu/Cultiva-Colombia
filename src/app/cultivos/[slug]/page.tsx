@@ -12,9 +12,13 @@ import { doc, getDoc, collection, query, where, getDocs, documentId } from 'fire
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor, MapPin, Info, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor, MapPin, Info, ExternalLink, PlusCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useAuth } from '@/context/auth-context';
+import type { SampleCrop } from '@/models/crop-model';
+import { AddCropDialog } from '../components/add-crop-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface CropDetailPageProps {
   params: {
@@ -31,7 +35,7 @@ interface SimplifiedItem {
     dataAiHint?: string; // For articles
 }
 
-// --- NEW HELPER FUNCTIONS ---
+// --- HELPER FUNCTIONS ---
 
 async function getCropBySlug(slug: string): Promise<CropTechnicalSheet | null> {
   const docRef = doc(db, 'fichas_tecnicas_cultivos', slug);
@@ -127,10 +131,12 @@ const MethodCard = ({ method }: { method: CultivationMethod }) => (
 
 export default function CropDetailPage({ params }: CropDetailPageProps) {
   const [crop, setCrop] = useState<CropTechnicalSheet | null>(null);
+  const [sampleCrop, setSampleCrop] = useState<SampleCrop | null>(null);
   const [compatibleCrops, setCompatibleCrops] = useState<SimplifiedItem[]>([]);
   const [incompatibleCrops, setIncompatibleCrops] = useState<SimplifiedItem[]>([]);
   const [relatedArticles, setRelatedArticles] = useState<SimplifiedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user, userProfile } = useAuth();
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -144,6 +150,29 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
       
       setCrop(fetchedCrop);
       
+      // Adapt data for AddCropDialog
+      const adaptedSampleCrop: SampleCrop = {
+          id: fetchedCrop.id || params.slug,
+          name: fetchedCrop.nombre,
+          description: fetchedCrop.descripcion,
+          regionSlugs: fetchedCrop.region.principal.map(r => r.toLowerCase()),
+          imageUrl: fetchedCrop.imagenes?.[0]?.url || 'https://placehold.co/300x200.png',
+          dataAiHint: 'crop field',
+          clima: fetchedCrop.clima.clase[0] as SampleCrop['clima'],
+          estimatedPrice: 'Precio moderado',
+          duration: 'Media (3–5 meses)',
+          spaceRequired: 'Maceta mediana (4–10 L)',
+          plantType: fetchedCrop.tipo_planta as SampleCrop['plantType'],
+          difficulty: 3, // Default
+          datos_programaticos: fetchedCrop.datos_programaticos,
+          lifeCycle: fetchedCrop.cicloVida.map(etapa => ({ name: etapa.etapa })),
+          pancoger: fetchedCrop.tags.includes('pancoger'),
+          patrimonial: fetchedCrop.tags.includes('patrimonial'),
+          sembrable_en_casa: 'sí',
+          educativo: 'no',
+      };
+      setSampleCrop(adaptedSampleCrop);
+
       // Fetch related data in parallel
       const [compat, incompat, articles] = await Promise.all([
         getRelatedCrops(fetchedCrop.compatibilidades || []),
@@ -187,6 +216,9 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
   ]
 
   const mainImage = crop.imagenes?.[0];
+
+  const userRegion = userProfile?.region;
+  const isCropInUserRegion = userRegion && crop.region.principal.map(r => r.toLowerCase()).includes(userRegion.toLowerCase());
 
   return (
     <article className="max-w-5xl mx-auto space-y-10">
@@ -318,6 +350,15 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
                                 <div className="flex flex-wrap gap-2">
                                     {crop.region.principal.map(region => <Badge key={region} variant="outline" className="bg-blue-100 text-blue-800">{region}</Badge>)}
                                 </div>
+                                {userRegion && !isCropInUserRegion && (
+                                    <Alert variant="destructive" className="mt-4">
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertTitle>¡Atención!</AlertTitle>
+                                        <AlertDescription>
+                                            Este cultivo no es ideal para tu región principal registrada ({userRegion}). Podría requerir cuidados especiales.
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
                                 <div className="mt-4 text-sm text-muted-foreground flex items-start gap-2">
                                     <Info className="h-4 w-4 mt-0.5 flex-shrink-0"/>
                                     <p>{crop.region.nota}</p>
@@ -349,8 +390,23 @@ export default function CropDetailPage({ params }: CropDetailPageProps) {
         </Accordion>
       </div>
 
+      <Card className="text-center p-6 shadow-lg bg-primary/10">
+        <CardHeader>
+            <CardTitle className="text-2xl font-nunito font-bold">¿Listo para empezar a cultivar?</CardTitle>
+            <CardDescription>Añade este cultivo a tu dashboard personal para hacer un seguimiento detallado de su progreso.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            {sampleCrop && (
+                 <AddCropDialog crop={sampleCrop}>
+                    <Button size="lg">
+                        <PlusCircle className="mr-2 h-5 w-5" />
+                        Añadir a Mi Dashboard
+                    </Button>
+                 </AddCropDialog>
+            )}
+        </CardContent>
+      </Card>
+
     </article>
   );
 }
-
-    

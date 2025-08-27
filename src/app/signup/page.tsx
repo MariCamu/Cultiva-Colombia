@@ -8,21 +8,36 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
+const regionOptions = [
+    { value: 'andina', label: 'Andina' },
+    { value: 'caribe', label: 'Caribe' },
+    { value: 'pacifica', label: 'Pacífica' },
+    { value: 'orinoquia', label: 'Orinoquía' },
+    { value: 'amazonia', label: 'Amazonía' },
+    { value: 'insular', label: 'Insular' },
+];
+
 export default function SignupPage() {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [region, setRegion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
   const handleSignup = async (event: FormEvent) => {
     event.preventDefault();
+    if (!region) {
+        toast({ variant: 'destructive', title: 'Campo Requerido', description: 'Por favor, selecciona tu región.' });
+        return;
+    }
     setIsLoading(true);
     
     try {
@@ -37,6 +52,7 @@ export default function SignupPage() {
       await setDoc(userRef, {
         nombre: displayName,
         email: user.email,
+        region: region,
         fecha_registro: serverTimestamp(),
         preferencia_tema: 'cultiva_verde_default',
         harvestedCropsCount: 0,
@@ -105,6 +121,21 @@ export default function SignupPage() {
                 required
                 disabled={isLoading}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="region">¿En qué región vives?</Label>
+              <Select value={region} onValueChange={setRegion} required>
+                <SelectTrigger id="region">
+                    <SelectValue placeholder="Selecciona tu región principal" />
+                </SelectTrigger>
+                <SelectContent>
+                    {regionOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}

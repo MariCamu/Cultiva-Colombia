@@ -3,28 +3,56 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter, usePathname } from 'next/navigation';
+import { doc, onSnapshot, type DocumentData } from 'firebase/firestore';
+
+interface UserProfile {
+    nombre: string;
+    email: string;
+    region?: string;
+    // Add other profile fields here
+}
 
 interface AuthContextType {
   user: User | null;
+  userProfile: UserProfile | null;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  userProfile: null,
   loading: true,
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
-      setLoading(false);
+      if (user) {
+        // User is signed in, see docs for a list of available properties
+        // https://firebase.google.com/docs/reference/js/firebase.User
+        const userDocRef = doc(db, 'usuarios', user.uid);
+        const unsubProfile = onSnapshot(userDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setUserProfile(docSnap.data() as UserProfile);
+            } else {
+                setUserProfile(null);
+            }
+             setLoading(false);
+        });
+        return () => unsubProfile(); // Unsubscribe from profile listener on cleanup
+      } else {
+        // User is signed out
+        setUserProfile(null);
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -42,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, userProfile, loading }}>
       {children}
     </AuthContext.Provider>
   );
