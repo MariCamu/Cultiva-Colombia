@@ -42,7 +42,7 @@ interface Crop {
     name: string;
     difficulty: 'Fácil' | 'Media' | 'Difícil' | string;
     type: string;
-    space: string; // Placeholder field for now
+    space: 'Maceta pequeña (1–3 L)' | 'Maceta mediana (4–10 L)' | 'Maceta grande o jardín (10+ L)';
     position: [number, number]; // [lat, lng]
     imageUrl: string;
     regionSlugs: string[]; // Para filtrar por región
@@ -60,12 +60,22 @@ async function getCropsForMap(): Promise<Crop[]> {
         const data = doc.data() as CropTechnicalSheet;
         if (data.posicion && (data.posicion as GeoPoint).latitude) {
             const geoPoint = data.posicion as GeoPoint;
+            
+            let spaceRequired: Crop['space'] = 'Maceta grande o jardín (10+ L)'; // Default
+            if (data.tags.includes('maceta_pequena')) {
+                spaceRequired = 'Maceta pequeña (1–3 L)';
+            } else if (data.tags.includes('maceta_mediana')) {
+                spaceRequired = 'Maceta mediana (4–10 L)';
+            } else if (data.tags.includes('maceta_grande')) {
+                 spaceRequired = 'Maceta grande o jardín (10+ L)';
+            }
+
             crops.push({
                 id: doc.id,
                 name: data.nombre,
                 difficulty: data.dificultad,
                 type: data.tipo_planta,
-                space: 'Jardín', // Placeholder, as this data is not in the main sheet yet
+                space: spaceRequired, 
                 position: [geoPoint.latitude, geoPoint.longitude],
                 imageUrl: data.imagenes?.[0]?.url || 'https://placehold.co/40x40.png',
                 regionSlugs: data.region.principal.map(r => r.toLowerCase()),
@@ -138,6 +148,13 @@ const createCropIcon = (crop: Crop) => {
 const createSlug = (name: string) => {
   return name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 }
+
+const spaceOptions = [
+    { value: 'all', label: 'Todos los Espacios' },
+    { value: 'Maceta pequeña (1–3 L)', label: 'Maceta pequeña' },
+    { value: 'Maceta mediana (4–10 L)', label: 'Maceta mediana' },
+    { value: 'Maceta grande o jardín (10+ L)', label: 'Maceta grande / Jardín' },
+];
 
 
 // --- COMPONENTE PRINCIPAL INTERACTIVEMAP ---
@@ -291,9 +308,8 @@ export function InteractiveMap() {
                             <Select value={spaceFilter} onValueChange={setSpaceFilter}>
                                 <SelectTrigger id="space-filter"><SelectValue placeholder="Todos los espacios" /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Todos los espacios</SelectItem>
-                                    {[...new Set(allCrops.map(c => c.space))].sort().map(space => (
-                                        <SelectItem key={space} value={space}>{space}</SelectItem>
+                                    {spaceOptions.map(opt => (
+                                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
