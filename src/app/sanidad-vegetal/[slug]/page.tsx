@@ -163,21 +163,21 @@ export default function PestPage({ params }: PestPageProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-green-600" />Prevención</CardTitle>
+                    <CardTitle className="text-2xl font-nunito font-bold flex items-center gap-3"><ShieldCheck className="h-6 w-6 text-green-600" />Prevención</CardTitle>
+                    <CardContent className="pt-4">
+                        <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                            {Array.isArray(pest.prevencion) ? pest.prevencion.map((tip, index) => <li key={index}>{tip}</li>) : <li>{pest.prevencion}</li>}
+                        </ul>
+                    </CardContent>
                 </CardHeader>
-                <CardContent>
-                    <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                        {Array.isArray(pest.prevencion) ? pest.prevencion.map((tip, index) => <li key={index}>{tip}</li>) : <li>{pest.prevencion}</li>}
-                    </ul>
-                </CardContent>
             </Card>
-            <Card>
+             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Bug className="h-5 w-5 text-red-600" />Solución Recomendada</CardTitle>
+                    <CardTitle className="text-2xl font-nunito font-bold flex items-center gap-3"><Bug className="h-6 w-6 text-red-600" />Solución Recomendada</CardTitle>
+                    <CardContent className="pt-4">
+                       <p className="text-muted-foreground">{pest.solucion}</p>
+                    </CardContent>
                 </CardHeader>
-                <CardContent>
-                   <p className="text-muted-foreground">{pest.solucion}</p>
-                </CardContent>
             </Card>
         </div>
 

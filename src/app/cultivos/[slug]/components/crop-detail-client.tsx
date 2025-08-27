@@ -10,7 +10,7 @@ import type { Article } from '@/models/article-model';
 import { doc, getDoc, collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor, MapPin, Info, ExternalLink, PlusCircle, AlertCircle, Check, Recycle, AlertTriangle, Clock, Target, StepForward } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor, MapPin, Info, ExternalLink, PlusCircle, AlertCircle, Check, Recycle, AlertTriangle, Clock, Target, StepForward, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useAuth } from '@/context/auth-context';
@@ -19,6 +19,7 @@ import { AddCropDialog } from '../../components/add-crop-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { Pest } from '@/models/pest-model';
 
 // Helper to make technical terms more human-readable
 const humanizeTerm = (term: string | null | undefined) => {
@@ -47,6 +48,7 @@ interface CropDetailClientProps {
   compatibleCrops: SimplifiedItem[];
   incompatibleCrops: SimplifiedItem[];
   relatedArticles: SimplifiedItem[];
+  commonPests: Pest[];
 }
 
 // --- CARD COMPONENTS ---
@@ -199,6 +201,7 @@ export function CropDetailClient({
   compatibleCrops,
   incompatibleCrops,
   relatedArticles,
+  commonPests,
 }: CropDetailClientProps) {
   const { user, userProfile } = useAuth();
   
@@ -279,7 +282,7 @@ export function CropDetailClient({
 
       <div>
         <h2 className="text-3xl font-nunito font-bold text-center mb-6">Información Adicional</h2>
-        <Accordion type="multiple" defaultValue={["item-1", "item-2", "item-3"]} className="w-full">
+        <Accordion type="multiple" defaultValue={["item-1", "item-2", "item-3", "item-4"]} className="w-full">
             <AccordionItem value="item-1">
                 <AccordionTrigger className="text-xl">Ciclo de Vida y Datos Técnicos</AccordionTrigger>
                 <AccordionContent>
@@ -304,6 +307,38 @@ export function CropDetailClient({
                     </div>
                 </AccordionContent>
             </AccordionItem>
+            {commonPests.length > 0 && (
+                 <AccordionItem value="item-4">
+                    <AccordionTrigger className="text-xl">Plagas y Enfermedades Comunes</AccordionTrigger>
+                    <AccordionContent>
+                        <Card className="mt-4">
+                            <CardHeader>
+                                <CardTitle className="text-lg flex items-center gap-2"><Bug className="h-5 w-5 text-red-600"/>Amenazas Comunes</CardTitle>
+                                <CardDescription>Estas son algunas de las plagas y enfermedades que afectan comúnmente a este cultivo. Haz clic para aprender a prevenirlas y tratarlas.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {commonPests.map(pest => (
+                                     <Link href={`/sanidad-vegetal/${pest.slug}`} key={pest.id} className="group">
+                                        <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                                            <Image
+                                                src={pest.imageUrl}
+                                                alt={pest.nombreComun}
+                                                width={150}
+                                                height={100}
+                                                className="w-full h-24 object-cover"
+                                                data-ai-hint={pest.dataAiHint}
+                                            />
+                                            <CardHeader className="p-3">
+                                                <CardTitle className="text-sm font-nunito font-bold group-hover:text-primary transition-colors">{pest.nombreComun}</CardTitle>
+                                            </CardHeader>
+                                        </Card>
+                                    </Link>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    </AccordionContent>
+                </AccordionItem>
+            )}
             <AccordionItem value="item-2">
                 <AccordionTrigger className="text-xl">Asociaciones y Regiones</AccordionTrigger>
                 <AccordionContent>

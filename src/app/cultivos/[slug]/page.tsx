@@ -2,7 +2,7 @@
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import type { CropTechnicalSheet } from '@/lib/crop-data-structure';
-import type { Article } from '@/models/article-model';
+import type { Pest } from '@/models/pest-model';
 import { doc, getDoc, collection, query, where, getDocs, documentId, type GeoPoint } from 'firebase/firestore';
 import { CropDetailClient } from './components/crop-detail-client';
 import type { SampleCrop } from '@/models/crop-model';
@@ -25,23 +25,6 @@ interface SimplifiedItem {
 
 // --- HELPER FUNCTIONS ---
 
-const createSlug = (text: string): string => {
-  if (!text) return '';
-  const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;'
-  const b = 'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz------'
-  const p = new RegExp(a.split('').join('|'), 'g')
-
-  return text.toString().toLowerCase()
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(p, c => b.charAt(a.indexOf(c))) // Replace special characters
-    .replace(/&/g, '-and-') // Replace & with 'and'
-    .replace(/[^\w-]+/g, '') // Remove all non-word chars
-    .replace(/--+/g, '-') // Replace multiple - with single -
-    .replace(/^-+/, '') // Trim - from start of text
-    .replace(/-+$/, '') // Trim - from end of text
-}
-
-
 async function getCropBySlug(slug: string): Promise<CropTechnicalSheet | null> {
   const docRef = doc(db, 'fichas_tecnicas_cultivos', slug);
   const docSnap = await getDoc(docRef);
@@ -50,6 +33,24 @@ async function getCropBySlug(slug: string): Promise<CropTechnicalSheet | null> {
     return { id: docSnap.id, ...(docSnap.data() as CropTechnicalSheet) };
   }
   return null;
+}
+
+async function getRelatedPests(pestSlugs: string[]): Promise<Pest[]> {
+    if (!pestSlugs || pestSlugs.length === 0) return [];
+    const pestsRef = collection(db, 'plagas_y_enfermedades');
+    const q = query(pestsRef, where(documentId(), 'in', pestSlugs));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            slug: doc.id,
+            nombreComun: data.nombreComun,
+            imageUrl: data.imageUrl,
+            dataAiHint: data.dataAiHint,
+            tipo: data.tipo,
+        } as Pest;
+    });
 }
 
 
@@ -123,10 +124,11 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
     };
 
     // Fetch related data in parallel
-    const [compatibleCrops, incompatibleCrops, relatedArticles] = await Promise.all([
+    const [compatibleCrops, incompatibleCrops, relatedArticles, commonPests] = await Promise.all([
         getRelatedCrops(crop.compatibilidades || []),
         getRelatedCrops(crop.incompatibilidades || []),
-        getRelatedArticles(crop.articulosRelacionados || [])
+        getRelatedArticles(crop.articulosRelacionados || []),
+        getRelatedPests(crop.plagasComunes || [])
     ]);
 
     return (
@@ -136,6 +138,7 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
             compatibleCrops={compatibleCrops}
             incompatibleCrops={incompatibleCrops}
             relatedArticles={relatedArticles}
+            commonPests={commonPests}
         />
     );
 }
