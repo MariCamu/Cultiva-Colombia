@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import type { EducationalGuideDocument } from '@/lib/educational-guides-structure';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
@@ -40,6 +41,8 @@ export default function GuiasPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [openAccordionItem, setOpenAccordionItem] = useState<string | undefined>(undefined);
+  const accordionRefs = useRef<{[key: string]: HTMLDivElement | null}>({});
 
   useEffect(() => {
     const fetchGuides = async () => {
@@ -47,6 +50,12 @@ export default function GuiasPage() {
         try {
             const fetchedGuides = await getGuides();
             setGuides(fetchedGuides);
+
+            // Check for hash in URL to open specific guide
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                setOpenAccordionItem(hash);
+            }
         } catch (err) {
             console.error("Error fetching guides:", err);
             setError("No se pudieron cargar las guías. Revisa tu conexión y las reglas de seguridad de Firestore.");
@@ -56,6 +65,18 @@ export default function GuiasPage() {
     };
     fetchGuides();
   }, []);
+
+  // Effect to scroll to and open the guide from URL hash
+  useEffect(() => {
+    if (openAccordionItem && !isLoading) {
+        const element = accordionRefs.current[openAccordionItem];
+        if (element) {
+            setTimeout(() => {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100); // Small delay to ensure accordion is rendered
+        }
+    }
+  }, [openAccordionItem, isLoading]);
 
   const filteredGuides = useMemo(() => {
     if (!searchQuery) {
@@ -108,63 +129,65 @@ export default function GuiasPage() {
     }
 
     return (
-        <Accordion type="single" collapsible className="w-full space-y-4">
+        <Accordion type="single" collapsible value={openAccordionItem} onValueChange={setOpenAccordionItem} className="w-full space-y-4">
             {filteredGuides.map((guide) => (
-                <AccordionItem value={guide.id} key={guide.id} className="border rounded-lg bg-card">
-                     <AccordionTrigger className="p-6 text-xl text-left hover:no-underline">
-                        <div className="flex items-start gap-4">
-                           <div className="bg-primary/10 p-3 rounded-full mt-1">
-                             <BookOpen className="h-6 w-6 text-primary" />
-                           </div>
-                           <div>
-                             <h2 className="font-nunito font-bold text-primary">{guide.titulo}</h2>
-                             <p className="text-sm font-sans font-normal text-muted-foreground mt-1">{guide.subtitulo}</p>
-                           </div>
-                        </div>
-                     </AccordionTrigger>
-                     <AccordionContent className="p-6 pt-0">
-                        <div className="space-y-6">
-                            <p className="text-base text-muted-foreground">{guide.descripcion}</p>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {guide.materiales && guide.materiales.length > 0 && (
-                                     <Card className="bg-background/50">
-                                        <CardHeader>
-                                            <CardTitle className="text-lg flex items-center gap-2"><Recycle className="h-5 w-5 text-green-600"/>Materiales</CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                                {guide.materiales.map((item, i) => <li key={i}>{item}</li>)}
-                                            </ul>
-                                        </CardContent>
-                                    </Card>
-                                )}
-                                {guide.exito && guide.exito.length > 0 && (
-                                    <Card className="bg-background/50">
-                                        <CardHeader>
-                                            <CardTitle className="text-lg flex items-center gap-2"><CheckCircle className="h-5 w-5 text-blue-600"/>Indicadores de Éxito</CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                                                {guide.exito.map((item, i) => <li key={i}>{item}</li>)}
-                                            </ul>
-                                        </CardContent>
-                                    </Card>
-                                )}
+                <div key={guide.id} id={guide.id} ref={el => accordionRefs.current[guide.id] = el}>
+                    <AccordionItem value={guide.id} className="border rounded-lg bg-card">
+                        <AccordionTrigger className="p-6 text-xl text-left hover:no-underline">
+                            <div className="flex items-start gap-4">
+                            <div className="bg-primary/10 p-3 rounded-full mt-1">
+                                <BookOpen className="h-6 w-6 text-primary" />
                             </div>
-
-                            {guide.pasos && guide.pasos.length > 0 && (
-                                <div className="space-y-3">
-                                    <h3 className="text-lg font-nunito font-semibold flex items-center gap-2"><FlaskConical className="h-5 w-5 text-amber-600"/>Pasos a Seguir</h3>
-                                    <ol className="list-decimal list-inside space-y-2 text-muted-foreground pl-4">
-                                        {guide.pasos.map((paso, i) => <li key={i}>{paso}</li>)}
-                                    </ol>
+                            <div>
+                                <h2 className="font-nunito font-bold text-primary">{guide.titulo}</h2>
+                                <p className="text-sm font-sans font-normal text-muted-foreground mt-1">{guide.subtitulo}</p>
+                            </div>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="p-6 pt-0">
+                            <div className="space-y-6">
+                                <p className="text-base text-muted-foreground">{guide.descripcion}</p>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {guide.materiales && guide.materiales.length > 0 && (
+                                        <Card className="bg-background/50">
+                                            <CardHeader>
+                                                <CardTitle className="text-lg flex items-center gap-2"><Recycle className="h-5 w-5 text-green-600"/>Materiales</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                                    {guide.materiales.map((item, i) => <li key={i}>{item}</li>)}
+                                                </ul>
+                                            </CardContent>
+                                        </Card>
+                                    )}
+                                    {guide.exito && guide.exito.length > 0 && (
+                                        <Card className="bg-background/50">
+                                            <CardHeader>
+                                                <CardTitle className="text-lg flex items-center gap-2"><CheckCircle className="h-5 w-5 text-blue-600"/>Indicadores de Éxito</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                                    {guide.exito.map((item, i) => <li key={i}>{item}</li>)}
+                                                </ul>
+                                            </CardContent>
+                                        </Card>
+                                    )}
                                 </div>
-                            )}
 
-                        </div>
-                     </AccordionContent>
-                </AccordionItem>
+                                {guide.pasos && guide.pasos.length > 0 && (
+                                    <div className="space-y-3">
+                                        <h3 className="text-lg font-nunito font-semibold flex items-center gap-2"><FlaskConical className="h-5 w-5 text-amber-600"/>Pasos a Seguir</h3>
+                                        <ol className="list-decimal list-inside space-y-2 text-muted-foreground pl-4">
+                                            {guide.pasos.map((paso, i) => <li key={i}>{paso}</li>)}
+                                        </ol>
+                                    </div>
+                                )}
+
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </div>
             ))}
         </Accordion>
     );

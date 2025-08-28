@@ -466,7 +466,8 @@ function DashboardContent() {
             if (cropToUpdate) {
                 const plantedDate = startOfDay(new Date(cropToUpdate.fecha_plantacion.seconds * 1000));
                 const daysSincePlantedToday = differenceInDays(startOfDay(new Date()), plantedDate);
-                const nextDueInDays = daysSincePlantedToday + cropToUpdate.datos_programaticos.frecuencia_riego_dias;
+                const wateringFrequency = cropToUpdate.datos_programaticos?.frecuencia_riego_dias || 7;
+                const nextDueInDays = daysSincePlantedToday + wateringFrequency;
                 
                 batch.update(cropRef, { 
                     'nextTask.dueInDays': nextDueInDays,
@@ -931,7 +932,7 @@ function DashboardContent() {
                   <ul className="space-y-3">
                     {recommendedGuides.map(guide => (
                       <li key={guide.id}>
-                        <Link href={'/guias'} className="text-primary font-nunito font-semibold hover:underline">
+                        <Link href={`/guias#${guide.id}`} className="text-primary font-nunito font-semibold hover:underline">
                           {guide.titulo}
                         </Link>
                       </li>
@@ -986,4 +987,3 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
-

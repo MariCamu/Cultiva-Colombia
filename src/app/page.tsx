@@ -166,7 +166,14 @@ export default async function HomePage() {
           {recentGuides.map((guide) => (
             <Card key={guide.id} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
                <div className="w-full h-52 bg-primary/10 flex items-center justify-center">
-                  <BookOpen className="h-20 w-20 text-primary/50" />
+                  <Image
+                    src="https://placehold.co/400x250/EDF2E8/6B875E?text=Gu%C3%ADa"
+                    alt={`Guía sobre ${guide.titulo}`}
+                    width={400}
+                    height={250}
+                    className="w-full h-52 object-cover"
+                    data-ai-hint="educational guide"
+                  />
                </div>
               <CardHeader>
                 <CardTitle className="text-xl font-nunito font-bold">{guide.titulo}</CardTitle>
@@ -176,7 +183,7 @@ export default async function HomePage() {
               </CardContent>
               <div className="p-6 pt-0">
                 <Button asChild variant="outline">
-                  <Link href={'/guias'}>Ver Guía <ExternalLink className="ml-2 h-4 w-4" /></Link>
+                  <Link href={`/guias#${guide.id}`}>Ver Guía <ExternalLink className="ml-2 h-4 w-4" /></Link>
                 </Button>
               </div>
             </Card>

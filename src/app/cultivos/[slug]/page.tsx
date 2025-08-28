@@ -64,7 +64,7 @@ async function getRelatedCrops(cropSlugs: string[]): Promise<SimplifiedItem[]> {
     const data = doc.data() as CropTechnicalSheet;
     return {
       id: doc.id,
-      slug: doc.id, // Use the document ID for consistent slug generation
+      slug: doc.id, // Use the document ID for the link
       name: data.nombre,
       imageUrl: data.imagenes?.[0]?.url || 'https://placehold.co/300x200',
       dataAiHint: 'crop field',
@@ -101,7 +101,7 @@ async function getRelatedContent(cropSlug: string, articleSlugs: string[] = []):
       const data = doc.data() as EducationalGuideDocument;
       allContent.push({
           id: doc.id,
-          slug: `/guias`, // Link to the main guides page
+          slug: `/guias#${doc.id}`, // Link to guides page with anchor
           name: data.titulo,
           summary: data.subtitulo,
           imageUrl: 'https://placehold.co/400x250/EDF2E8/6B875E?text=Gu%C3%ADa', // Placeholder for guides
