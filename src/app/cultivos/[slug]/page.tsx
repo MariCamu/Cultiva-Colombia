@@ -75,7 +75,7 @@ async function getRelatedCrops(cropSlugs: string[]): Promise<SimplifiedItem[]> {
 async function getRelatedContent(cropSlug: string, articleSlugs: string[] = []): Promise<SimplifiedItem[]> {
   const allContent: SimplifiedItem[] = [];
 
-  // 1. Fetch related articles by slug
+  // 1. Fetch related articles by slug (if manually linked)
   if (articleSlugs && articleSlugs.length > 0) {
     const articlesRef = collection(db, 'articulos');
     const articlesQuery = query(articlesRef, where('slug', 'in', articleSlugs));
@@ -93,7 +93,7 @@ async function getRelatedContent(cropSlug: string, articleSlugs: string[] = []):
     });
   }
 
-  // 2. Fetch related educational guides by crop slug
+  // 2. Fetch related educational guides by dynamically querying for the current crop slug
   const guidesRef = collection(db, 'guias_educativas');
   const guidesQuery = query(guidesRef, where('cultivosRelacionados', 'array-contains', cropSlug));
   const guidesSnapshot = await getDocs(guidesQuery);
@@ -101,10 +101,10 @@ async function getRelatedContent(cropSlug: string, articleSlugs: string[] = []):
       const data = doc.data() as EducationalGuideDocument;
       allContent.push({
           id: doc.id,
-          slug: `/guias`, // Guides page for now, can be individual pages later
+          slug: `/guias`, // Link to the main guides page
           name: data.titulo,
           summary: data.subtitulo,
-          imageUrl: 'https://placehold.co/400x250/EDF2E8/6B875E?text=Gu%C3%ADa', // Placeholder image for guides
+          imageUrl: 'https://placehold.co/400x250/EDF2E8/6B875E?text=Gu%C3%ADa', // Placeholder for guides
           dataAiHint: 'educational guide',
       });
   });
@@ -161,7 +161,7 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
             sampleCrop={sampleCrop}
             compatibleCrops={compatibleCrops}
             incompatibleCrops={incompatibleCrops}
-            relatedArticles={relatedContent} // Changed to relatedContent
+            relatedArticles={relatedContent} // This now includes both articles and guides
             commonPests={commonPests}
         />
     );
