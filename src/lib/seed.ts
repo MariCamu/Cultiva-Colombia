@@ -1,4 +1,3 @@
-
 // Añadido para cargar las variables de entorno (API Keys) ANTES que cualquier otra cosa.
 import { config } from 'dotenv';
 config();
@@ -20,9 +19,10 @@ import type { EducationalGuideDocument } from './educational-guides-structure';
 // 3. Abre la terminal y ejecuta el comando: `npm run db:seed`
 // 4. ¡Listo! Tus colecciones se llenarán con los datos.
 
-const pestsAndDiseasesData: Omit<Pest, 'slug' | 'imageUrl' | 'dataAiHint'>[] = [
+const pestsAndDiseasesData: Pest[] = [
     {
       id: "pulgones",
+      slug: "pulgones",
       nombreComun: "Pulgones",
       nombreCientifico: "Aphididae spp.",
       tipo: "insecto",
@@ -30,16 +30,12 @@ const pestsAndDiseasesData: Omit<Pest, 'slug' | 'imageUrl' | 'dataAiHint'>[] = [
       danos: "Enrulado, clorosis, retraso de crecimiento, fumagina sobre melaza; vectores de virosis.",
       cultivosAfectados: ['lechuga', 'cilantro', 'fresa', 'cebolla-larga', 'aj-dulce', 'pepino-cohombro', 'albahaca', 'espinaca', 'hierbabuena', 'calabacn', 'perejil', 'rbano', 'tomate-cherry', 'organo', 'acelga', 'pepino-dulce', 'frijol', 'pimentn', 'yuca_dulce'],
       prevencion: ["Monitoreo del enves", "Control de hormigas", "Asociacion con aromaticas (ajo/cebolla/calendula)"],
-      solucion: "Jabon potasico o aceite de neem; liberar depredadores (mariquitas, sirfidos); retirar focos."
+      solucion: "Jabon potasico o aceite de neem; liberar depredadores (mariquitas, sirfidos); retirar focos.",
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Pestes%2Fpulgon.jpg?alt=media&token=c27e2a39-c5d0-4e31-897d-6062cc8f0f0c", 
+      dataAiHint: "aphids on plant" 
     },
 ];
 
-const pestImages: { [id: string]: { imageUrl: string; dataAiHint: string } } = {
-  pulgones: { 
-    imageUrl: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Pestes%2Fpulgon.jpg?alt=media&token=c27e2a39-c5d0-4e31-897d-6062cc8f0f0c", 
-    dataAiHint: "aphids on plant" 
-  },
-};
 
 async function seedPestsAndDiseases() {
   if (pestsAndDiseasesData.length === 0) {
@@ -52,20 +48,8 @@ async function seedPestsAndDiseases() {
 
   const batch = writeBatch(db);
   pestsAndDiseasesData.forEach(pestData => {
-    if (pestData.id) {
-      const docRef = doc(collectionRef, pestData.id);
-      const { id, ...dataToSet } = pestData;
-      
-      const completeData: Pest = {
-        ...dataToSet,
-        id: id,
-        slug: id,
-        imageUrl: pestImages[id]?.imageUrl || 'https://placehold.co/400x250.png',
-        dataAiHint: pestImages[id]?.dataAiHint || `${dataToSet.nombreComun.toLowerCase()} plant pest`,
-      };
-      
-      batch.set(docRef, completeData);
-    }
+    const docRef = doc(collectionRef, pestData.id);
+    batch.set(docRef, pestData);
   });
 
   try {
@@ -77,9 +61,12 @@ async function seedPestsAndDiseases() {
 }
 
 // --- DATOS PARA GUÍAS EDUCATIVAS ---
-const educationalGuidesData: Omit<EducationalGuideDocument, 'id'>[] = [
+// IMPORTANTE: Para usar tus propios IDs, asegúrate de que cada objeto tenga un campo "id".
+// Si un objeto no tiene "id", se generará uno a partir del título.
+const educationalGuidesData: EducationalGuideDocument[] = [ 
     {
-      "titulo": "🧫 Guía práctica: Inoculación de Rhizobium (frijol)",
+      "id": "guia-practica-inoculacion-rhizobium-frijol",
+      "titulo": "Guía práctica: Inoculación de Rhizobium (frijol)",
       "subtitulo": "Fijación biológica de N para plantas más verdes",
       "descripcion": "Recubre semillas con inoculante específico (o suelo ‘viejo’ de frijol) para formar nódulos eficientes.",
       "materiales": [
@@ -98,7 +85,7 @@ const educationalGuidesData: Omit<EducationalGuideDocument, 'id'>[] = [
         "Nódulos rosados a 4–6 semanas.",
         "Plantas verde sanas con menos N externo."
       ],
-      "cultivosRelacionados": ["lechuga", "cilantro", "fresa", "cebolla-larga", "aj-dulce", "pepino-cohombro", "espinaca", "jengibre", "calabacn", "perejil", "rbano", "crcuma", "yuca-dulce", "tomate-cherry", "acelga", "pepino-dulce", "maz", "pia", "frijol", "pimentn"]
+      "cultivosRelacionados": ["frijol"]
     },
 ];
 
@@ -113,7 +100,8 @@ async function seedEducationalGuides() {
 
     const batch = writeBatch(db);
     educationalGuidesData.forEach(guideData => {
-        const docId = guideData.titulo.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        // CORREGIDO: Usar el guideData.id si existe, si no, generar uno del título.
+        const docId = guideData.id || guideData.titulo.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         const docRef = doc(collectionRef, docId);
         batch.set(docRef, guideData);
     });
@@ -135,7 +123,7 @@ async function main() {
   console.log('--- Iniciando Proceso de Siembra en Firestore ---');
   
   // Decide qué sembrar descomentando las líneas que necesites:
-  await seedPestsAndDiseases();
+  // await seedPestsAndDiseases();
   await seedEducationalGuides();
   
   console.log('--- Proceso de Siembra Finalizado ---');
