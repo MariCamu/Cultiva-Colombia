@@ -17,13 +17,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/context/auth-context';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, deleteDoc, type Timestamp, type DocumentData, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, deleteDoc, type Timestamp, type DocumentData, getDoc, updateDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { fetchWeatherForecast } from '@/services/weatherService';
 import { willItRainSoon, type WeatherData } from '@/lib/weather-utils';
 import type { CropTechnicalSheet, LifeCycleStage } from '@/lib/crop-data-structure';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, startOfDay } from 'date-fns';
 import Link from 'next/link';
 
 // Helper to make technical terms more human-readable
@@ -264,6 +264,19 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
     try {
         const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'diario');
         await addDoc(logCollectionRef, logData);
+
+        if (type === 'water' && crop.datos_programaticos) {
+            const cropRef = doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id);
+            const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
+            const daysSincePlantedToday = differenceInDays(startOfDay(new Date()), plantedDate);
+            const nextDueInDays = daysSincePlantedToday + crop.datos_programaticos.frecuencia_riego_dias;
+            
+            await updateDoc(cropRef, {
+                'nextTask.dueInDays': nextDueInDays,
+                'lastNote': content,
+            });
+        }
+
         if (!isInitialEntry) {
             toast({ title: "Diario actualizado", description: "Se ha añadido una nueva entrada."});
         }
