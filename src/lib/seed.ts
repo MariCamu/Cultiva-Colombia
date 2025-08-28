@@ -51,7 +51,11 @@ async function seedPestsAndDiseases() {
   pestsAndDiseasesData.forEach(pestData => {
     // Usar el campo `id` de tus datos como el ID del documento.
     const docRef = doc(collectionRef, pestData.id); 
-    batch.set(docRef, pestData);
+    
+    // Crear un nuevo objeto sin el campo 'slug' para no guardarlo en Firestore
+    const { slug, ...dataToSave } = pestData;
+    
+    batch.set(docRef, dataToSave);
   });
 
   try {
@@ -102,7 +106,7 @@ async function seedEducationalGuides() {
 
     const batch = writeBatch(db);
     educationalGuidesData.forEach(guideData => {
-        // CORREGIDO: Usar el guideData.id si existe, si no, generar uno del título.
+        // CORREGIDO: Usar el guideData.id si existe. Si no, generar uno del título.
         const docId = guideData.id || guideData.titulo.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         const docRef = doc(collectionRef, docId);
         batch.set(docRef, guideData);
@@ -126,7 +130,7 @@ async function main() {
   
   // Decide qué sembrar descomentando las líneas que necesites:
   await seedPestsAndDiseases();
-  // await seedEducationalGuides();
+  await seedEducationalGuides();
   
   console.log('--- Proceso de Siembra Finalizado ---');
 }
