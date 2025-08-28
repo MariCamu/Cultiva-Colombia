@@ -253,6 +253,7 @@ function DashboardContent() {
             const today = startOfDay(new Date());
 
             for (const crop of crops) {
+                if (!crop.fecha_plantacion) continue;
                 const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
                 
                 // Fetch the full technical sheet to get the specific watering instructions
@@ -279,8 +280,9 @@ function DashboardContent() {
                 }
 
                 // Check for next task (riego/abono)
-                if (crop.nextTask) {
+                if (crop.nextTask && crop.datos_programaticos) {
                     const daysSincePlanted = differenceInDays(today, plantedDate);
+                    // Use dueInDays from the specific user crop data
                     if (daysSincePlanted >= crop.nextTask.dueInDays) {
                          const taskId = `${crop.id}_${crop.nextTask.name.replace(/\s+/g, '')}_${crop.nextTask.dueInDays}`;
                          const alertDocRef = doc(alertsCollectionRef, taskId);
@@ -324,7 +326,8 @@ function DashboardContent() {
     const unsubscribeCrops = onSnapshot(userCropsQuery, async (snapshot) => {
       const cropsData = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
         const data = doc.data();
-        if (!data.fecha_plantacion || typeof data.daysToHarvest !== 'number' || !data.nextTask) {
+        // Basic validation to ensure required fields exist
+        if (!data.fecha_plantacion || typeof data.daysToHarvest !== 'number' || !data.nextTask || !data.datos_programaticos) {
             return null;
         }
 
@@ -332,13 +335,9 @@ function DashboardContent() {
         const daysSincePlanted = differenceInDays(startOfDay(new Date()), plantedDate);
         const progress = data.daysToHarvest > 0 ? Math.min(Math.round((daysSincePlanted / data.daysToHarvest) * 100), 100) : 0;
         
-        // FIX: Ensure datos_programaticos is always an object
-        const datos_programaticos = data.datos_programaticos || { frecuencia_riego_dias: 7, dias_para_cosecha: 90 };
-
         return {
           id: doc.id,
           ...data,
-          datos_programaticos,
           progress,
         } as UserCrop;
       }).filter((crop): crop is UserCrop => crop !== null);
@@ -355,16 +354,10 @@ function DashboardContent() {
         const userCropSlugs = [...new Set(cropsData.map(c => c.ficha_cultivo_id))];
         if (userCropSlugs.length > 0) {
             const guidesRef = collection(db, 'guias_educativas');
-            // Firestore 'array-contains-any' is limited to 10 values in the array.
-            // A better approach would be to fetch all guides and filter client-side if the list is small,
-            // or implement a more complex data structure/querying for larger datasets.
-            // For now, we fetch all and filter.
-            const guidesSnapshot = await getDocs(guidesRef);
-            const allGuides = guidesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EducationalGuideDocument));
-            const filteredGuides = allGuides.filter(guide => 
-              guide.cultivosRelacionados?.some(slug => userCropSlugs.includes(slug))
-            );
-            setRecommendedGuides(filteredGuides.slice(0, 5)); // Limit to 5
+            const guidesQuery = query(guidesRef, where('cultivosRelacionados', 'array-contains-any', userCropSlugs.slice(0, 10)));
+            const guidesSnapshot = await getDocs(guidesQuery);
+            const filteredGuides = guidesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EducationalGuideDocument));
+            setRecommendedGuides(filteredGuides.slice(0, 5));
         }
       } else {
         setRecommendedGuides([]);
@@ -470,10 +463,10 @@ function DashboardContent() {
             const cropRef = doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', alert.cropId);
             const cropToUpdate = userCrops.find(c => c.id === alert.cropId);
 
-            if (cropToUpdate) {
+            if (cropToUpdate && cropToUpdate.datos_programaticos) {
                 const plantedDate = startOfDay(new Date(cropToUpdate.fecha_plantacion.seconds * 1000));
                 const daysSincePlantedToday = differenceInDays(startOfDay(new Date()), plantedDate);
-                const wateringFrequency = cropToUpdate.datos_programaticos?.frecuencia_riego_dias || 7; // Safeguard
+                const wateringFrequency = cropToUpdate.datos_programaticos.frecuencia_riego_dias || 7;
                 const nextDueInDays = daysSincePlantedToday + wateringFrequency;
                 
                 batch.update(cropRef, { 

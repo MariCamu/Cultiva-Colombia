@@ -70,10 +70,13 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
       imageUrl: crop.imageUrl,
       dataAiHint: crop.dataAiHint,
       daysToHarvest: crop.datos_programaticos.dias_para_cosecha,
+      // Guardar el objeto completo de datos programáticos
+      datos_programaticos: crop.datos_programaticos,
       estado_actual_cultivo: currentStage,
       notas_progreso_inicial: initialNotes,
       nextTask: { 
         name: 'Regar', 
+        // Establecer el primer riego basado en la frecuencia
         dueInDays: crop.datos_programaticos.frecuencia_riego_dias,
         iconName: 'Droplets' 
       },
