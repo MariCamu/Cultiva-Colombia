@@ -21,7 +21,7 @@ import type { EducationalGuideDocument } from './educational-guides-structure';
 
 const pestsAndDiseasesData: Pest[] = [
     {
-      id: "pulgones",
+      id: "pulgones", // Este es el ID del documento
       slug: "pulgones",
       nombreComun: "Pulgones",
       nombreCientifico: "Aphididae spp.",
@@ -34,6 +34,7 @@ const pestsAndDiseasesData: Pest[] = [
       imageUrl: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Pestes%2Fpulgon.jpg?alt=media&token=c27e2a39-c5d0-4e31-897d-6062cc8f0f0c", 
       dataAiHint: "aphids on plant" 
     },
+    // --- PEGA AQUÍ EL RESTO DE TUS DATOS DE PLAGAS ---
 ];
 
 
@@ -48,7 +49,8 @@ async function seedPestsAndDiseases() {
 
   const batch = writeBatch(db);
   pestsAndDiseasesData.forEach(pestData => {
-    const docRef = doc(collectionRef, pestData.id);
+    // Usar el campo `id` de tus datos como el ID del documento.
+    const docRef = doc(collectionRef, pestData.id); 
     batch.set(docRef, pestData);
   });
 
@@ -61,8 +63,7 @@ async function seedPestsAndDiseases() {
 }
 
 // --- DATOS PARA GUÍAS EDUCATIVAS ---
-// IMPORTANTE: Para usar tus propios IDs, asegúrate de que cada objeto tenga un campo "id".
-// Si un objeto no tiene "id", se generará uno a partir del título.
+// IMPORTANTE: Asegúrate de que cada objeto tenga un campo "id" único.
 const educationalGuidesData: EducationalGuideDocument[] = [ 
     {
       "id": "guia-practica-inoculacion-rhizobium-frijol",
@@ -87,6 +88,7 @@ const educationalGuidesData: EducationalGuideDocument[] = [
       ],
       "cultivosRelacionados": ["frijol"]
     },
+    // --- PEGA AQUÍ EL RESTO DE TUS GUÍAS ---
 ];
 
 async function seedEducationalGuides() {
@@ -123,12 +125,13 @@ async function main() {
   console.log('--- Iniciando Proceso de Siembra en Firestore ---');
   
   // Decide qué sembrar descomentando las líneas que necesites:
-  // await seedPestsAndDiseases();
-  await seedEducationalGuides();
+  await seedPestsAndDiseases();
+  // await seedEducationalGuides();
   
   console.log('--- Proceso de Siembra Finalizado ---');
 }
 
+// Esta línea permite ejecutar el script directamente desde la terminal con `npm run db:seed`
 if (require.main === module) {
     main().catch(error => {
         console.error("Ocurrió un error en el script de siembra:", error);
