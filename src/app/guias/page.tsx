@@ -1,15 +1,17 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
 import type { EducationalGuideDocument } from '@/lib/educational-guides-structure';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { BookOpen, Info, CheckCircle, FlaskConical, Recycle } from 'lucide-react';
+import { BookOpen, Info, CheckCircle, FlaskConical, Recycle, Search } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Input } from '@/components/ui/input';
+
 
 async function getGuides(): Promise<EducationalGuideDocument[]> {
     const guidesCollectionRef = collection(db, 'guias_educativas');
@@ -25,10 +27,19 @@ async function getGuides(): Promise<EducationalGuideDocument[]> {
     });
 }
 
+const normalizeText = (text: string) => {
+    if (!text) return '';
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+};
+
 export default function GuiasPage() {
   const [guides, setGuides] = useState<EducationalGuideDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchGuides = async () => {
@@ -45,6 +56,17 @@ export default function GuiasPage() {
     };
     fetchGuides();
   }, []);
+
+  const filteredGuides = useMemo(() => {
+    if (!searchQuery) {
+        return guides;
+    }
+    const normalizedQuery = normalizeText(searchQuery);
+    return guides.filter(guide => 
+        normalizeText(guide.titulo).includes(normalizedQuery) ||
+        normalizeText(guide.subtitulo).includes(normalizedQuery)
+    );
+  }, [guides, searchQuery]);
 
   const renderContent = () => {
     if (isLoading) {
@@ -72,10 +94,22 @@ export default function GuiasPage() {
             </Alert>
         );
     }
+    
+    if (filteredGuides.length === 0) {
+       return (
+            <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>No se encontraron guías</AlertTitle>
+                <AlertDescription>
+                    Ninguna guía coincide con tu búsqueda. Intenta con otras palabras.
+                </AlertDescription>
+            </Alert>
+        );
+    }
 
     return (
         <Accordion type="single" collapsible className="w-full space-y-4">
-            {guides.map((guide) => (
+            {filteredGuides.map((guide) => (
                 <AccordionItem value={guide.id} key={guide.id} className="border rounded-lg bg-card">
                      <AccordionTrigger className="p-6 text-xl text-left hover:no-underline">
                         <div className="flex items-start gap-4">
@@ -148,6 +182,20 @@ export default function GuiasPage() {
             </p>
         </div>
         
+        <Card className="p-4 sm:p-6 shadow-lg bg-card/50">
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                    id="search-guides"
+                    type="text"
+                    placeholder="Buscar por título o descripción de la guía..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 h-11"
+                />
+            </div>
+        </Card>
+
         <div className="mt-6">
             {renderContent()}
         </div>

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
@@ -10,7 +10,7 @@ import type { Article } from '@/models/article-model';
 import { doc, getDoc, collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor, MapPin, Info, ExternalLink, PlusCircle, AlertCircle, Check, Recycle, AlertTriangle, Clock, Target, StepForward, Bug } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Sprout, Thermometer, Droplets, Sun, Beaker, Users, ShieldAlert, BookOpen, Tractor, MapPin, Info, ExternalLink, PlusCircle, AlertCircle, Check, Recycle, AlertTriangle, Clock, Target, StepForward, Bug, ChevronLeftCircle, ChevronRightCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useAuth } from '@/context/auth-context';
@@ -20,6 +20,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Pest } from '@/models/pest-model';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 // Helper to make technical terms more human-readable
 const humanizeTerm = (term: string | null | undefined) => {
@@ -54,7 +56,7 @@ interface CropDetailClientProps {
 // --- CARD COMPONENTS ---
 
 const ItemCard = ({ item }: { item: SimplifiedItem }) => (
-  <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+  <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow w-64 flex-shrink-0">
     <Image
       src={item.imageUrl}
       alt={`Imagen para ${item.name}`}
@@ -64,7 +66,7 @@ const ItemCard = ({ item }: { item: SimplifiedItem }) => (
       data-ai-hint={item.dataAiHint || 'crop field'}
     />
     <CardHeader className="flex-grow p-4">
-      <CardTitle className="text-md font-nunito font-bold">{item.name}</CardTitle>
+      <CardTitle className="text-md font-nunito font-bold line-clamp-2">{item.name}</CardTitle>
     </CardHeader>
     <CardContent className="p-4 pt-0">
       <Button asChild variant="outline" size="sm">
@@ -75,6 +77,30 @@ const ItemCard = ({ item }: { item: SimplifiedItem }) => (
     </CardContent>
   </Card>
 );
+
+const HorizontalScroller = ({ items, title, icon: Icon }: { items: SimplifiedItem[], title: string, icon: React.ElementType }) => {
+    if (items.length === 0) return null;
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                    <Icon className="h-5 w-5" />
+                    {title}
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <ScrollArea>
+                    <div className="flex space-x-4 pb-4">
+                        {items.map(c => <ItemCard key={c.id} item={c} />)}
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+            </CardContent>
+        </Card>
+    );
+};
+
 
 const MethodCard = ({ method }: { method: CultivationMethod }) => (
   <Card className="bg-background/50">
@@ -343,26 +369,16 @@ export function CropDetailClient({
                 <AccordionTrigger className="text-xl">Asociaciones y Regiones</AccordionTrigger>
                 <AccordionContent>
                      <div className="space-y-8 mt-4">
-                        {compatibleCrops.length > 0 && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5 text-green-600"/>Cultivos Amigables</CardTitle>
-                                </CardHeader>
-                                <CardContent className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {compatibleCrops.map(c => <ItemCard key={c.id} item={{...c, slug: `/cultivos/${c.slug}`}} />)}
-                                </CardContent>
-                            </Card>
-                        )}
-                         {incompatibleCrops.length > 0 && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-red-600"/>Cultivos a Evitar</CardTitle>
-                                </CardHeader>
-                                <CardContent className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                     {incompatibleCrops.map(c => <ItemCard key={c.id} item={{...c, slug: `/cultivos/${c.slug}`}} />)}
-                                </CardContent>
-                            </Card>
-                        )}
+                        <HorizontalScroller 
+                            items={compatibleCrops.map(c => ({...c, slug: `/cultivos/${c.slug}`}))}
+                            title="Cultivos Amigables"
+                            icon={Users}
+                        />
+                         <HorizontalScroller 
+                            items={incompatibleCrops.map(c => ({...c, slug: `/cultivos/${c.slug}`}))}
+                            title="Cultivos a Evitar"
+                            icon={ShieldAlert}
+                        />
                          <Card>
                             <CardHeader>
                                 <CardTitle className="text-lg flex items-center gap-2"><MapPin className="h-5 w-5 text-blue-600"/>Regiones Principales</CardTitle>
@@ -392,20 +408,11 @@ export function CropDetailClient({
             <AccordionItem value="item-3">
                 <AccordionTrigger className="text-xl">Artículos y Guías Relacionados</AccordionTrigger>
                 <AccordionContent>
-                     <Card className="mt-4">
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2"><BookOpen className="h-5 w-5 text-amber-600"/>Para Aprender Más</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                             {relatedArticles.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                     {relatedArticles.map(a => <ItemCard key={a.id} item={a} />)}
-                                </div>
-                            ) : (
-                                <p className="text-muted-foreground text-sm">No hay artículos o guías relacionados para este cultivo todavía.</p>
-                            )}
-                        </CardContent>
-                    </Card>
+                     <HorizontalScroller 
+                        items={relatedArticles}
+                        title="Para Aprender Más"
+                        icon={BookOpen}
+                    />
                 </AccordionContent>
             </AccordionItem>
         </Accordion>

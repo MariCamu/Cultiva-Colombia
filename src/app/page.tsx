@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, ExternalLink } from "lucide-react";
+import { Search, ExternalLink, BookOpen } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import type { EducationalGuideDocument } from "@/lib/educational-guides-structure";
 
 const popularCrops = [
   { 
@@ -34,34 +37,27 @@ const popularCrops = [
   },
 ];
 
-const recentArticles = [
-  { 
-    title: "Control de Plagas Casero y Orgánico", 
-    description: "Aprende a proteger tus cultivos de forma natural y efectiva sin químicos.",
-    imgSrc: "https://placehold.co/400x250.png",
-    imgAlt: "Control de plagas orgánico",
-    hint: "garden pests",
-    href: "/articulos" 
-  },
-  { 
-    title: "El Arte del Compostaje: Nutriendo tu Tierra", 
-    description: "Descubre cómo transformar desechos orgánicos en abono rico para tus plantas.",
-    imgSrc: "https://placehold.co/400x250.png",
-    imgAlt: "Compostaje casero",
-    hint: "compost bin",
-    href: "/articulos"
-  },
-  { 
-    title: "Guía Práctica para la Siembra en Macetas", 
-    description: "Ideal para espacios pequeños. Cultiva tus propios alimentos en balcones y patios.",
-    imgSrc: "https://placehold.co/400x250.png",
-    imgAlt: "Siembra en macetas",
-    hint: "potted plants",
-    href: "/articulos"
-  },
-];
+async function getRecentGuides(): Promise<EducationalGuideDocument[]> {
+    try {
+        const guidesRef = collection(db, 'guias_educativas');
+        // Order by title as a proxy for recency if no timestamp is available.
+        // For a true "recent" feature, a createdAt timestamp field would be needed.
+        const q = query(guidesRef, orderBy('titulo', 'asc'), limit(3));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...(doc.data() as Omit<EducationalGuideDocument, 'id'>)
+        }));
+    } catch (error) {
+        console.error("Error fetching recent guides for homepage:", error);
+        return [];
+    }
+}
 
-export default function HomePage() {
+
+export default async function HomePage() {
+  const recentGuides = await getRecentGuides();
+
   return (
     <div className="space-y-10">
       <section 
@@ -165,32 +161,32 @@ export default function HomePage() {
       </section>
 
       <section className="py-12 bg-muted/30">
-        <h2 className="text-3xl font-nunito font-bold tracking-tight text-foreground text-center mb-10">Artículos Recientes</h2>
+        <h2 className="text-3xl font-nunito font-bold tracking-tight text-foreground text-center mb-10">Guías Recientes</h2>
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8 px-4">
-          {recentArticles.map((article) => (
-            <Card key={article.title} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
-               <Image
-                src={article.imgSrc}
-                alt={article.imgAlt}
-                width={400}
-                height={250}
-                className="w-full h-52 object-cover"
-                data-ai-hint={article.hint}
-              />
+          {recentGuides.map((guide) => (
+            <Card key={guide.id} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+               <div className="w-full h-52 bg-primary/10 flex items-center justify-center">
+                  <BookOpen className="h-20 w-20 text-primary/50" />
+               </div>
               <CardHeader>
-                <CardTitle className="text-xl font-nunito font-bold">{article.title}</CardTitle>
+                <CardTitle className="text-xl font-nunito font-bold">{guide.titulo}</CardTitle>
               </CardHeader>
               <CardContent className="flex-grow">
-                <p className="text-muted-foreground text-sm">{article.description}</p>
+                <p className="text-muted-foreground text-sm line-clamp-3">{guide.subtitulo}</p>
               </CardContent>
               <div className="p-6 pt-0">
                 <Button asChild variant="outline">
-                  <Link href={article.href}>Leer más <ExternalLink className="ml-2 h-4 w-4" /></Link>
+                  <Link href={'/guias'}>Ver Guía <ExternalLink className="ml-2 h-4 w-4" /></Link>
                 </Button>
               </div>
             </Card>
           ))}
         </div>
+         <div className="text-center mt-10">
+            <Button asChild variant="default">
+                <Link href="/guias">Ver Todas las Guías</Link>
+            </Button>
+         </div>
       </section>
 
        <section className="text-center py-12 px-4">
