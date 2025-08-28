@@ -290,7 +290,7 @@ export function CropDetailClient({
           <div className="space-y-6">
               <h2 className="text-3xl font-nunito font-bold text-center">Guía de Cultivo Paso a Paso</h2>
                <Tabs defaultValue={crop.metodos[0].id} className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
                     {crop.metodos.map(method => (
                         <TabsTrigger key={method.id} value={method.id}>{humanizeTerm(method.nombre)}</TabsTrigger>
                     ))}
@@ -316,35 +316,33 @@ export function CropDetailClient({
                             <CardHeader>
                                 <CardTitle className="text-lg">Datos Técnicos Clave</CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="flex items-start gap-3 col-span-2">
-                                        <Droplets className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Riego</p>
-                                            <p className="font-sans text-base">{crop.tecnica.riego}</p>
-                                        </div>
+                            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="flex items-start gap-3 col-span-1 sm:col-span-2">
+                                    <Droplets className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Riego</p>
+                                        <p className="font-sans text-base">{crop.tecnica.riego}</p>
                                     </div>
-                                     <div className="flex items-start gap-3">
-                                        <Thermometer className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Temperatura Ideal</p>
-                                            <p className="font-semibold">{crop.tecnica.temperatura_ideal}</p>
-                                        </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <Thermometer className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Temperatura Ideal</p>
+                                        <p className="font-semibold">{crop.tecnica.temperatura_ideal}</p>
                                     </div>
-                                    <div className="flex items-start gap-3">
-                                        <Sun className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">Luz Solar</p>
-                                            <p className="font-semibold">{crop.tecnica.luz_solar}</p>
-                                        </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <Sun className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Luz Solar</p>
+                                        <p className="font-semibold">{crop.tecnica.luz_solar}</p>
                                     </div>
-                                    <div className="flex items-start gap-3 col-span-2">
-                                        <Beaker className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">pH del Suelo</p>
-                                            <p className="font-semibold">{crop.tecnica.ph_suelo}</p>
-                                        </div>
+                                </div>
+                                <div className="flex items-start gap-3 col-span-1 sm:col-span-2">
+                                    <Beaker className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">pH del Suelo</p>
+                                        <p className="font-semibold">{crop.tecnica.ph_suelo}</p>
                                     </div>
                                 </div>
                             </CardContent>

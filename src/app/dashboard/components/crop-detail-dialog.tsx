@@ -265,19 +265,20 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'diario');
         await addDoc(logCollectionRef, logData);
 
-        // FIX: Update next watering task when manually logging water
+        // Update last note and reset watering task if applicable
+        const cropRef = doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id);
+        const updateData: { lastNote: string, 'nextTask.dueInDays'?: number } = {
+            lastNote: content,
+        };
+        
         if (type === 'water') {
-            const cropRef = doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id);
+            const wateringFrequency = crop.datos_programaticos?.frecuencia_riego_dias || 7;
             const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
             const daysSincePlantedToday = differenceInDays(startOfDay(new Date()), plantedDate);
-            const wateringFrequency = crop.datos_programaticos?.frecuencia_riego_dias || 7; // Safeguard
-            const nextDueInDays = daysSincePlantedToday + wateringFrequency;
-            
-            await updateDoc(cropRef, {
-                'nextTask.dueInDays': nextDueInDays,
-                'lastNote': content,
-            });
+            updateData['nextTask.dueInDays'] = daysSincePlantedToday + wateringFrequency;
         }
+        
+        await updateDoc(cropRef, updateData);
 
         if (!isInitialEntry) {
             toast({ title: "Diario actualizado", description: "Se ha añadido una nueva entrada."});
