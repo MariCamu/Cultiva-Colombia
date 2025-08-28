@@ -265,11 +265,13 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id, 'diario');
         await addDoc(logCollectionRef, logData);
 
-        if (type === 'water' && crop.datos_programaticos) {
+        // FIX: Update next watering task when manually logging water
+        if (type === 'water') {
             const cropRef = doc(db, 'usuarios', user.uid, 'cultivos_del_usuario', crop.id);
             const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
             const daysSincePlantedToday = differenceInDays(startOfDay(new Date()), plantedDate);
-            const nextDueInDays = daysSincePlantedToday + crop.datos_programaticos.frecuencia_riego_dias;
+            const wateringFrequency = crop.datos_programaticos?.frecuencia_riego_dias || 7; // Safeguard
+            const nextDueInDays = daysSincePlantedToday + wateringFrequency;
             
             await updateDoc(cropRef, {
                 'nextTask.dueInDays': nextDueInDays,
