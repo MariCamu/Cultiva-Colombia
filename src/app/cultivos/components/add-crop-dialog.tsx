@@ -18,7 +18,7 @@ import type { SampleCrop } from '@/models/crop-model';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Loader2, AlertCircle } from 'lucide-react';
-import { format, subDays } from 'date-fns';
+import { format, subDays, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -30,7 +30,7 @@ interface AddCropDialogProps {
 
 export function AddCropDialog({ crop, children }: AddCropDialogProps) {
   const [open, setOpen] = useState(false);
-  const [plantingDate, setPlantingDate] = useState<Date | undefined>(new Date());
+  const [stageStartDate, setStageStartDate] = useState<Date | undefined>(new Date());
   const [currentStage, setCurrentStage] = useState<string>(crop.lifeCycle?.[0]?.name || 'Semilla');
   const [initialNotes, setInitialNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -56,44 +56,48 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
       return;
     }
 
-    if (!plantingDate) {
-        toast({ title: "Fecha requerida", description: "Por favor, selecciona una fecha de plantación.", variant: "destructive" });
+    if (!stageStartDate) {
+        toast({ title: "Fecha requerida", description: "Por favor, selecciona una fecha de inicio para la etapa.", variant: "destructive" });
         return;
     }
 
     setIsSaving(true);
 
-    let finalPlantingDate = plantingDate;
+    let finalPlantingDate = startOfDay(stageStartDate);
 
-    // Adjust planting date based on the selected stage to reflect correct progress
+    // ** LÓGICA CORREGIDA **
+    // Si el usuario selecciona una etapa que no es la primera, calculamos la fecha de
+    // siembra real restando la duración de las etapas anteriores.
     if (crop.lifeCycle && crop.lifeCycle.length > 0) {
       const selectedStageIndex = crop.lifeCycle.findIndex(stage => stage.name === currentStage);
+      
       if (selectedStageIndex > 0) {
-        // Calculate the duration of previous stages
         let daysToSubtract = 0;
+        // Sumamos la duración de todas las etapas PREVIAS a la seleccionada
         for (let i = 0; i < selectedStageIndex; i++) {
-            // Use the detailed lifeCycle data passed in the crop prop
-            daysToSubtract += crop.lifeCycle[i].duracion_dias_tipico || 0;
+          daysToSubtract += crop.lifeCycle[i].duracion_dias_tipico || 0;
         }
-        finalPlantingDate = subDays(plantingDate, daysToSubtract);
+        
+        // Restamos los días calculados desde la fecha que el usuario seleccionó
+        // como inicio de la etapa actual.
+        if (daysToSubtract > 0) {
+          finalPlantingDate = subDays(finalPlantingDate, daysToSubtract);
+        }
       }
     }
-
 
     const dataToAdd = {
       ficha_cultivo_id: crop.id,
       nombre_cultivo_personal: crop.name,
-      fecha_plantacion: finalPlantingDate,
+      fecha_plantacion: finalPlantingDate, // Esta es la fecha ajustada
       imageUrl: crop.imageUrl,
       dataAiHint: crop.dataAiHint,
       daysToHarvest: crop.datos_programaticos.dias_para_cosecha,
-      // Guardar el objeto completo de datos programáticos
       datos_programaticos: crop.datos_programaticos,
       estado_actual_cultivo: currentStage,
       notas_progreso_inicial: initialNotes,
       nextTask: { 
         name: 'Regar', 
-        // Establecer el primer riego basado en la frecuencia
         dueInDays: crop.datos_programaticos.frecuencia_riego_dias,
         iconName: 'Droplets' 
       },
@@ -175,18 +179,18 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
                     variant={"outline"}
                     className={cn(
                     "w-full justify-start text-left font-normal",
-                    !plantingDate && "text-muted-foreground"
+                    !stageStartDate && "text-muted-foreground"
                     )}
                 >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {plantingDate ? format(plantingDate, "PPP", { locale: es }) : <span>Elige una fecha</span>}
+                    {stageStartDate ? format(stageStartDate, "PPP", { locale: es }) : <span>Elige una fecha</span>}
                 </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                 <Calendar
                     mode="single"
-                    selected={plantingDate}
-                    onSelect={setPlantingDate}
+                    selected={stageStartDate}
+                    onSelect={setStageStartDate}
                     disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                     initialFocus
                     locale={es}
