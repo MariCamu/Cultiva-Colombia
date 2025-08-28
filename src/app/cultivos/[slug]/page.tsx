@@ -127,7 +127,7 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
     }
 
     // Adapt data for AddCropDialog
-    const sampleCrop: SampleCrop & { lifeCycleDetails?: CropTechnicalSheet['cicloVida'] } = {
+    const sampleCrop: SampleCrop = {
         id: crop.id,
         name: crop.nombre,
         description: crop.descripcion,
@@ -140,8 +140,7 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
         plantType: crop.tipo_planta as SampleCrop['plantType'],
         difficulty: 'Media',
         datos_programaticos: crop.datos_programaticos,
-        lifeCycle: crop.cicloVida.map(etapa => ({ name: etapa.etapa })),
-        lifeCycleDetails: crop.cicloVida, // Pass full details for progress calculation
+        lifeCycle: crop.cicloVida.map(etapa => ({ name: etapa.etapa, duracion_dias_tipico: etapa.duracion_dias_tipico || 0 })),
         pancoger: crop.tags.includes('pancoger'),
         patrimonial: crop.tags.includes('patrimonial'),
         sembrable_en_casa: 'sí',

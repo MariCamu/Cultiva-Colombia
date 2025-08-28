@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Progress } from "@/components/ui/progress";
-import { MapPin, Home, User, Leaf, Clock, Sun, ChevronLeft, ChevronRight, CheckCircle, RefreshCw, Star, PlusCircle, Carrot, Wheat, BookHeart, Building, Sprout, Thermometer } from 'lucide-react';
+import { MapPin, Home, User, Leaf, Clock, Sun, ChevronLeft, ChevronRight, CheckCircle, RefreshCw, Star, PlusCircle, Carrot, Wheat, BookHeart, Building, Sprout, Thermometer, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -18,10 +18,9 @@ import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { AddCropDialog } from '../cultivos/components/add-crop-dialog';
 import type { SampleCrop } from '@/models/crop-model';
-
-// NOTE: sampleCropsData has been removed as the app will now fetch data from Firestore.
-// The component is now prepared to handle an empty state while the database is being populated.
-const sampleCropsData: SampleCrop[] = [];
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query } from 'firebase/firestore';
+import type { CropTechnicalSheet } from '@/lib/crop-data-structure';
 
 interface Step {
   id: string;
@@ -150,7 +149,7 @@ const testPlantTypeMap: { [key: string]: string | null } = {
 const testSpaceMap: { [key: string]: string | null } = {
   'pequeno': 'Maceta pequeña (1–3 L)',
   'mediano': 'Maceta mediana (4–10 L)',
-  'grande': 'Maceta grande o jardín (10+ L)',
+  'grande': 'Maceta grande (10+ L)',
 };
 
 
@@ -169,30 +168,81 @@ const GenericFruitIcon = (props: React.SVGProps<SVGSVGElement>) => (
 )
 
 const getCropTypeIcon = (plantType: string) => {
-    switch (plantType) {
-        case 'Leguminosas': return BeanIcon;
-        case 'Tubérculos':
-        case 'Hortalizas de raíz': return CarrotIconSvg;
-        case 'Frutales':
-        case 'Hortalizas de fruto': return GenericFruitIcon;
-        case 'Cereales': return Wheat;
-        case 'Plantas aromáticas':
-        case 'Hortalizas de hoja': return LeafIconSvg;
-        default: return LeafIconSvg;
-    }
+    const pt = plantType?.toLowerCase() || '';
+    if (pt.includes('leguminosa')) return BeanIcon;
+    if (pt.includes('tubérculo') || pt.includes('raíz')) return CarrotIconSvg;
+    if (pt.includes('frutal') || pt.includes('fruto')) return GenericFruitIcon;
+    if (pt.includes('cereal')) return Wheat;
+    if (pt.includes('aromática') || pt.includes('hoja')) return LeafIconSvg;
+    return LeafIconSvg;
 };
 
-const getDifficultyStyles = (difficulty: number): { badge: string, iconBg: string, iconText: string } => {
-    if (difficulty <= 2) return { badge: 'bg-green-100 text-green-800 border-green-200', iconBg: 'bg-green-500', iconText: 'text-white' };
-    if (difficulty <= 4) return { badge: 'bg-yellow-100 text-yellow-800 border-yellow-200', iconBg: 'bg-yellow-500', iconText: 'text-white' };
+const getDifficultyStyles = (difficulty: SampleCrop['difficulty']): { badge: string, iconBg: string, iconText: string } => {
+    if (difficulty === 'Fácil') return { badge: 'bg-green-100 text-green-800 border-green-200', iconBg: 'bg-green-500', iconText: 'text-white' };
+    if (difficulty === 'Media') return { badge: 'bg-yellow-100 text-yellow-800 border-yellow-200', iconBg: 'bg-yellow-500', iconText: 'text-white' };
     return { badge: 'bg-red-100 text-red-800 border-red-200', iconBg: 'bg-red-600', iconText: 'text-white' };
 };
+
+// --- GET CROPS FROM FIRESTORE ---
+async function getAllCrops(): Promise<SampleCrop[]> {
+  const cropsCollectionRef = collection(db, 'fichas_tecnicas_cultivos');
+  const q = query(cropsCollectionRef);
+  const querySnapshot = await getDocs(q);
+  
+  return querySnapshot.docs.map(doc => {
+    const data = doc.data() as CropTechnicalSheet;
+    
+    let spaceRequired: SampleCrop['spaceRequired'] = 'Jardín'; // Default
+    if (data.tags.includes('maceta_pequena')) spaceRequired = 'Maceta pequeña (1–3 L)';
+    else if (data.tags.includes('maceta_mediana')) spaceRequired = 'Maceta mediana (4–10 L)';
+    else if (data.tags.includes('maceta_grande')) spaceRequired = 'Maceta grande (10+ L)';
+
+    return {
+      id: doc.id,
+      name: data.nombre,
+      description: data.descripcion,
+      regionSlugs: data.region.principal.map(r => r.toLowerCase()),
+      imageUrl: data.imagenes?.[0]?.url || 'https://placehold.co/300x200.png',
+      dataAiHint: 'crop field',
+      clima: data.clima.clase[0] as SampleCrop['clima'],
+      duration: 'Media (3–5 meses)',
+      spaceRequired: spaceRequired,
+      plantType: data.tipo_planta as SampleCrop['plantType'],
+      difficulty: data.dificultad as SampleCrop['difficulty'],
+      datos_programaticos: data.datos_programaticos,
+      lifeCycle: data.cicloVida.map(etapa => ({ name: etapa.etapa, duracion_dias_tipico: etapa.duracion_dias_tipico || 0 })),
+      pancoger: data.tags.includes('pancoger'),
+      patrimonial: data.tags.includes('patrimonial'),
+      sembrable_en_casa: 'sí',
+      educativo: 'no',
+    } as SampleCrop;
+  });
+}
+
 
 export default function TestPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<UserAnswers>(initialAnswers);
   const [showResults, setShowResults] = useState(false);
   const [filteredCrops, setFilteredCrops] = useState<SampleCrop[]>([]);
+  const [allCrops, setAllCrops] = useState<SampleCrop[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+
+  useEffect(() => {
+      const fetchCrops = async () => {
+          setIsLoading(true);
+          try {
+              const crops = await getAllCrops();
+              setAllCrops(crops);
+          } catch (error) {
+              console.error("Failed to fetch crops for test:", error);
+          } finally {
+              setIsLoading(false);
+          }
+      };
+      fetchCrops();
+  }, []);
 
   const handleAnswerChange = (stateKey: keyof UserAnswers, value: string) => {
     setAnswers(prev => ({ ...prev, [stateKey]: value }));
@@ -202,11 +252,11 @@ export default function TestPage() {
     if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      let maxDifficulty: number | null = null;
-      if (answers.experience === 'principiante' || (answers.experience === 'intermedio' && answers.learning === 'no')) {
-          maxDifficulty = 2;
+      let difficultyFilter: SampleCrop['difficulty'] | null = null;
+      if (answers.experience === 'principiante' || answers.learning === 'no') {
+          difficultyFilter = 'Fácil';
       } else if (answers.experience === 'intermedio') {
-          maxDifficulty = 4;
+          difficultyFilter = 'Media';
       }
 
       const regionFilter = answers.region !== 'any' ? answers.region : null;
@@ -214,14 +264,18 @@ export default function TestPage() {
       const spaceFilter = testSpaceMap[answers.space] || null;
       const plantTypeFilter = testPlantTypeMap[answers.plantType] || null;
       
-      const results = sampleCropsData.filter(crop => {
-          let matches = true;
-          if (regionFilter && !crop.regionSlugs.includes(regionFilter)) matches = false;
-          if (climaFilter && crop.clima.toLowerCase() !== climaFilter.toLowerCase()) matches = false;
-          if (spaceFilter && crop.spaceRequired !== spaceFilter) matches = false;
-          if (plantTypeFilter && crop.plantType !== plantTypeFilter) matches = false;
-          if (maxDifficulty !== null && crop.difficulty > maxDifficulty) matches = false;
-          return matches;
+      const results = allCrops.filter(crop => {
+          if (regionFilter && !crop.regionSlugs.includes(regionFilter)) return false;
+          if (climaFilter && !crop.clima.toLowerCase().includes(climaFilter)) return false;
+          if (spaceFilter && crop.spaceRequired !== spaceFilter) return false;
+          if (plantTypeFilter && crop.plantType !== plantTypeFilter) return false;
+          
+          if (difficultyFilter) {
+              if (difficultyFilter === 'Fácil' && crop.difficulty !== 'Fácil') return false;
+              if (difficultyFilter === 'Media' && !['Fácil', 'Media'].includes(crop.difficulty)) return false;
+          }
+          
+          return true;
       });
 
       setFilteredCrops(results);
@@ -240,6 +294,15 @@ export default function TestPage() {
       setAnswers(initialAnswers);
       setShowResults(false);
       setFilteredCrops([]);
+  }
+
+  if (isLoading) {
+      return (
+          <div className="flex flex-col items-center justify-center h-64">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <p className="mt-4 text-muted-foreground">Cargando cultivos...</p>
+          </div>
+      );
   }
 
   const progress = Math.round(((currentStep + 1) / steps.length) * 100);
@@ -331,7 +394,6 @@ export default function TestPage() {
                   {filteredCrops.map((crop) => {
                      const TypeIcon = getCropTypeIcon(crop.plantType);
                      const difficultyStyles = getDifficultyStyles(crop.difficulty);
-                     const difficultyText = crop.difficulty <= 2 ? 'Fácil' : crop.difficulty <=4 ? 'Media' : 'Difícil';
                     
                      return (
                         <Card key={crop.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
@@ -343,7 +405,7 @@ export default function TestPage() {
                                   <div>
                                       <CardTitle className="text-xl font-nunito font-bold">{crop.name}</CardTitle>
                                       <Badge variant="outline" className={cn("mt-1 w-fit font-nunito", difficultyStyles.badge)}>
-                                        Dificultad: {difficultyText}
+                                        Dificultad: {crop.difficulty}
                                       </Badge>
                                   </div>
                               </div>
@@ -401,5 +463,3 @@ export default function TestPage() {
     </div>
   );
 }
-
-    

@@ -22,7 +22,6 @@ import { format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import type { CropTechnicalSheet } from '@/lib/crop-data-structure';
 
 interface AddCropDialogProps {
   crop: SampleCrop;
@@ -72,11 +71,9 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
       if (selectedStageIndex > 0) {
         // Calculate the duration of previous stages
         let daysToSubtract = 0;
-        const fullTechnicalSheet = crop as SampleCrop & { lifeCycleDetails?: CropTechnicalSheet['cicloVida'] };
-        if (fullTechnicalSheet.lifeCycleDetails) {
-            for (let i = 0; i < selectedStageIndex; i++) {
-                daysToSubtract += fullTechnicalSheet.lifeCycleDetails[i].duracion_dias_tipico || 0;
-            }
+        for (let i = 0; i < selectedStageIndex; i++) {
+            // Use the detailed lifeCycle data passed in the crop prop
+            daysToSubtract += crop.lifeCycle[i].duracion_dias_tipico || 0;
         }
         finalPlantingDate = subDays(plantingDate, daysToSubtract);
       }

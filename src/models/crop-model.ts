@@ -6,7 +6,6 @@
 
 import type { Timestamp } from 'firebase/firestore';
 import type { ReactElement } from 'react';
-import type { CropTechnicalSheet } from './crop-data-structure';
 
 // --- USER PROFILE STRUCTURE ---
 // Firestore Path: /usuarios/{userId}
@@ -114,12 +113,10 @@ export interface SampleCrop {
     dias_para_cosecha: number;
     frecuencia_riego_dias: number;
   };
-  lifeCycle?: { name: string }[];
-  lifeCycleDetails?: CropTechnicalSheet['cicloVida'];
+  lifeCycle?: { name: string; duracion_dias_tipico: number; }[];
   pancoger: boolean;
   patrimonial: boolean;
   sembrable_en_casa: 'sí' | 'no' | 'parcialmente';
   educativo: 'sí' | 'no' | 'parcialmente';
   tags?: string[];
 }
-    
