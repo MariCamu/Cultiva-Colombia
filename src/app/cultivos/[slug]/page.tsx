@@ -6,6 +6,7 @@ import type { Pest } from '@/models/pest-model';
 import { doc, getDoc, collection, query, where, getDocs, documentId, type GeoPoint } from 'firebase/firestore';
 import { CropDetailClient } from './components/crop-detail-client';
 import type { SampleCrop } from '@/models/crop-model';
+import type { EducationalGuideDocument } from '@/lib/educational-guides-structure';
 
 
 interface CropDetailPageProps {
@@ -71,23 +72,46 @@ async function getRelatedCrops(cropSlugs: string[]): Promise<SimplifiedItem[]> {
   });
 }
 
-async function getRelatedArticles(articleSlugs: string[]): Promise<SimplifiedItem[]> {
-  if (!articleSlugs || articleSlugs.length === 0) return [];
-  const articlesRef = collection(db, 'articulos');
-  const q = query(articlesRef, where('slug', 'in', articleSlugs));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => {
-    const data = doc.data() as Article;
-    return {
-      id: doc.id,
-      slug: data.slug,
-      name: data.title,
-      summary: data.summary,
-      imageUrl: data.imageUrl,
-      dataAiHint: data.dataAiHint,
-    };
+async function getRelatedContent(cropSlug: string, articleSlugs: string[] = []): Promise<SimplifiedItem[]> {
+  const allContent: SimplifiedItem[] = [];
+
+  // 1. Fetch related articles by slug
+  if (articleSlugs && articleSlugs.length > 0) {
+    const articlesRef = collection(db, 'articulos');
+    const articlesQuery = query(articlesRef, where('slug', 'in', articleSlugs));
+    const articlesSnapshot = await getDocs(articlesQuery);
+    articlesSnapshot.forEach(doc => {
+        const data = doc.data();
+        allContent.push({
+            id: doc.id,
+            slug: `/articulos/${data.slug}`,
+            name: data.title,
+            summary: data.summary,
+            imageUrl: data.imageUrl,
+            dataAiHint: data.dataAiHint,
+        });
+    });
+  }
+
+  // 2. Fetch related educational guides by crop slug
+  const guidesRef = collection(db, 'guias_educativas');
+  const guidesQuery = query(guidesRef, where('cultivosRelacionados', 'array-contains', cropSlug));
+  const guidesSnapshot = await getDocs(guidesQuery);
+  guidesSnapshot.forEach(doc => {
+      const data = doc.data() as EducationalGuideDocument;
+      allContent.push({
+          id: doc.id,
+          slug: `/guias`, // Guides page for now, can be individual pages later
+          name: data.titulo,
+          summary: data.subtitulo,
+          imageUrl: 'https://placehold.co/400x250/EDF2E8/6B875E?text=Gu%C3%ADa', // Placeholder image for guides
+          dataAiHint: 'educational guide',
+      });
   });
+
+  return allContent;
 }
+
 
 export default async function CropDetailPage({ params }: CropDetailPageProps) {
     const crop = await getCropBySlug(params.slug);
@@ -124,10 +148,10 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
     };
 
     // Fetch related data in parallel
-    const [compatibleCrops, incompatibleCrops, relatedArticles, commonPests] = await Promise.all([
+    const [compatibleCrops, incompatibleCrops, relatedContent, commonPests] = await Promise.all([
         getRelatedCrops(crop.compatibilidades || []),
         getRelatedCrops(crop.incompatibilidades || []),
-        getRelatedArticles(crop.articulosRelacionados || []),
+        getRelatedContent(params.slug, crop.articulosRelacionados || []),
         getRelatedPests(crop.plagasComunes || [])
     ]);
 
@@ -137,7 +161,7 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
             sampleCrop={sampleCrop}
             compatibleCrops={compatibleCrops}
             incompatibleCrops={incompatibleCrops}
-            relatedArticles={relatedArticles}
+            relatedArticles={relatedContent} // Changed to relatedContent
             commonPests={commonPests}
         />
     );

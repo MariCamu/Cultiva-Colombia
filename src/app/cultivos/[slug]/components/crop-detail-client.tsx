@@ -53,7 +53,7 @@ interface CropDetailClientProps {
 
 // --- CARD COMPONENTS ---
 
-const ItemCard = ({ item, type }: { item: SimplifiedItem; type: 'crop' | 'article' }) => (
+const ItemCard = ({ item }: { item: SimplifiedItem }) => (
   <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
     <Image
       src={item.imageUrl}
@@ -68,8 +68,8 @@ const ItemCard = ({ item, type }: { item: SimplifiedItem; type: 'crop' | 'articl
     </CardHeader>
     <CardContent className="p-4 pt-0">
       <Button asChild variant="outline" size="sm">
-        <Link href={`/${type === 'crop' ? 'cultivos' : 'articulos'}/${item.slug}`}>
-            {type === 'crop' ? 'Ver Ficha' : 'Leer Más'} <ExternalLink className="ml-2 h-3 w-3" />
+        <Link href={`${item.slug}`}>
+            Ver Más <ExternalLink className="ml-2 h-3 w-3" />
         </Link>
       </Button>
     </CardContent>
@@ -349,7 +349,7 @@ export function CropDetailClient({
                                     <CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5 text-green-600"/>Cultivos Amigables</CardTitle>
                                 </CardHeader>
                                 <CardContent className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {compatibleCrops.map(c => <ItemCard key={c.id} item={c} type="crop" />)}
+                                    {compatibleCrops.map(c => <ItemCard key={c.id} item={{...c, slug: `/cultivos/${c.slug}`}} />)}
                                 </CardContent>
                             </Card>
                         )}
@@ -359,7 +359,7 @@ export function CropDetailClient({
                                     <CardTitle className="text-lg flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-red-600"/>Cultivos a Evitar</CardTitle>
                                 </CardHeader>
                                 <CardContent className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                     {incompatibleCrops.map(c => <ItemCard key={c.id} item={c} type="crop" />)}
+                                     {incompatibleCrops.map(c => <ItemCard key={c.id} item={{...c, slug: `/cultivos/${c.slug}`}} />)}
                                 </CardContent>
                             </Card>
                         )}
@@ -390,19 +390,19 @@ export function CropDetailClient({
                 </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-3">
-                <AccordionTrigger className="text-xl">Artículos Relacionados</AccordionTrigger>
+                <AccordionTrigger className="text-xl">Artículos y Guías Relacionados</AccordionTrigger>
                 <AccordionContent>
                      <Card className="mt-4">
                         <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2"><BookOpen className="h-5 w-5 text-amber-600"/>Artículos para Aprender Más</CardTitle>
+                            <CardTitle className="text-lg flex items-center gap-2"><BookOpen className="h-5 w-5 text-amber-600"/>Para Aprender Más</CardTitle>
                         </CardHeader>
                         <CardContent>
                              {relatedArticles.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                     {relatedArticles.map(a => <ItemCard key={a.id} item={a} type="article" />)}
+                                     {relatedArticles.map(a => <ItemCard key={a.id} item={a} />)}
                                 </div>
                             ) : (
-                                <p className="text-muted-foreground text-sm">No hay artículos relacionados para este cultivo todavía.</p>
+                                <p className="text-muted-foreground text-sm">No hay artículos o guías relacionados para este cultivo todavía.</p>
                             )}
                         </CardContent>
                     </Card>

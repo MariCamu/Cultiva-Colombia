@@ -21,8 +21,6 @@ import type { EducationalGuideDocument } from './educational-guides-structure';
 // 4. ¡Listo! Tus colecciones se llenarán con los datos.
 
 const pestsAndDiseasesData: Omit<Pest, 'slug' | 'imageUrl' | 'dataAiHint'>[] = [
-  // PEGA AQUÍ TUS DATOS DE PLAGAS Y ENFERMEDADES
-  // EJEMPLO DE ESTRUCTURA:
     {
       id: "pulgones",
       nombreComun: "Pulgones",
@@ -37,11 +35,10 @@ const pestsAndDiseasesData: Omit<Pest, 'slug' | 'imageUrl' | 'dataAiHint'>[] = [
 ];
 
 const pestImages: { [id: string]: { imageUrl: string; dataAiHint: string } } = {
-  // EJEMPLO:
-  // pulgones: { 
-  //   imageUrl: "https://.../imagen_pulgon.jpg", 
-  //   dataAiHint: "aphids on plant" 
-  // },
+  pulgones: { 
+    imageUrl: "https://firebasestorage.googleapis.com/v0/b/agrinavigate.firebasestorage.app/o/Pestes%2Fpulgon.jpg?alt=media&token=c27e2a39-c5d0-4e31-897d-6062cc8f0f0c", 
+    dataAiHint: "aphids on plant" 
+  },
 };
 
 async function seedPestsAndDiseases() {
@@ -81,8 +78,6 @@ async function seedPestsAndDiseases() {
 
 // --- DATOS PARA GUÍAS EDUCATIVAS ---
 const educationalGuidesData: Omit<EducationalGuideDocument, 'id'>[] = [
-    // PEGA AQUÍ TUS DATOS DE GUÍAS
-    // EJEMPLO:
     {
       "titulo": "🧫 Guía práctica: Inoculación de Rhizobium (frijol)",
       "subtitulo": "Fijación biológica de N para plantas más verdes",
@@ -102,7 +97,8 @@ const educationalGuidesData: Omit<EducationalGuideDocument, 'id'>[] = [
       "exito": [
         "Nódulos rosados a 4–6 semanas.",
         "Plantas verde sanas con menos N externo."
-      ]
+      ],
+      "cultivosRelacionados": ["lechuga", "cilantro", "fresa", "cebolla-larga", "aj-dulce", "pepino-cohombro", "espinaca", "jengibre", "calabacn", "perejil", "rbano", "crcuma", "yuca-dulce", "tomate-cherry", "acelga", "pepino-dulce", "maz", "pia", "frijol", "pimentn"]
     },
 ];
 
@@ -140,7 +136,7 @@ async function main() {
   
   // Decide qué sembrar descomentando las líneas que necesites:
   await seedPestsAndDiseases();
-  // await seedEducationalGuides();
+  await seedEducationalGuides();
   
   console.log('--- Proceso de Siembra Finalizado ---');
 }

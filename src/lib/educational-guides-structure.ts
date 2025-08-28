@@ -15,4 +15,5 @@ export interface EducationalGuideDocument {
   materiales?: string[];
   pasos?: string[];
   exito?: string[];
+  cultivosRelacionados?: string[]; // Array of crop slugs
 }
