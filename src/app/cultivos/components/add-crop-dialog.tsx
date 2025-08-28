@@ -65,7 +65,6 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
 
     let finalPlantingDate = startOfDay(stageStartDate);
 
-    // ** LÓGICA CORREGIDA **
     // Si el usuario selecciona una etapa que no es la primera, calculamos la fecha de
     // siembra real restando la duración de las etapas anteriores.
     if (crop.lifeCycle && crop.lifeCycle.length > 0) {
@@ -88,8 +87,8 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
 
     const dataToAdd = {
       ficha_cultivo_id: crop.id,
-      nombre_cultivo_personal: crop.name,
-      fecha_plantacion: finalPlantingDate, // Esta es la fecha ajustada
+      nombre_cultivo_personal: crop.name, // Usar el nombre completo y correcto
+      fecha_plantacion: finalPlantingDate,
       imageUrl: crop.imageUrl,
       dataAiHint: crop.dataAiHint,
       daysToHarvest: crop.datos_programaticos.dias_para_cosecha,
