@@ -335,10 +335,15 @@ function DashboardContent() {
         const plantedDate = startOfDay(new Date(data.fecha_plantacion.seconds * 1000));
         const daysSincePlanted = differenceInDays(startOfDay(new Date()), plantedDate);
         const progress = data.daysToHarvest > 0 ? Math.min(Math.round((daysSincePlanted / data.daysToHarvest) * 100), 100) : 0;
+        
+        // Defensive check for datos_programaticos
+        const datos_programaticos = data.datos_programaticos || { frecuencia_riego_dias: 7, dias_para_cosecha: 90 };
+
 
         return {
           id: doc.id,
           ...data,
+          datos_programaticos, // Ensure it's not undefined
           progress,
         } as UserCrop;
       }).filter((crop): crop is UserCrop => crop !== null);
@@ -505,7 +510,7 @@ function DashboardContent() {
 
   const allSimulatedTasks: SimulatedTask[] = userCrops
     .flatMap(crop => {
-        if (!crop.fecha_plantacion) return [];
+        if (!crop.fecha_plantacion || !crop.datos_programaticos) return [];
         
         const tasks: SimulatedTask[] = [];
         const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
@@ -517,16 +522,18 @@ function DashboardContent() {
         });
 
         // Generate next 2 watering tasks based on frequency
-        let currentDueDay = crop.nextTask.dueInDays;
-        const wateringFrequency = crop.datos_programaticos.frecuencia_riego_dias;
-        for (let i = 0; i < 2; i++) {
-            if (currentDueDay < crop.daysToHarvest) {
-                tasks.push({
-                    date: addDays(plantedDate, currentDueDay),
-                    description: `Regar ${crop.nombre_cultivo_personal}`,
-                    type: 'riego'
-                });
-                currentDueDay += wateringFrequency;
+        if (crop.nextTask && crop.datos_programaticos.frecuencia_riego_dias > 0) {
+            let currentDueDay = crop.nextTask.dueInDays;
+            const wateringFrequency = crop.datos_programaticos.frecuencia_riego_dias;
+            for (let i = 0; i < 2; i++) {
+                if (currentDueDay < crop.daysToHarvest) {
+                    tasks.push({
+                        date: addDays(plantedDate, currentDueDay),
+                        description: `Regar ${crop.nombre_cultivo_personal}`,
+                        type: 'riego'
+                    });
+                    currentDueDay += wateringFrequency;
+                }
             }
         }
         
