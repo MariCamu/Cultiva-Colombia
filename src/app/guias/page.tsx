@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
 import type { EducationalGuideDocument } from '@/lib/educational-guides-structure';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { BookOpen, Info, CheckCircle, FlaskConical, Recycle, Search } from 'lucide-react';
