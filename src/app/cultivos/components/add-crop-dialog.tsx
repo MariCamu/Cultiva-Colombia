@@ -208,7 +208,7 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
                 <SelectValue placeholder="Selecciona una etapa" />
               </SelectTrigger>
               <SelectContent>
-                {(crop.lifeCycle && crop.lifeCycle.length > 0 ? crop.lifeCycle : [{ name: 'Semilla' }, { name: 'Plántula' }, { name: 'Adulto' }]).map(stage => (
+                {(crop.lifeCycle && crop.lifeCycle.length > 0 ? crop.lifeCycle : [{ name: 'Semilla', duracion_dias_tipico: 0 }]).map(stage => (
                     <SelectItem key={stage.name} value={stage.name}>
                         {stage.name}
                     </SelectItem>

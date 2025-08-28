@@ -88,7 +88,7 @@ async function getSampleCrops(): Promise<SampleCrop[]> {
       plantType: data.tipo_planta as SampleCrop['plantType'],
       difficulty: difficultyLabel,
       datos_programaticos: data.datos_programaticos,
-      lifeCycle: data.cicloVida.map(etapa => ({ name: etapa.etapa })),
+      lifeCycle: data.cicloVida.map(etapa => ({ name: etapa.etapa, duracion_dias_tipico: etapa.duracion_dias_tipico || 0 })),
       pancoger: data.tags.includes('pancoger'),
       patrimonial: data.tags.includes('patrimonial'),
       sembrable_en_casa: 'sí',
