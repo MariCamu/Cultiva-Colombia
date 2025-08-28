@@ -160,14 +160,26 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         const sheetData = docSnap.data() as CropTechnicalSheet;
         setTechnicalSheet(sheetData);
 
-        // Determine current life cycle stage
+        // ** LÓGICA CORREGIDA PARA DETERMINAR LA ETAPA ACTUAL **
         let daysAccumulated = 0;
-        for (const stage of sheetData.cicloVida.sort((a,b) => a.orden - b.orden)) {
-            daysAccumulated += stage.duracion_dias_tipico || 0;
-            if (daysSincePlanted <= daysAccumulated) {
-                setCurrentLifeCycleStage(stage);
-                break;
-            }
+        const sortedStages = sheetData.cicloVida.sort((a, b) => a.orden - b.orden);
+
+        for (const stage of sortedStages) {
+          const stageDuration = stage.duracion_dias_tipico || 0;
+          // Si los días desde la siembra son MENORES que el final de esta etapa,
+          // entonces estamos en esta etapa.
+          if (daysSincePlanted <= daysAccumulated + stageDuration) {
+            setCurrentLifeCycleStage(stage);
+            break;
+          }
+          // Si no, sumamos la duración de esta etapa y continuamos al siguiente ciclo.
+          daysAccumulated += stageDuration;
+        }
+
+        // Si después del bucle no se encontró una etapa (por si daysSincePlanted es mayor que todo el ciclo),
+        // se asigna la última etapa.
+        if (!currentLifeCycleStage && sortedStages.length > 0) {
+            setCurrentLifeCycleStage(sortedStages[sortedStages.length - 1]);
         }
 
       } else {
@@ -273,6 +285,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
         
         if (type === 'water') {
             const wateringFrequency = crop.datos_programaticos?.frecuencia_riego_dias || 7;
+            // ** LÓGICA CORREGIDA **: La próxima tarea es desde HOY + la frecuencia.
             const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
             const daysSincePlantedToday = differenceInDays(startOfDay(new Date()), plantedDate);
             updateData['nextTask.dueInDays'] = daysSincePlantedToday + wateringFrequency;
