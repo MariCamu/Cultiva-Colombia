@@ -166,14 +166,7 @@ export default async function HomePage() {
           {recentGuides.map((guide) => (
             <Card key={guide.id} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
                <div className="w-full h-52 bg-primary/10 flex items-center justify-center">
-                  <Image
-                    src="https://placehold.co/400x250/EDF2E8/6B875E?text=Gu%C3%ADa"
-                    alt={`Guía sobre ${guide.titulo}`}
-                    width={400}
-                    height={250}
-                    className="w-full h-52 object-cover"
-                    data-ai-hint="educational guide"
-                  />
+                  <BookOpen className="h-20 w-20 text-primary/30" />
                </div>
               <CardHeader>
                 <CardTitle className="text-xl font-nunito font-bold">{guide.titulo}</CardTitle>

@@ -57,14 +57,20 @@ interface CropDetailClientProps {
 
 const ItemCard = ({ item }: { item: SimplifiedItem }) => (
   <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow w-64 flex-shrink-0">
-    <Image
-      src={item.imageUrl}
-      alt={`Imagen para ${item.name}`}
-      width={400}
-      height={250}
-      className="w-full h-32 object-cover"
-      data-ai-hint={item.dataAiHint || 'crop field'}
-    />
+     {item.imageUrl.includes('placehold.co') ? (
+        <div className="w-full h-32 bg-primary/10 flex items-center justify-center">
+            <BookOpen className="h-12 w-12 text-primary/50" />
+        </div>
+    ) : (
+        <Image
+            src={item.imageUrl}
+            alt={`Imagen para ${item.name}`}
+            width={400}
+            height={250}
+            className="w-full h-32 object-cover"
+            data-ai-hint={item.dataAiHint || 'crop field'}
+        />
+    )}
     <CardHeader className="flex-grow p-4">
       <CardTitle className="text-md font-nunito font-bold line-clamp-2">{item.name}</CardTitle>
     </CardHeader>
@@ -231,13 +237,6 @@ export function CropDetailClient({
 }: CropDetailClientProps) {
   const { user, userProfile } = useAuth();
   
-  const dataTecnicos = [
-      { icon: Droplets, label: "Riego", value: crop.tecnica.riego },
-      { icon: Thermometer, label: "Temperatura Ideal", value: crop.tecnica.temperatura_ideal },
-      { icon: Sun, label: "Luz Solar", value: crop.tecnica.luz_solar },
-      { icon: Beaker, label: "pH del Suelo", value: crop.tecnica.ph_suelo },
-  ];
-
   const mainImage = crop.imagenes?.[0];
 
   const userRegion = userProfile?.region;
@@ -310,26 +309,47 @@ export function CropDetailClient({
         <h2 className="text-3xl font-nunito font-bold text-center mb-6">Información Adicional</h2>
         <Accordion type="multiple" defaultValue={["item-1", "item-2", "item-3", "item-4"]} className="w-full">
             <AccordionItem value="item-1">
-                <AccordionTrigger className="text-xl">Ciclo de Vida y Datos Técnicos</AccordionTrigger>
+                <AccordionTrigger className="text-xl">Datos Técnicos y Ciclo de Vida</AccordionTrigger>
                 <AccordionContent>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
-                        <LifeCycleCard stages={crop.cicloVida} />
                         <Card>
                             <CardHeader>
-                                <CardTitle className="text-lg">Datos Técnicos</CardTitle>
+                                <CardTitle className="text-lg">Datos Técnicos Clave</CardTitle>
                             </CardHeader>
-                            <CardContent className="grid grid-cols-2 gap-6">
-                                {dataTecnicos.map(item => (
-                                    <div key={item.label} className="flex items-center gap-3">
-                                        <item.icon className="h-6 w-6 text-muted-foreground"/>
+                            <CardContent className="space-y-6">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="flex items-start gap-3 col-span-2">
+                                        <Droplets className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
                                         <div>
-                                            <p className="text-sm text-muted-foreground">{item.label}</p>
-                                            <p className="font-semibold">{item.value}</p>
+                                            <p className="text-sm text-muted-foreground">Riego</p>
+                                            <p className="font-sans text-base">{crop.tecnica.riego}</p>
                                         </div>
                                     </div>
-                                ))}
+                                     <div className="flex items-start gap-3">
+                                        <Thermometer className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Temperatura Ideal</p>
+                                            <p className="font-semibold">{crop.tecnica.temperatura_ideal}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <Sun className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">Luz Solar</p>
+                                            <p className="font-semibold">{crop.tecnica.luz_solar}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3 col-span-2">
+                                        <Beaker className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
+                                        <div>
+                                            <p className="text-sm text-muted-foreground">pH del Suelo</p>
+                                            <p className="font-semibold">{crop.tecnica.ph_suelo}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
+                        <LifeCycleCard stages={crop.cicloVida} />
                     </div>
                 </AccordionContent>
             </AccordionItem>
