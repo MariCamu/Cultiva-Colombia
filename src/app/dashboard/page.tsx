@@ -253,7 +253,7 @@ function DashboardContent() {
             const today = startOfDay(new Date());
 
             for (const crop of crops) {
-                if (!crop.fecha_plantacion) continue;
+                if (!crop.fecha_plantacion || !crop.datos_programaticos) continue;
                 const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
                 
                 // Fetch the full technical sheet to get the specific watering instructions
@@ -280,7 +280,7 @@ function DashboardContent() {
                 }
 
                 // Check for next task (riego/abono)
-                if (crop.nextTask && crop.datos_programaticos) {
+                if (crop.nextTask) {
                     const daysSincePlanted = differenceInDays(today, plantedDate);
                     // Use dueInDays from the specific user crop data
                     if (daysSincePlanted >= crop.nextTask.dueInDays) {
@@ -328,7 +328,12 @@ function DashboardContent() {
         const data = doc.data();
         // Basic validation to ensure required fields exist
         if (!data.fecha_plantacion || typeof data.daysToHarvest !== 'number' || !data.nextTask || !data.datos_programaticos) {
-            return null;
+            return {
+              id: doc.id,
+              ...data,
+              progress: 0,
+              datos_programaticos: { frecuencia_riego_dias: 7, dias_para_cosecha: data.daysToHarvest || 90 }, // Fallback
+            } as UserCrop;
         }
 
         const plantedDate = startOfDay(new Date(data.fecha_plantacion.seconds * 1000));

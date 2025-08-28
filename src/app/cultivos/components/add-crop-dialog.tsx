@@ -18,10 +18,11 @@ import type { SampleCrop } from '@/models/crop-model';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Loader2, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import type { CropTechnicalSheet } from '@/lib/crop-data-structure';
 
 interface AddCropDialogProps {
   crop: SampleCrop;
@@ -63,10 +64,29 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
 
     setIsSaving(true);
 
+    let finalPlantingDate = plantingDate;
+
+    // Adjust planting date based on the selected stage to reflect correct progress
+    if (crop.lifeCycle && crop.lifeCycle.length > 0) {
+      const selectedStageIndex = crop.lifeCycle.findIndex(stage => stage.name === currentStage);
+      if (selectedStageIndex > 0) {
+        // Calculate the duration of previous stages
+        let daysToSubtract = 0;
+        const fullTechnicalSheet = crop as SampleCrop & { lifeCycleDetails?: CropTechnicalSheet['cicloVida'] };
+        if (fullTechnicalSheet.lifeCycleDetails) {
+            for (let i = 0; i < selectedStageIndex; i++) {
+                daysToSubtract += fullTechnicalSheet.lifeCycleDetails[i].duracion_dias_tipico || 0;
+            }
+        }
+        finalPlantingDate = subDays(plantingDate, daysToSubtract);
+      }
+    }
+
+
     const dataToAdd = {
       ficha_cultivo_id: crop.id,
       nombre_cultivo_personal: crop.name,
-      fecha_plantacion: plantingDate,
+      fecha_plantacion: finalPlantingDate,
       imageUrl: crop.imageUrl,
       dataAiHint: crop.dataAiHint,
       daysToHarvest: crop.datos_programaticos.dias_para_cosecha,
@@ -151,7 +171,7 @@ export function AddCropDialog({ crop, children }: AddCropDialogProps) {
 
         <form onSubmit={handleAddCrop} className="space-y-4">
           <div>
-            <Label htmlFor="planting-date">Fecha de Plantación/Inicio de Seguimiento</Label>
+            <Label htmlFor="planting-date">Fecha de Inicio de Etapa</Label>
              <Popover>
                 <PopoverTrigger asChild>
                 <Button

@@ -6,6 +6,7 @@
 
 import type { Timestamp } from 'firebase/firestore';
 import type { ReactElement } from 'react';
+import type { CropTechnicalSheet } from './crop-data-structure';
 
 // --- USER PROFILE STRUCTURE ---
 // Firestore Path: /usuarios/{userId}
@@ -114,6 +115,7 @@ export interface SampleCrop {
     frecuencia_riego_dias: number;
   };
   lifeCycle?: { name: string }[];
+  lifeCycleDetails?: CropTechnicalSheet['cicloVida'];
   pancoger: boolean;
   patrimonial: boolean;
   sembrable_en_casa: 'sí' | 'no' | 'parcialmente';

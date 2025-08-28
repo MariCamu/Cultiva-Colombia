@@ -127,7 +127,7 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
     }
 
     // Adapt data for AddCropDialog
-    const sampleCrop: SampleCrop = {
+    const sampleCrop: SampleCrop & { lifeCycleDetails?: CropTechnicalSheet['cicloVida'] } = {
         id: crop.id,
         name: crop.nombre,
         description: crop.descripcion,
@@ -141,6 +141,7 @@ export default async function CropDetailPage({ params }: CropDetailPageProps) {
         difficulty: 'Media',
         datos_programaticos: crop.datos_programaticos,
         lifeCycle: crop.cicloVida.map(etapa => ({ name: etapa.etapa })),
+        lifeCycleDetails: crop.cicloVida, // Pass full details for progress calculation
         pancoger: crop.tags.includes('pancoger'),
         patrimonial: crop.tags.includes('patrimonial'),
         sembrable_en_casa: 'sí',
