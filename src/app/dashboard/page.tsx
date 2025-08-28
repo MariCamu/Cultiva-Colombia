@@ -21,7 +21,7 @@ import { addDays, format, isToday, isTomorrow, differenceInDays, startOfDay, isP
 import { es } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc, type Timestamp, addDoc, serverTimestamp, where, getDocs, updateDoc, writeBatch, getDoc, runTransaction, increment, orderBy, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, type DocumentData, type QueryDocumentSnapshot, doc, deleteDoc, type Timestamp, addDoc, serverTimestamp, where, getDocs, updateDoc, writeBatch, getDoc, runTransaction, increment, orderBy, setDoc, limit } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 import { fetchWeatherForecast } from '@/services/weatherService';
 import { getWeatherDescription, getWeatherIcon, type WeatherData, willItRainSoon } from '@/lib/weather-utils';
 import type { UserCrop, UserProfile, UserAlert } from '@/models/crop-model';
+import type { EducationalGuideDocument } from '@/lib/educational-guides-structure';
 
 
 interface SimulatedTask {
@@ -50,12 +51,6 @@ const ALERT_ICONS: { [key: string]: React.ElementType } = {
     cosecha: Leaf,
     info: CloudRain
 }
-
-const recommendedArticles = [
-    { id: '1', title: 'Guía de compostaje para principiantes', href: '/articulos' },
-    { id: '2', title: 'Cómo regar tus tomates correctamente', href: '/articulos' },
-    { id: '3', title: 'Control orgánico de pulgones', href: '/articulos' },
-];
 
 const formatHarvestTime = (days: number, progress: number) => {
   if (progress >= 100) return '¡Listo para Cosechar!';
@@ -234,6 +229,9 @@ function DashboardContent() {
 
   const [alerts, setAlerts] = useState<UserAlert[]>([]);
   const [isAlertsLoading, setIsAlertsLoading] = useState(true);
+  
+  const [recommendedGuides, setRecommendedGuides] = useState<EducationalGuideDocument[]>([]);
+
 
   const [harvestingCrop, setHarvestingCrop] = useState<UserCrop | null>(null);
   const [harvestWeight, setHarvestWeight] = useState('');
@@ -246,15 +244,6 @@ function DashboardContent() {
   const [aiError, setAiError] = useState<string | null>(null);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | undefined>(new Date());
 
-    /**
-     * This function runs automatically when the dashboard loads.
-     * It checks all user's crops and creates alerts for tasks that are due.
-     * It checks for:
-     * 1. Harvest alerts: If a crop is ready to be harvested.
-     * 2. Next task alerts: Based on `nextTask.dueInDays` (e.g., watering).
-     * It writes these alerts to the `usuarios/{userId}/alertas` subcollection.
-     * The function is designed to not create duplicate alerts for the same task.
-     */
     const checkForUpcomingTasks = async (crops: UserCrop[]) => {
         if (!user) return;
 
@@ -266,6 +255,12 @@ function DashboardContent() {
             for (const crop of crops) {
                 const plantedDate = startOfDay(new Date(crop.fecha_plantacion.seconds * 1000));
                 
+                // Fetch the full technical sheet to get the specific watering instructions
+                const fichaRef = doc(db, 'fichas_tecnicas_cultivos', crop.ficha_cultivo_id);
+                const fichaSnap = await getDoc(fichaRef);
+                const fichaData = fichaSnap.exists() ? fichaSnap.data() : null;
+                const riegoNota = fichaData?.tecnica?.riego || 'Riega regularmente para mantener el sustrato húmedo.';
+
                 // Check for harvest
                 if (crop.daysToHarvest > 0) {
                     const harvestDate = addDays(plantedDate, crop.daysToHarvest);
@@ -292,9 +287,10 @@ function DashboardContent() {
                          const alertDoc = await getDoc(alertDocRef);
                          if (!alertDoc.exists()) {
                              const alertType = crop.nextTask.name.toLowerCase().includes('regar') ? 'riego' : 'abono';
+                             const message = `Es hora de "${crop.nextTask.name}" tu cultivo de ${crop.nombre_cultivo_personal}. Recuerda: ${riegoNota}`;
                              batch.set(alertDocRef, {
                                 cropId: crop.id, cropName: crop.nombre_cultivo_personal,
-                                message: `Es hora de "${crop.nextTask.name}" tu cultivo de ${crop.nombre_cultivo_personal}.`,
+                                message: message,
                                 type: alertType, date: serverTimestamp(), isRead: false,
                             });
                          }
@@ -325,7 +321,7 @@ function DashboardContent() {
 
     const userCropsQuery = query(collection(db, 'usuarios', user.uid, 'cultivos_del_usuario'));
 
-    const unsubscribeCrops = onSnapshot(userCropsQuery, (snapshot) => {
+    const unsubscribeCrops = onSnapshot(userCropsQuery, async (snapshot) => {
       const cropsData = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
         const data = doc.data();
         if (!data.fecha_plantacion || typeof data.daysToHarvest !== 'number' || !data.nextTask) {
@@ -336,25 +332,37 @@ function DashboardContent() {
         const daysSincePlanted = differenceInDays(startOfDay(new Date()), plantedDate);
         const progress = data.daysToHarvest > 0 ? Math.min(Math.round((daysSincePlanted / data.daysToHarvest) * 100), 100) : 0;
         
-        // Defensive check for datos_programaticos
         const datos_programaticos = data.datos_programaticos || { frecuencia_riego_dias: 7, dias_para_cosecha: 90 };
-
 
         return {
           id: doc.id,
           ...data,
-          datos_programaticos, // Ensure it's not undefined
+          datos_programaticos,
           progress,
         } as UserCrop;
       }).filter((crop): crop is UserCrop => crop !== null);
 
       setUserCrops(cropsData);
+      
       if (cropsData.length > 0) {
         checkForUpcomingTasks(cropsData);
         if (!journalCropId) {
             setJournalCropId(cropsData[0].id);
         }
+        
+        // Fetch recommended guides based on user's crops
+        const userCropSlugs = [...new Set(cropsData.map(c => c.ficha_cultivo_id))];
+        if (userCropSlugs.length > 0) {
+            const guidesRef = collection(db, 'guias_educativas');
+            const guidesQuery = query(guidesRef, where('cultivosRelacionados', 'array-contains-any', userCropSlugs), limit(5));
+            const guidesSnapshot = await getDocs(guidesQuery);
+            const guides = guidesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EducationalGuideDocument));
+            setRecommendedGuides(guides);
+        }
+      } else {
+        setRecommendedGuides([]);
       }
+
       setIsCropsLoading(false);
     }, (error) => {
       console.error("Error fetching user crops:", error);
@@ -456,17 +464,15 @@ function DashboardContent() {
             const cropToUpdate = userCrops.find(c => c.id === alert.cropId);
 
             if (cropToUpdate) {
-                // CORRECTED LOGIC: Calculate next due date from today
                 const plantedDate = startOfDay(new Date(cropToUpdate.fecha_plantacion.seconds * 1000));
                 const daysSincePlantedToday = differenceInDays(startOfDay(new Date()), plantedDate);
                 const nextDueInDays = daysSincePlantedToday + cropToUpdate.datos_programaticos.frecuencia_riego_dias;
                 
                 batch.update(cropRef, { 
                     'nextTask.dueInDays': nextDueInDays,
-                    'lastNote': 'Riego registrado hoy.' // Update last note
+                    'lastNote': 'Riego registrado hoy.'
                 });
 
-                // Add automatic log entry to journal
                 const logCollectionRef = collection(db, 'usuarios', user.uid, 'cultivos_del_usuario', alert.cropId, 'diario');
                 const logDocRef = doc(logCollectionRef);
                 batch.set(logDocRef, {
@@ -521,7 +527,6 @@ function DashboardContent() {
             type: 'siembra'
         });
 
-        // Generate next 2 watering tasks based on frequency
         if (crop.nextTask && crop.datos_programaticos.frecuencia_riego_dias > 0) {
             let currentDueDay = crop.nextTask.dueInDays;
             const wateringFrequency = crop.datos_programaticos.frecuencia_riego_dias;
@@ -922,15 +927,19 @@ function DashboardContent() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-3">
-                {recommendedArticles.map(article => (
-                  <li key={article.id}>
-                    <Link href={article.href} className="text-primary font-nunito font-semibold hover:underline">
-                      {article.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+               {recommendedGuides.length > 0 ? (
+                  <ul className="space-y-3">
+                    {recommendedGuides.map(guide => (
+                      <li key={guide.id}>
+                        <Link href={'/guias'} className="text-primary font-nunito font-semibold hover:underline">
+                          {guide.titulo}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Añade cultivos a tu dashboard para ver guías recomendadas.</p>
+                )}
             </CardContent>
           </Card>
         </div>
@@ -977,3 +986,4 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
+
