@@ -258,226 +258,225 @@ export function CropDetailClient({
   const isCropInUserRegion = userRegion && crop.region.principal.map(r => r.toLowerCase()).includes(userRegion.toLowerCase());
 
   return (
-    <article className="max-w-6xl mx-auto space-y-10">
-      
-       {/* Breadcrumbs for Desktop/Tablet */}
-      <nav className="hidden md:flex items-center text-sm font-medium text-muted-foreground">
-        <Link href="/cultivos" className="hover:text-primary">Cultivos</Link>
-        <ChevronRight className="h-4 w-4 mx-1" />
-        <span className="text-foreground truncate">{crop.nombre}</span>
-      </nav>
-      {/* Back Button for Mobile */}
-      <Button asChild variant="ghost" className="md:hidden -ml-4">
-        <Link href="/cultivos">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver a todos los cultivos
-        </Link>
-      </Button>
+    <div className="w-full overflow-x-hidden">
+      <article className="max-w-6xl mx-auto space-y-10">
+        
+        {/* Breadcrumbs for Desktop/Tablet */}
+        <nav className="hidden md:flex items-center text-sm font-medium text-muted-foreground">
+          <Link href="/cultivos" className="hover:text-primary">Cultivos</Link>
+          <ChevronRight className="h-4 w-4 mx-1" />
+          <span className="text-foreground truncate">{crop.nombre}</span>
+        </nav>
+        {/* Back Button for Mobile */}
+        <Button asChild variant="ghost" className="md:hidden -ml-4">
+          <Link href="/cultivos">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Volver a todos los cultivos
+          </Link>
+        </Button>
 
-      {/* --- Responsive Header Section --- */}
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-        {/* Image Column */}
-        <div className="w-full lg:w-1/2">
-             {mainImage && (
-                <Image
-                    src={mainImage.url}
-                    alt={`Imagen de ${crop.nombre}`}
-                    width={1200}
-                    height={900}
-                    className="w-full h-auto object-cover rounded-xl shadow-lg"
-                    priority
-                />
-            )}
-            {mainImage?.atribucion?.text && mainImage?.atribucion?.link && (
-                <p className="text-xs text-muted-foreground text-right mt-2 pr-2">
-                Foto por <a href={mainImage.atribucion.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary">{mainImage.atribucion.text}</a>
-                </p>
-            )}
+        {/* --- Responsive Header Section --- */}
+        <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-12 items-start">
+          {/* Image Column */}
+          <div className="w-full lg:w-auto">
+              {mainImage && (
+                  <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg">
+                      <Image
+                          src={mainImage.url}
+                          alt={`Imagen de ${crop.nombre}`}
+                          fill
+                          className="object-cover"
+                          priority
+                      />
+                  </div>
+              )}
+              {mainImage?.atribucion?.text && mainImage?.atribucion?.link && (
+                  <p className="text-xs text-muted-foreground text-right mt-2 pr-2">
+                  Foto por <a href={mainImage.atribucion.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary">{mainImage.atribucion.text}</a>
+                  </p>
+              )}
+          </div>
+          
+          {/* Text Column */}
+          <div className="w-full mt-6 lg:mt-0">
+            <h1 className="text-4xl font-nunito font-extrabold tracking-tight lg:text-5xl">{crop.nombre}</h1>
+            <p className="text-xl text-muted-foreground font-sans italic mt-2">{crop.nombreCientifico}</p>
+            <div className="flex flex-wrap gap-2 mt-4">
+                <Badge variant="secondary">{crop.tipo_planta}</Badge>
+                <Badge variant="secondary">{crop.dificultad}</Badge>
+                {crop.clima.clase.map(c => <Badge key={c} variant="secondary">{humanizeTerm(c)}</Badge>)}
+            </div>
+            <p className="text-lg text-muted-foreground mt-4">{crop.descripcion}</p>
+          </div>
         </div>
         
-        {/* Text Column */}
-        <div className="w-full lg:w-1/2">
-          <h1 className="text-4xl font-nunito font-extrabold tracking-tight lg:text-5xl">{crop.nombre}</h1>
-          <p className="text-xl text-muted-foreground font-sans italic mt-2">{crop.nombreCientifico}</p>
-          <div className="flex flex-wrap gap-2 mt-4">
-              <Badge variant="secondary">{crop.tipo_planta}</Badge>
-              <Badge variant="secondary">{crop.dificultad}</Badge>
-              {crop.clima.clase.map(c => <Badge key={c} variant="secondary">{humanizeTerm(c)}</Badge>)}
-          </div>
-          <p className="text-lg text-muted-foreground mt-4">{crop.descripcion}</p>
+        {crop.metodos && crop.metodos.length > 0 && (
+            <div className="space-y-6">
+                <h2 className="text-3xl font-nunito font-bold text-center">Guía de Cultivo Paso a Paso</h2>
+                <Tabs defaultValue={crop.metodos[0].id} className="w-full">
+                  <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
+                      {crop.metodos.map(method => (
+                          <TabsTrigger key={method.id} value={method.id}>{humanizeTerm(method.nombre)}</TabsTrigger>
+                      ))}
+                  </TabsList>
+                  {crop.metodos.map(method => (
+                      <TabsContent key={method.id} value={method.id} className="mt-4">
+                          <MethodCard method={method} />
+                      </TabsContent>
+                  ))}
+                </Tabs>
+            </div>
+        )}
+
+
+        <div>
+          <h2 className="text-3xl font-nunito font-bold text-center mb-6">Información Adicional</h2>
+          <Accordion type="multiple" defaultValue={["item-1", "item-2", "item-3", "item-4"]} className="w-full">
+              <AccordionItem value="item-1">
+                  <AccordionTrigger className="text-xl">Datos Técnicos y Ciclo de Vida</AccordionTrigger>
+                  <AccordionContent>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+                          <Card>
+                              <CardHeader>
+                                  <CardTitle className="text-lg">Datos Técnicos Clave</CardTitle>
+                              </CardHeader>
+                              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                  <div className="flex items-start gap-3 col-span-1 sm:col-span-2">
+                                      <Droplets className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
+                                      <div>
+                                          <p className="text-sm text-muted-foreground">Riego</p>
+                                          <p className="font-sans text-base">{crop.tecnica.riego}</p>
+                                      </div>
+                                  </div>
+                                  <div className="flex items-start gap-3">
+                                      <Thermometer className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
+                                      <div>
+                                          <p className="text-sm text-muted-foreground">Temperatura Ideal</p>
+                                          <p className="font-semibold">{crop.tecnica.temperatura_ideal}</p>
+                                      </div>
+                                  </div>
+                                  <div className="flex items-start gap-3">
+                                      <Sun className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
+                                      <div>
+                                          <p className="text-sm text-muted-foreground">Luz Solar</p>
+                                          <p className="font-semibold">{crop.tecnica.luz_solar}</p>
+                                      </div>
+                                  </div>
+                                  <div className="flex items-start gap-3 col-span-1 sm:col-span-2">
+                                      <Beaker className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
+                                      <div>
+                                          <p className="text-sm text-muted-foreground">pH del Suelo</p>
+                                          <p className="font-semibold">{crop.tecnica.ph_suelo}</p>
+                                      </div>
+                                  </div>
+                              </CardContent>
+                          </Card>
+                          <LifeCycleCard stages={crop.cicloVida} />
+                      </div>
+                  </AccordionContent>
+              </AccordionItem>
+              {commonPests.length > 0 && (
+                  <AccordionItem value="item-4">
+                      <AccordionTrigger className="text-xl">Plagas y Enfermedades Comunes</AccordionTrigger>
+                      <AccordionContent>
+                          <Card className="mt-4">
+                              <CardHeader>
+                                  <CardTitle className="text-lg flex items-center gap-2"><Bug className="h-5 w-5 text-red-600"/>Amenazas Comunes</CardTitle>
+                                  <CardDescription>Estas son algunas de las plagas y enfermedades que afectan comúnmente a este cultivo. Haz clic para aprender a prevenirlas y tratarlas.</CardDescription>
+                              </CardHeader>
+                              <CardContent className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                  {commonPests.map(pest => (
+                                      <Link href={`/sanidad-vegetal/${pest.slug}`} key={pest.id} className="group">
+                                          <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                                              <Image
+                                                  src={pest.imageUrl}
+                                                  alt={pest.nombreComun}
+                                                  width={150}
+                                                  height={100}
+                                                  className="w-full h-24 object-cover"
+                                                  data-ai-hint={pest.dataAiHint}
+                                              />
+                                              <CardHeader className="p-3">
+                                                  <CardTitle className="text-sm font-nunito font-bold group-hover:text-primary transition-colors">{pest.nombreComun}</CardTitle>
+                                              </CardHeader>
+                                          </Card>
+                                      </Link>
+                                  ))}
+                              </CardContent>
+                          </Card>
+                      </AccordionContent>
+                  </AccordionItem>
+              )}
+              <AccordionItem value="item-2">
+                  <AccordionTrigger className="text-xl">Asociaciones y Regiones</AccordionTrigger>
+                  <AccordionContent>
+                      <div className="space-y-8 mt-4">
+                          <HorizontalScroller 
+                              items={compatibleCrops.map(c => ({...c, slug: `/cultivos/${c.slug}`}))}
+                              title="Cultivos Amigables"
+                              icon={Users}
+                          />
+                          <HorizontalScroller 
+                              items={incompatibleCrops.map(c => ({...c, slug: `/cultivos/${c.slug}`}))}
+                              title="Cultivos a Evitar"
+                              icon={ShieldAlert}
+                          />
+                          <Card>
+                              <CardHeader>
+                                  <CardTitle className="text-lg flex items-center gap-2"><MapPin className="h-5 w-5 text-blue-600"/>Regiones Principales</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                  <div className="flex flex-wrap gap-2">
+                                      {crop.region.principal.map(region => <Badge key={region} variant="outline" className="bg-blue-100 text-blue-800">{region}</Badge>)}
+                                  </div>
+                                  {userRegion && !isCropInUserRegion && (
+                                      <Alert variant="destructive" className="mt-4">
+                                          <AlertCircle className="h-4 w-4" />
+                                          <AlertTitle>¡Atención!</AlertTitle>
+                                          <AlertDescription>
+                                              Este cultivo no es ideal para tu región principal registrada ({userRegion}). Podría requerir cuidados especiales.
+                                          </AlertDescription>
+                                      </Alert>
+                                  )}
+                                  <div className="mt-4 text-sm text-muted-foreground flex items-start gap-2">
+                                      <Info className="h-4 w-4 mt-0.5 flex-shrink-0"/>
+                                      <p>{crop.region.nota}</p>
+                                  </div>
+                              </CardContent>
+                          </Card>
+                      </div>
+                  </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-3">
+                  <AccordionTrigger className="text-xl">Artículos y Guías Relacionados</AccordionTrigger>
+                  <AccordionContent>
+                      <HorizontalScroller 
+                          items={relatedArticles}
+                          title="Para Aprender Más"
+                          icon={BookOpen}
+                      />
+                  </AccordionContent>
+              </AccordionItem>
+          </Accordion>
         </div>
-      </div>
-      
-       {crop.metodos && crop.metodos.length > 0 && (
-          <div className="space-y-6">
-              <h2 className="text-3xl font-nunito font-bold text-center">Guía de Cultivo Paso a Paso</h2>
-               <Tabs defaultValue={crop.metodos[0].id} className="w-full">
-                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
-                    {crop.metodos.map(method => (
-                        <TabsTrigger key={method.id} value={method.id}>{humanizeTerm(method.nombre)}</TabsTrigger>
-                    ))}
-                </TabsList>
-                 {crop.metodos.map(method => (
-                    <TabsContent key={method.id} value={method.id} className="mt-4">
-                        <MethodCard method={method} />
-                    </TabsContent>
-                ))}
-              </Tabs>
-          </div>
-      )}
 
-
-      <div>
-        <h2 className="text-3xl font-nunito font-bold text-center mb-6">Información Adicional</h2>
-        <Accordion type="multiple" defaultValue={["item-1", "item-2", "item-3", "item-4"]} className="w-full">
-            <AccordionItem value="item-1">
-                <AccordionTrigger className="text-xl">Datos Técnicos y Ciclo de Vida</AccordionTrigger>
-                <AccordionContent>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Datos Técnicos Clave</CardTitle>
-                            </CardHeader>
-                            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div className="flex items-start gap-3 col-span-1 sm:col-span-2">
-                                    <Droplets className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Riego</p>
-                                        <p className="font-sans text-base">{crop.tecnica.riego}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <Thermometer className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Temperatura Ideal</p>
-                                        <p className="font-semibold">{crop.tecnica.temperatura_ideal}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <Sun className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Luz Solar</p>
-                                        <p className="font-semibold">{crop.tecnica.luz_solar}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3 col-span-1 sm:col-span-2">
-                                    <Beaker className="h-6 w-6 text-muted-foreground flex-shrink-0 mt-1"/>
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">pH del Suelo</p>
-                                        <p className="font-semibold">{crop.tecnica.ph_suelo}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <LifeCycleCard stages={crop.cicloVida} />
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-            {commonPests.length > 0 && (
-                 <AccordionItem value="item-4">
-                    <AccordionTrigger className="text-xl">Plagas y Enfermedades Comunes</AccordionTrigger>
-                    <AccordionContent>
-                        <Card className="mt-4">
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2"><Bug className="h-5 w-5 text-red-600"/>Amenazas Comunes</CardTitle>
-                                <CardDescription>Estas son algunas de las plagas y enfermedades que afectan comúnmente a este cultivo. Haz clic para aprender a prevenirlas y tratarlas.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {commonPests.map(pest => (
-                                     <Link href={`/sanidad-vegetal/${pest.slug}`} key={pest.id} className="group">
-                                        <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-                                            <Image
-                                                src={pest.imageUrl}
-                                                alt={pest.nombreComun}
-                                                width={150}
-                                                height={100}
-                                                className="w-full h-24 object-cover"
-                                                data-ai-hint={pest.dataAiHint}
-                                            />
-                                            <CardHeader className="p-3">
-                                                <CardTitle className="text-sm font-nunito font-bold group-hover:text-primary transition-colors">{pest.nombreComun}</CardTitle>
-                                            </CardHeader>
-                                        </Card>
-                                    </Link>
-                                ))}
-                            </CardContent>
-                        </Card>
-                    </AccordionContent>
-                </AccordionItem>
-            )}
-            <AccordionItem value="item-2">
-                <AccordionTrigger className="text-xl">Asociaciones y Regiones</AccordionTrigger>
-                <AccordionContent>
-                     <div className="space-y-8 mt-4">
-                        <HorizontalScroller 
-                            items={compatibleCrops.map(c => ({...c, slug: `/cultivos/${c.slug}`}))}
-                            title="Cultivos Amigables"
-                            icon={Users}
-                        />
-                         <HorizontalScroller 
-                            items={incompatibleCrops.map(c => ({...c, slug: `/cultivos/${c.slug}`}))}
-                            title="Cultivos a Evitar"
-                            icon={ShieldAlert}
-                        />
-                         <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2"><MapPin className="h-5 w-5 text-blue-600"/>Regiones Principales</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex flex-wrap gap-2">
-                                    {crop.region.principal.map(region => <Badge key={region} variant="outline" className="bg-blue-100 text-blue-800">{region}</Badge>)}
-                                </div>
-                                {userRegion && !isCropInUserRegion && (
-                                    <Alert variant="destructive" className="mt-4">
-                                        <AlertCircle className="h-4 w-4" />
-                                        <AlertTitle>¡Atención!</AlertTitle>
-                                        <AlertDescription>
-                                            Este cultivo no es ideal para tu región principal registrada ({userRegion}). Podría requerir cuidados especiales.
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
-                                <div className="mt-4 text-sm text-muted-foreground flex items-start gap-2">
-                                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0"/>
-                                    <p>{crop.region.nota}</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                     </div>
-                </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="item-3">
-                <AccordionTrigger className="text-xl">Artículos y Guías Relacionados</AccordionTrigger>
-                <AccordionContent>
-                     <HorizontalScroller 
-                        items={relatedArticles}
-                        title="Para Aprender Más"
-                        icon={BookOpen}
-                    />
-                </AccordionContent>
-            </AccordionItem>
-        </Accordion>
-      </div>
-
-      <Card className="text-center p-6 shadow-lg bg-primary/10">
-        <CardHeader>
-            <CardTitle className="text-2xl font-nunito font-bold">¿Listo para empezar a cultivar?</CardTitle>
-            <CardDescription>Añade este cultivo a tu dashboard personal para hacer un seguimiento detallado de su progreso.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            {sampleCrop && (
-                 <AddCropDialog crop={sampleCrop}>
-                    <Button size="lg">
-                        <PlusCircle className="mr-2 h-5 w-5" />
-                        Añadir a Mi Dashboard
-                    </Button>
-                 </AddCropDialog>
-            )}
-        </CardContent>
-      </Card>
-    </article>
+        <Card className="text-center p-6 shadow-lg bg-primary/10">
+          <CardHeader>
+              <CardTitle className="text-2xl font-nunito font-bold">¿Listo para empezar a cultivar?</CardTitle>
+              <CardDescription>Añade este cultivo a tu dashboard personal para hacer un seguimiento detallado de su progreso.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              {sampleCrop && (
+                  <AddCropDialog crop={sampleCrop}>
+                      <Button size="lg">
+                          <PlusCircle className="mr-2 h-5 w-5" />
+                          Añadir a Mi Dashboard
+                      </Button>
+                  </AddCropDialog>
+              )}
+          </CardContent>
+        </Card>
+      </article>
+    </div>
   );
 }
-
-    
-
-    
