@@ -56,7 +56,7 @@ interface CropDetailClientProps {
 // --- CARD COMPONENTS ---
 
 const ItemCard = ({ item }: { item: SimplifiedItem }) => {
-  const isGuide = item.imageUrl.includes('placehold.co');
+  const isGuide = !item.imageUrl.includes('firebasestorage'); // A more robust check
   const emojiMatch = isGuide && item.name.match(/^(\p{Emoji})/u);
   const emoji = emojiMatch ? emojiMatch[1] : null;
   const title = emoji ? item.name.replace(emoji, '').trim() : item.name;
@@ -258,7 +258,7 @@ export function CropDetailClient({
   const isCropInUserRegion = userRegion && crop.region.principal.map(r => r.toLowerCase()).includes(userRegion.toLowerCase());
 
   return (
-    <article className="max-w-5xl mx-auto space-y-10">
+    <article className="max-w-6xl mx-auto space-y-10">
       <nav className="hidden md:flex items-center text-sm font-medium text-muted-foreground mb-4">
         <Link href="/cultivos" className="hover:text-primary">Cultivos</Link>
         <ChevronRight className="h-4 w-4 mx-1" />
@@ -271,28 +271,32 @@ export function CropDetailClient({
         </Link>
       </Button>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-        <div className="space-y-4 md:order-1">
+       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+        {/* Columna de Texto */}
+        <div className="w-full lg:order-last">
           <h1 className="text-4xl font-nunito font-extrabold tracking-tight lg:text-5xl">{crop.nombre}</h1>
-          <p className="text-xl text-muted-foreground font-sans italic">{crop.nombreCientifico}</p>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-xl text-muted-foreground font-sans italic mt-2">{crop.nombreCientifico}</p>
+          <div className="flex flex-wrap gap-2 mt-4">
               <Badge variant="secondary">{crop.tipo_planta}</Badge>
               <Badge variant="secondary">{crop.dificultad}</Badge>
               {crop.clima.clase.map(c => <Badge key={c} variant="secondary">{humanizeTerm(c)}</Badge>)}
           </div>
-          <p className="text-lg text-muted-foreground">{crop.descripcion}</p>
+          <p className="text-lg text-muted-foreground mt-4">{crop.descripcion}</p>
         </div>
-        <div className="md:order-2 overflow-hidden rounded-xl shadow-lg">
-          {mainImage && (
-            <Image
-              src={mainImage.url}
-              alt={`Imagen de ${crop.nombre}`}
-              width={600}
-              height={400}
-              className="w-full h-auto object-cover"
-              priority
-            />
-          )}
+        
+        {/* Columna de Imagen */}
+        <div className="w-full lg:w-2/3 flex-shrink-0">
+          <div className="aspect-[4/3] relative rounded-xl shadow-lg overflow-hidden">
+            {mainImage && (
+              <Image
+                src={mainImage.url}
+                alt={`Imagen de ${crop.nombre}`}
+                fill
+                className="object-cover"
+                priority
+              />
+            )}
+          </div>
           {mainImage?.atribucion?.text && mainImage?.atribucion?.link && (
             <p className="text-xs text-muted-foreground text-right mt-2 pr-2">
               Foto por <a href={mainImage.atribucion.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary">{mainImage.atribucion.text}</a>
