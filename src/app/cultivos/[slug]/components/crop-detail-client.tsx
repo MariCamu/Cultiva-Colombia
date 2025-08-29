@@ -276,11 +276,11 @@ export function CropDetailClient({
         </Button>
 
         {/* --- Responsive Header Section --- */}
-        <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-12 items-start">
-          {/* Image Column */}
-          <div className="w-full lg:w-auto">
-              {mainImage && (
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+            {/* Image Column */}
+            <div className="w-full lg:w-1/2 flex-shrink-0">
+                 {mainImage && (
+                  <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden shadow-lg">
                       <Image
                           src={mainImage.url}
                           alt={`Imagen de ${crop.nombre}`}
@@ -295,10 +295,10 @@ export function CropDetailClient({
                   Foto por <a href={mainImage.atribucion.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary">{mainImage.atribucion.text}</a>
                   </p>
               )}
-          </div>
+            </div>
           
           {/* Text Column */}
-          <div className="w-full mt-6 lg:mt-0">
+          <div className="w-full lg:w-1/2">
             <h1 className="text-4xl font-nunito font-extrabold tracking-tight lg:text-5xl">{crop.nombre}</h1>
             <p className="text-xl text-muted-foreground font-sans italic mt-2">{crop.nombreCientifico}</p>
             <div className="flex flex-wrap gap-2 mt-4">
@@ -306,7 +306,7 @@ export function CropDetailClient({
                 <Badge variant="secondary">{crop.dificultad}</Badge>
                 {crop.clima.clase.map(c => <Badge key={c} variant="secondary">{humanizeTerm(c)}</Badge>)}
             </div>
-            <p className="text-lg text-muted-foreground mt-4">{crop.descripcion}</p>
+            <p className="text-lg text-muted-foreground mt-6">{crop.descripcion}</p>
           </div>
         </div>
         
@@ -314,7 +314,7 @@ export function CropDetailClient({
             <div className="space-y-6">
                 <h2 className="text-3xl font-nunito font-bold text-center">Guía de Cultivo Paso a Paso</h2>
                 <Tabs defaultValue={crop.metodos[0].id} className="w-full">
-                  <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
+                  <TabsList className="w-full justify-start overflow-x-auto">
                       {crop.metodos.map(method => (
                           <TabsTrigger key={method.id} value={method.id}>{humanizeTerm(method.nombre)}</TabsTrigger>
                       ))}
