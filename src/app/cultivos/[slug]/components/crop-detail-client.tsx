@@ -259,33 +259,25 @@ export function CropDetailClient({
 
   return (
     <article className="max-w-6xl mx-auto space-y-10">
-      <nav className="hidden md:flex items-center text-sm font-medium text-muted-foreground mb-4">
+      
+       {/* Breadcrumbs for Desktop/Tablet */}
+      <nav className="hidden md:flex items-center text-sm font-medium text-muted-foreground">
         <Link href="/cultivos" className="hover:text-primary">Cultivos</Link>
         <ChevronRight className="h-4 w-4 mx-1" />
         <span className="text-foreground truncate">{crop.nombre}</span>
       </nav>
-      <Button asChild variant="ghost" className="md:hidden mb-4 -ml-4">
+      {/* Back Button for Mobile */}
+      <Button asChild variant="ghost" className="md:hidden -ml-4">
         <Link href="/cultivos">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Volver a todos los cultivos
         </Link>
       </Button>
 
-       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-        {/* Columna de Texto */}
-        <div className="w-full lg:order-last">
-          <h1 className="text-4xl font-nunito font-extrabold tracking-tight lg:text-5xl">{crop.nombre}</h1>
-          <p className="text-xl text-muted-foreground font-sans italic mt-2">{crop.nombreCientifico}</p>
-          <div className="flex flex-wrap gap-2 mt-4">
-              <Badge variant="secondary">{crop.tipo_planta}</Badge>
-              <Badge variant="secondary">{crop.dificultad}</Badge>
-              {crop.clima.clase.map(c => <Badge key={c} variant="secondary">{humanizeTerm(c)}</Badge>)}
-          </div>
-          <p className="text-lg text-muted-foreground mt-4">{crop.descripcion}</p>
-        </div>
-        
-        {/* Columna de Imagen */}
-        <div className="w-full lg:w-2/3 flex-shrink-0">
+      {/* --- Responsive Header Section --- */}
+      <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-5 md:gap-8 lg:gap-12 items-start">
+        {/* Image Column */}
+        <div className="w-full lg:col-span-3">
           <div className="aspect-[4/3] relative rounded-xl shadow-lg overflow-hidden">
             {mainImage && (
               <Image
@@ -302,6 +294,18 @@ export function CropDetailClient({
               Foto por <a href={mainImage.atribucion.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary">{mainImage.atribucion.text}</a>
             </p>
           )}
+        </div>
+        
+        {/* Text Column */}
+        <div className="w-full lg:col-span-2 mt-6 md:mt-0">
+          <h1 className="text-4xl font-nunito font-extrabold tracking-tight lg:text-5xl">{crop.nombre}</h1>
+          <p className="text-xl text-muted-foreground font-sans italic mt-2">{crop.nombreCientifico}</p>
+          <div className="flex flex-wrap gap-2 mt-4">
+              <Badge variant="secondary">{crop.tipo_planta}</Badge>
+              <Badge variant="secondary">{crop.dificultad}</Badge>
+              {crop.clima.clase.map(c => <Badge key={c} variant="secondary">{humanizeTerm(c)}</Badge>)}
+          </div>
+          <p className="text-lg text-muted-foreground mt-4">{crop.descripcion}</p>
         </div>
       </div>
       
