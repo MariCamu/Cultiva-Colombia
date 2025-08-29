@@ -473,7 +473,9 @@ function DashboardContent() {
 
             if (cropToUpdate && cropToUpdate.datos_programaticos) {
                 const wateringFrequency = cropToUpdate.datos_programaticos.frecuencia_riego_dias || 7;
-                const nextDueInDays = wateringFrequency;
+                const plantedDate = startOfDay(new Date(cropToUpdate.fecha_plantacion.seconds * 1000));
+                const daysSincePlantedToday = differenceInDays(startOfDay(new Date()), plantedDate);
+                const nextDueInDays = daysSincePlantedToday + wateringFrequency;
                 
                 batch.update(cropRef, { 
                     'nextTask.dueInDays': nextDueInDays,

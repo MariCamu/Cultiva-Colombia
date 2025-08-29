@@ -169,7 +169,7 @@ export function CropDetailDialog({ crop, children }: { crop: UserCrop; children:
             const stageDuration = stage.duracion_dias_tipico || 0;
             // Si los días desde la siembra son MENORES que el final de esta etapa,
             // entonces estamos en esta etapa.
-            if (daysSincePlanted < daysAccumulated + stageDuration) {
+            if (daysSincePlanted <= daysAccumulated + stageDuration) {
                 setCurrentLifeCycleStage(stage);
                 foundStage = true;
                 break;
