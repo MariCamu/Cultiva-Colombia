@@ -275,20 +275,19 @@ export function CropDetailClient({
       </Button>
 
       {/* --- Responsive Header Section --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+      <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
         {/* Image Column */}
-        <div className="w-full">
-            <div className="aspect-[4/3] relative rounded-xl shadow-lg overflow-hidden">
-                {mainImage && (
+        <div className="w-full lg:w-1/2">
+             {mainImage && (
                 <Image
                     src={mainImage.url}
                     alt={`Imagen de ${crop.nombre}`}
-                    fill
-                    className="object-cover"
+                    width={1200}
+                    height={900}
+                    className="w-full h-auto object-cover rounded-xl shadow-lg"
                     priority
                 />
-                )}
-            </div>
+            )}
             {mainImage?.atribucion?.text && mainImage?.atribucion?.link && (
                 <p className="text-xs text-muted-foreground text-right mt-2 pr-2">
                 Foto por <a href={mainImage.atribucion.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary">{mainImage.atribucion.text}</a>
@@ -297,7 +296,7 @@ export function CropDetailClient({
         </div>
         
         {/* Text Column */}
-        <div className="w-full">
+        <div className="w-full lg:w-1/2">
           <h1 className="text-4xl font-nunito font-extrabold tracking-tight lg:text-5xl">{crop.nombre}</h1>
           <p className="text-xl text-muted-foreground font-sans italic mt-2">{crop.nombreCientifico}</p>
           <div className="flex flex-wrap gap-2 mt-4">
