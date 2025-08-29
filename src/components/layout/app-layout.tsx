@@ -148,7 +148,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <TooltipProvider>
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="flex min-h-screen w-full flex-col overflow-hidden">
       <header className="sticky top-0 z-50 flex h-16 items-center border-b bg-background/95 px-4 shadow-sm backdrop-blur-sm sm:px-6">
         <div className="flex w-full items-center justify-between gap-4">
           <div className="flex items-center gap-2 md:gap-4">

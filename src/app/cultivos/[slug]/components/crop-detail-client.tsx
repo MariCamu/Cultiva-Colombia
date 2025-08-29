@@ -282,14 +282,14 @@ export function CropDetailClient({
           </div>
           <p className="text-lg text-muted-foreground">{crop.descripcion}</p>
         </div>
-        <div className="md:order-2">
+        <div className="md:order-2 overflow-hidden rounded-xl shadow-lg">
           {mainImage && (
             <Image
               src={mainImage.url}
               alt={`Imagen de ${crop.nombre}`}
               width={600}
               height={400}
-              className="w-full h-auto object-cover rounded-xl shadow-lg"
+              className="w-full h-auto object-cover"
               priority
             />
           )}
