@@ -275,29 +275,29 @@ export function CropDetailClient({
       </Button>
 
       {/* --- Responsive Header Section --- */}
-      <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-5 md:gap-8 lg:gap-12 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
         {/* Image Column */}
-        <div className="w-full lg:col-span-3">
-          <div className="aspect-[4/3] relative rounded-xl shadow-lg overflow-hidden">
-            {mainImage && (
-              <Image
-                src={mainImage.url}
-                alt={`Imagen de ${crop.nombre}`}
-                fill
-                className="object-cover"
-                priority
-              />
+        <div className="w-full">
+            <div className="aspect-[4/3] relative rounded-xl shadow-lg overflow-hidden">
+                {mainImage && (
+                <Image
+                    src={mainImage.url}
+                    alt={`Imagen de ${crop.nombre}`}
+                    fill
+                    className="object-cover"
+                    priority
+                />
+                )}
+            </div>
+            {mainImage?.atribucion?.text && mainImage?.atribucion?.link && (
+                <p className="text-xs text-muted-foreground text-right mt-2 pr-2">
+                Foto por <a href={mainImage.atribucion.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary">{mainImage.atribucion.text}</a>
+                </p>
             )}
-          </div>
-          {mainImage?.atribucion?.text && mainImage?.atribucion?.link && (
-            <p className="text-xs text-muted-foreground text-right mt-2 pr-2">
-              Foto por <a href={mainImage.atribucion.link} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary">{mainImage.atribucion.text}</a>
-            </p>
-          )}
         </div>
         
         {/* Text Column */}
-        <div className="w-full lg:col-span-2 mt-6 md:mt-0">
+        <div className="w-full">
           <h1 className="text-4xl font-nunito font-extrabold tracking-tight lg:text-5xl">{crop.nombre}</h1>
           <p className="text-xl text-muted-foreground font-sans italic mt-2">{crop.nombreCientifico}</p>
           <div className="flex flex-wrap gap-2 mt-4">
