@@ -1,0 +1,126 @@
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 100 33% 94%; /* #EDF2E8 */
+    --foreground: 95 17% 30%; /* #6B875E - Adjusted for better contrast on #EDF2E8 */
+
+    --card: 80 60% 99%; /* #FAFCF7 */
+    --card-foreground: 95 17% 30%; /* #6B875E */
+
+    --popover: 80 60% 99%; /* #FAFCF7 */
+    --popover-foreground: 95 17% 30%; /* #6B875E */
+
+    --primary: 101 30% 45%; /* #70964F */
+    --primary-foreground: 80 60% 99%; /* #FAFCF7 */
+
+    --secondary: 100 33% 94%; /* #EDF2E8 - For secondary button background */
+    --secondary-foreground: 101 30% 45%; /* #70964F - For secondary button text */
+
+    --muted: 210 17% 96%; /* Lighter version of E5E8EB for muted backgrounds */
+    --muted-foreground: 95 17% 55%; /* Lighter version of #6B875E */
+
+    --accent: 28 90% 69%; /* #F6A967 - Orange */
+    --accent-foreground: 23 29% 20%; /* Darker brown for text on orange */
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 210 17% 91%; /* #E5E8EB */
+    --input: 80 60% 99%; /* #FAFCF7 - Using light background for inputs */
+    --ring: 101 30% 46%; /* #73964F - For focus border */
+
+    --chart-1: 101 30% 45%; /* --primary */
+    --chart-2: 28 90% 69%; /* --accent */
+    --chart-3: 198 60.1% 40%;
+    --chart-4: 43 74% 66.3%;
+    --chart-5: 27 82.2% 61.2%;
+
+    /* Sidebar specific colors */
+    --sidebar-background: 100 33% 92%; /* Slightly darker #EDF2E8 */
+    --sidebar-foreground: 95 17% 25%; 
+    --sidebar-primary: 101 30% 40%; 
+    --sidebar-primary-foreground: 80 60% 98%;
+    --sidebar-accent: 28 90% 65%;
+    --sidebar-accent-foreground: 23 29% 15%;
+    --sidebar-border: 210 17% 88%;
+    --sidebar-ring: 101 30% 40%;
+  }
+
+  .dark {
+    --background: 0 0% 10%; /* #1a1a1a */
+    --foreground: 0 0% 88%; /* #e0e0e0 */
+
+    --card: 0 0% 17%; /* #2c2c2c */
+    --card-foreground: 0 0% 88%; /* #e0e0e0 */
+
+    --popover: 0 0% 17%; /* #2c2c2c */
+    --popover-foreground: 0 0% 88%; /* #e0e0e0 */
+
+    --primary: 80 61% 50%; /* #9acd32 */
+    --primary-foreground: 0 0% 0%; /* black */
+
+    --secondary: 0 0% 17%; /* #2c2c2c - same as card */
+    --secondary-foreground: 0 0% 80%; /* #cccccc */
+
+    --muted: 0 0% 27%; /* #444444 - for muted backgrounds */
+    --muted-foreground: 0 0% 80%; /* #cccccc */
+
+    --accent: 75 75% 61%; /* #b3e06a */
+    --accent-foreground: 0 0% 0%; /* black */
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 27%; /* #444444 */
+    --input: 0 0% 27%; /* #444444 */
+    --ring: 80 61% 50%; /* #9acd32 */
+
+    /* Sidebar specific colors for dark theme */
+    --sidebar-background: 0 0% 8%; 
+    --sidebar-foreground: 0 0% 88%;
+    --sidebar-primary: 80 61% 50%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 75 75% 61%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 27%;
+    --sidebar-ring: 80 61% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-nunito font-bold;
+  }
+}
+
+@layer components {
+    .map-marker {
+        @apply shadow-lg cursor-pointer transition-transform duration-300 transform hover:scale-110;
+    }
+    .map-marker-easy {
+        @apply bg-green-500/80;
+    }
+    .map-marker-medium {
+        @apply bg-yellow-500/80;
+    }
+    .map-marker-hard {
+        @apply bg-red-500/80;
+    }
+    .map-marker-icon {
+        @apply drop-shadow-md;
+    }
+    .map-marker-tooltip {
+        @apply absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-card text-card-foreground text-xs font-semibold rounded-md shadow-lg whitespace-nowrap opacity-0 transition-all duration-300 pointer-events-none;
+    }
+}

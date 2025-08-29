@@ -1,0 +1,465 @@
+
+"use client";
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Progress } from "@/components/ui/progress";
+import { MapPin, Home, User, Leaf, Clock, Sun, ChevronLeft, ChevronRight, CheckCircle, RefreshCw, Star, PlusCircle, Carrot, Wheat, BookHeart, Building, Sprout, Thermometer, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useAuth } from '@/context/auth-context';
+import { useToast } from '@/hooks/use-toast';
+import { AddCropDialog } from '../cultivos/components/add-crop-dialog';
+import type { SampleCrop } from '@/models/crop-model';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query } from 'firebase/firestore';
+import type { CropTechnicalSheet } from '@/lib/crop-data-structure';
+
+interface Step {
+  id: string;
+  icon: React.ElementType;
+  question: string;
+  options: { value: string; label: string; description?: string }[];
+  stateKey: keyof UserAnswers;
+}
+
+interface UserAnswers {
+  region: string;
+  clima: string;
+  space: string;
+  experience: string;
+  plantType: string;
+  care: string;
+  learning: string;
+}
+
+const steps: Step[] = [
+  {
+    id: 'region',
+    icon: MapPin,
+    question: '¿En qué región de Colombia te encuentras?',
+    stateKey: 'region',
+    options: [
+      { value: 'andina', label: 'Andina' },
+      { value: 'caribe', label: 'Caribe' },
+      { value: 'pacifica', label: 'Pacífica' },
+      { value: 'orinoquia', label: 'Orinoquía' },
+      { value: 'amazonia', label: 'Amazonía' },
+      { value: 'insular', label: 'Insular' },
+      { value: 'any', label: 'No estoy seguro / Quiero ver todas' },
+    ],
+  },
+  {
+    id: 'clima',
+    icon: Thermometer,
+    question: '¿Y cómo describirías el clima donde vives?',
+    stateKey: 'clima',
+    options: [
+      { value: 'frio', label: 'Frío', description: '10–17 °C (ej. Bogotá, Tunja)' },
+      { value: 'templado', label: 'Templado', description: '18–23 °C (ej. Medellín, Popayán)' },
+      { value: 'calido', label: 'Cálido', description: '24–30 °C (ej. Barranquilla, Cali)' },
+      { value: 'muy calido', label: 'Muy cálido', description: '>30 °C (ej. Riohacha, Santa Marta)' },
+      { value: 'any', label: 'No estoy seguro' },
+    ],
+  },
+  {
+    id: 'space',
+    icon: Home,
+    question: '¿De cuánto espacio dispones para cultivar?',
+    stateKey: 'space',
+    options: [
+      { value: 'pequeno', label: 'Espacio pequeño', description: 'Macetas en un balcón o ventana.' },
+      { value: 'mediano', label: 'Espacio mediano', description: 'Un patio o un jardín pequeño.' },
+      { value: 'grande', label: 'Espacio grande', description: 'Una huerta o un terreno amplio.' },
+    ],
+  },
+  {
+    id: 'experience',
+    icon: User,
+    question: '¿Cuál es tu nivel de experiencia en jardinería?',
+    stateKey: 'experience',
+    options: [
+      { value: 'principiante', label: 'Principiante', description: '¡Estoy empezando mi aventura verde!' },
+      { value: 'intermedio', label: 'Intermedio', description: 'Ya he cultivado algunas cosas antes.' },
+      { value: 'avanzado', label: 'Avanzado', description: 'Tengo manos de jardinero experto.' },
+    ],
+  },
+  {
+    id: 'plantType',
+    icon: Leaf,
+    question: '¿Qué tipo de plantas te llaman más la atención?',
+    stateKey: 'plantType',
+    options: [
+      { value: 'comestibles', label: 'Comestibles', description: 'Hortalizas, hierbas para cocinar.' },
+      { value: 'aromaticas', label: 'Aromáticas', description: 'Para infusiones o dar buen olor.' },
+      { value: 'coloridas', label: 'Coloridas', description: 'Flores y plantas ornamentales.' },
+      { value: 'frutales', label: 'Frutales', description: 'Árboles o arbustos que den fruta.' },
+      { value: 'cualquiera', label: 'Cualquiera', description: '¡Sorpréndeme!' },
+    ],
+  },
+  {
+    id: 'care',
+    icon: Clock,
+    question: '¿Cuánto tiempo puedes dedicar a tus plantas?',
+    stateKey: 'care',
+    options: [
+      { value: 'diario', label: 'Cuidado diario', description: 'Un ratito todos los días.' },
+      { value: 'dos_tres_semana', label: 'Un par de veces por semana', description: '2-3 días a la semana.' },
+      { value: 'ocasionalmente', label: 'Ocasionalmente', description: 'Prefiero algo de bajo mantenimiento.' },
+    ],
+  },
+  {
+    id: 'learning',
+    icon: Sun,
+    question: '¿Te interesa aprender sobre el proceso o prefieres algo muy sencillo?',
+    stateKey: 'learning',
+    options: [
+      { value: 'si', label: 'Sí, quiero aprender', description: 'Me emociona el reto y aprender trucos.' },
+      { value: 'no', label: 'No, prefiero lo más fácil', description: 'Busco algo simple que casi se cuide solo.' },
+    ],
+  },
+];
+
+const initialAnswers: UserAnswers = {
+  region: '',
+  clima: '',
+  space: '',
+  experience: '',
+  plantType: '',
+  care: '',
+  learning: '',
+};
+
+// Mapeos para filtros
+const testPlantTypeMap: { [key: string]: string | null } = {
+  'comestibles': null,
+  'aromaticas': 'Plantas aromáticas',
+  'coloridas': 'Hortalizas de flor',
+  'frutales': 'Frutales',
+  'cualquiera': null,
+};
+
+const testSpaceMap: { [key: string]: string | null } = {
+  'pequeno': 'Maceta pequeña (1–3 L)',
+  'mediano': 'Maceta mediana (4–10 L)',
+  'grande': 'Maceta grande (10+ L)',
+};
+
+
+// SVG Icons for Crop Types
+const BeanIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}><path d="M50,10 C20,25 20,75 50,90 C80,75 80,25 50,10 M40,40 Q50,50 60,40 M40,60 Q50,50 60,60" stroke="#a16207" fill="#facc15" strokeWidth="5" /></svg>
+);
+const CarrotIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}><path d="M50 90 L60 30 L40 30 Z" fill="#f97316"/><path d="M50 30 L40 10 L45 30 M50 30 L60 10 L55 30" fill="#22c55e"/></svg>
+);
+const LeafIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}><path d="M50 10 C 20 40, 20 70, 50 90 C 80 70, 80 40, 50 10 Z" fill="#4ade80" /><line x1="50" y1="90" x2="50" y2="25" stroke="#16a34a" strokeWidth="5" /></svg>
+);
+const GenericFruitIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 100 100" width="28" height="28" {...props}><circle cx="50" cy="60" r="30" fill="#ef4444"/><path d="M50 30 Q 60 10, 70 20" stroke="#166534" strokeWidth="8" fill="none"/></svg>
+)
+
+const getCropTypeIcon = (plantType: string) => {
+    const pt = plantType?.toLowerCase() || '';
+    if (pt.includes('leguminosa')) return BeanIcon;
+    if (pt.includes('tubérculo') || pt.includes('raíz')) return CarrotIconSvg;
+    if (pt.includes('frutal') || pt.includes('fruto')) return GenericFruitIcon;
+    if (pt.includes('cereal')) return Wheat;
+    if (pt.includes('aromática') || pt.includes('hoja')) return LeafIconSvg;
+    return LeafIconSvg;
+};
+
+const getDifficultyStyles = (difficulty: SampleCrop['difficulty']): { badge: string, iconBg: string, iconText: string } => {
+    if (difficulty === 'Fácil') return { badge: 'bg-green-100 text-green-800 border-green-200', iconBg: 'bg-green-500', iconText: 'text-white' };
+    if (difficulty === 'Media') return { badge: 'bg-yellow-100 text-yellow-800 border-yellow-200', iconBg: 'bg-yellow-500', iconText: 'text-white' };
+    return { badge: 'bg-red-100 text-red-800 border-red-200', iconBg: 'bg-red-600', iconText: 'text-white' };
+};
+
+// --- GET CROPS FROM FIRESTORE ---
+async function getAllCrops(): Promise<SampleCrop[]> {
+  const cropsCollectionRef = collection(db, 'fichas_tecnicas_cultivos');
+  const q = query(cropsCollectionRef);
+  const querySnapshot = await getDocs(q);
+  
+  return querySnapshot.docs.map(doc => {
+    const data = doc.data() as CropTechnicalSheet;
+    
+    let spaceRequired: SampleCrop['spaceRequired'] = 'Jardín'; // Default
+    if (data.tags.includes('maceta_pequena')) spaceRequired = 'Maceta pequeña (1–3 L)';
+    else if (data.tags.includes('maceta_mediana')) spaceRequired = 'Maceta mediana (4–10 L)';
+    else if (data.tags.includes('maceta_grande')) spaceRequired = 'Maceta grande (10+ L)';
+
+    return {
+      id: doc.id,
+      name: data.nombre,
+      description: data.descripcion,
+      regionSlugs: data.region.principal.map(r => r.toLowerCase()),
+      imageUrl: data.imagenes?.[0]?.url || 'https://placehold.co/300x200.png',
+      dataAiHint: 'crop field',
+      clima: data.clima.clase[0] as SampleCrop['clima'],
+      duration: 'Media (3–5 meses)',
+      spaceRequired: spaceRequired,
+      plantType: data.tipo_planta as SampleCrop['plantType'],
+      difficulty: data.dificultad as SampleCrop['difficulty'],
+      datos_programaticos: data.datos_programaticos,
+      lifeCycle: data.cicloVida.map(etapa => ({ name: etapa.etapa, duracion_dias_tipico: etapa.duracion_dias_tipico || 0 })),
+      pancoger: data.tags.includes('pancoger'),
+      patrimonial: data.tags.includes('patrimonial'),
+      sembrable_en_casa: 'sí',
+      educativo: 'no',
+    } as SampleCrop;
+  });
+}
+
+
+export default function TestPage() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [answers, setAnswers] = useState<UserAnswers>(initialAnswers);
+  const [showResults, setShowResults] = useState(false);
+  const [filteredCrops, setFilteredCrops] = useState<SampleCrop[]>([]);
+  const [allCrops, setAllCrops] = useState<SampleCrop[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+
+  useEffect(() => {
+      const fetchCrops = async () => {
+          setIsLoading(true);
+          try {
+              const crops = await getAllCrops();
+              setAllCrops(crops);
+          } catch (error) {
+              console.error("Failed to fetch crops for test:", error);
+          } finally {
+              setIsLoading(false);
+          }
+      };
+      fetchCrops();
+  }, []);
+
+  const handleAnswerChange = (stateKey: keyof UserAnswers, value: string) => {
+    setAnswers(prev => ({ ...prev, [stateKey]: value }));
+  };
+
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      let difficultyFilter: SampleCrop['difficulty'] | null = null;
+      if (answers.experience === 'principiante' || answers.learning === 'no') {
+          difficultyFilter = 'Fácil';
+      } else if (answers.experience === 'intermedio') {
+          difficultyFilter = 'Media';
+      }
+
+      const regionFilter = answers.region !== 'any' ? answers.region : null;
+      const climaFilter = answers.clima !== 'any' ? answers.clima : null;
+      const spaceFilter = testSpaceMap[answers.space] || null;
+      const plantTypeFilter = testPlantTypeMap[answers.plantType] || null;
+      
+      const results = allCrops.filter(crop => {
+          if (regionFilter && !crop.regionSlugs.includes(regionFilter)) return false;
+          if (climaFilter && !crop.clima.toLowerCase().includes(climaFilter)) return false;
+          if (spaceFilter && crop.spaceRequired !== spaceFilter) return false;
+          if (plantTypeFilter && crop.plantType !== plantTypeFilter) return false;
+          
+          if (difficultyFilter) {
+              if (difficultyFilter === 'Fácil' && crop.difficulty !== 'Fácil') return false;
+              if (difficultyFilter === 'Media' && !['Fácil', 'Media'].includes(crop.difficulty)) return false;
+          }
+          
+          return true;
+      });
+
+      setFilteredCrops(results);
+      setShowResults(true);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+  
+  const resetTest = () => {
+      setCurrentStep(0);
+      setAnswers(initialAnswers);
+      setShowResults(false);
+      setFilteredCrops([]);
+  }
+
+  if (isLoading) {
+      return (
+          <div className="flex flex-col items-center justify-center h-64">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <p className="mt-4 text-muted-foreground">Cargando cultivos...</p>
+          </div>
+      );
+  }
+
+  const progress = Math.round(((currentStep + 1) / steps.length) * 100);
+  const currentQuestion = steps[currentStep];
+  const isLastStep = currentStep === steps.length - 1;
+  const isNextDisabled = !answers[currentQuestion.stateKey];
+
+  return (
+    <div className="space-y-8 max-w-4xl mx-auto">
+      <div className="text-center">
+        <h1 className="text-3xl font-nunito font-bold tracking-tight text-foreground sm:text-4xl">
+          Encuentra tu Cultivo Ideal
+        </h1>
+        <p className="mt-2 max-w-2xl mx-auto text-lg text-muted-foreground">
+          Responde unas preguntas rápidas y descubre qué sembrar según tus preferencias y recursos.
+        </p>
+      </div>
+
+      {!showResults && (
+        <Card>
+          <CardHeader>
+            <div className="w-full space-y-2">
+              <div className="flex justify-between text-sm font-nunito font-semibold text-muted-foreground">
+                <span>Pregunta {currentStep + 1} de {steps.length}</span>
+                <span>{progress}%</span>
+              </div>
+              <Progress value={progress} />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <currentQuestion.icon className="h-8 w-8 text-primary" />
+                </div>
+                <h2 className="text-2xl font-nunito font-semibold">{currentQuestion.question}</h2>
+              </div>
+              
+              <RadioGroup
+                value={answers[currentQuestion.stateKey]}
+                onValueChange={(value) => handleAnswerChange(currentQuestion.stateKey, value)}
+                className="space-y-3"
+              >
+                {currentQuestion.options.map(option => (
+                  <Label
+                    key={option.value}
+                    htmlFor={`${currentQuestion.id}-${option.value}`}
+                    className={cn(
+                      "flex items-center gap-4 rounded-lg border p-4 cursor-pointer transition-all hover:bg-muted/80 min-h-[44px]",
+                      answers[currentQuestion.stateKey] === option.value && "bg-muted border-primary ring-2 ring-primary"
+                    )}
+                  >
+                    <RadioGroupItem value={option.value} id={`${currentQuestion.id}-${option.value}`} />
+                    <div className="flex-grow">
+                      <p className="font-nunito font-semibold text-base">{option.label}</p>
+                      {option.description && <p className="text-sm text-muted-foreground">{option.description}</p>}
+                    </div>
+                  </Label>
+                ))}
+              </RadioGroup>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" onClick={handlePrev} disabled={currentStep === 0}>
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Anterior
+            </Button>
+            <Button onClick={handleNext} disabled={isNextDisabled}>
+              {isLastStep ? 'Ver Mis Recomendaciones' : 'Siguiente'}
+              {isLastStep ? <CheckCircle className="ml-2 h-4 w-4" /> : <ChevronRight className="ml-2 h-4 w-4" />}
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
+
+      {showResults && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="text-center">
+              <div className="mx-auto bg-green-100 p-3 rounded-full w-fit">
+                <CheckCircle className="h-10 w-10 text-green-600" />
+              </div>
+              <CardTitle className="text-2xl mt-4">¡Estos son tus cultivos recomendados!</CardTitle>
+              <CardDescription>Basado en tus respuestas, estos son los cultivos que mejor se adaptan a ti.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {filteredCrops.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredCrops.map((crop) => {
+                     const TypeIcon = getCropTypeIcon(crop.plantType);
+                     const difficultyStyles = getDifficultyStyles(crop.difficulty);
+                    
+                     return (
+                        <Card key={crop.id} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+                          <CardHeader>
+                              <div className="flex items-center gap-4">
+                                  <div className={cn("p-3 rounded-full", difficultyStyles.iconBg)}>
+                                      <TypeIcon className={cn("h-6 w-6", difficultyStyles.iconText)} />
+                                  </div>
+                                  <div>
+                                      <CardTitle className="text-xl font-nunito font-bold">{crop.name}</CardTitle>
+                                      <Badge variant="outline" className={cn("mt-1 w-fit font-nunito", difficultyStyles.badge)}>
+                                        Dificultad: {crop.difficulty}
+                                      </Badge>
+                                  </div>
+                              </div>
+                          </CardHeader>
+                          <CardContent className="flex-grow space-y-3 pt-0">
+                             <Image
+                                src={crop.imageUrl}
+                                alt={crop.name}
+                                width={300}
+                                height={200}
+                                className="w-full h-40 object-cover rounded-md"
+                                data-ai-hint={crop.dataAiHint}
+                              />
+                             <p className="text-sm text-muted-foreground pt-2">{crop.description}</p>
+                             <div className="flex flex-wrap gap-2 pt-2 border-t">
+                               {crop.pancoger && <Badge variant="secondary" className="bg-sky-100 text-sky-800"><Sprout className="mr-1 h-3 w-3" />Pancoger</Badge>}
+                               {crop.patrimonial && <Badge variant="secondary" className="bg-amber-100 text-amber-800"><Building className="mr-1 h-3 w-3" />Patrimonial</Badge>}
+                               {crop.sembrable_en_casa !== 'no' && <Badge variant="secondary" className="bg-teal-100 text-teal-800"><Home className="mr-1 h-3 w-3" />Para Casa</Badge>}
+                               {crop.educativo !== 'no' && <Badge variant="secondary" className="bg-indigo-100 text-indigo-800"><BookHeart className="mr-1 h-3 w-3" />Educativo</Badge>}
+                             </div>
+                          </CardContent>
+                          <CardFooter>
+                            <AddCropDialog crop={crop}>
+                              <Button className="w-full">
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Añadir a mi Dashboard
+                              </Button>
+                            </AddCropDialog>
+                          </CardFooter>
+                        </Card>
+                     );
+                  })}
+                </div>
+              ) : (
+                <Alert>
+                  <AlertTitle>No se encontraron cultivos</AlertTitle>
+                  <AlertDescription>No hemos encontrado cultivos que coincidan perfectamente con tus respuestas. ¡Intenta con otras opciones!</AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+            <CardFooter className="flex justify-center">
+              <Button variant="ghost" onClick={resetTest}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Volver a empezar el test
+              </Button>
+            </CardFooter>
+          </Card>
+          <div className="text-center">
+             <Button asChild>
+                <Link href="/cultivos">O explora todos los cultivos</Link>
+             </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,27 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Regla general: Permitir lectura y escritura en todas las colecciones.
+    // Esto es útil para desarrollo y para que el script de seed funcione.
+    // Para producción, podrías querer reglas más específicas.
+    match /{document=**} {
+      allow read, write: if true;
+    }
+
+    // Reglas específicas para la seguridad de los datos de usuario
+    match /usuarios/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Un usuario solo puede leer y escribir en sus propias subcolecciones
+      match /cultivos_del_usuario/{cultivoId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      match /alertas/{alertaId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}

@@ -1,0 +1,287 @@
+
+"use client";
+
+import { useState, type ReactNode } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { Home, Map, Leaf, BookOpen, Lightbulb, Menu, Bot, LogOut, LayoutDashboard, UserPlus, LogIn, BookText, ShieldHalf } from 'lucide-react'; 
+import { Toaster } from "@/components/ui/toaster";
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { useAuth } from '@/context/auth-context';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { ThemeToggle } from './theme-toggle';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
+
+const navItems = [
+  { href: '/', label: 'Inicio', icon: Home, protected: false },
+  { href: '/mapa', label: 'Mapa', icon: Map, protected: false },
+  { href: '/cultivos', label: 'Cultivos', icon: Leaf, protected: false },
+  { href: '/guias', label: 'Guías', icon: BookOpen, protected: false },
+  { href: '/glosario', label: 'Glosario', icon: BookText, protected: false },
+  { href: '/sanidad-vegetal', label: 'Sanidad Vegetal', icon: ShieldHalf, protected: false },
+  { href: '/test', label: 'Test', icon: Lightbulb, protected: false },
+  { href: '/deteccion-ia', label: 'Detección IA', icon: Bot, protected: false },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, protected: true },
+];
+
+function AppName() {
+  return (
+    <Link href="/" className="flex items-center gap-2">
+      <Leaf className="h-7 w-7 text-primary" />
+      <span className="hidden md:inline text-xl font-nunito font-semibold text-foreground">Cultiva Colombia</span>
+    </Link>
+  );
+}
+
+export function AppLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading } = useAuth();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
+
+  const displayedNavItems = navItems.filter(item => !item.protected || (item.protected && user));
+
+  const authButtons = user ? (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+                <LogOut className="h-4 w-4" />
+                <span className="sr-only">Cerrar Sesión</span>
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Estás seguro que quieres cerrar sesión?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Podrás volver a iniciar sesión en cualquier momento.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSignOut}>Cerrar Sesión</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Cerrar Sesión</p>
+      </TooltipContent>
+    </Tooltip>
+    
+  ) : (
+    <div className="flex items-center gap-2">
+      <Button asChild size="sm" variant="ghost">
+        <Link href="/login">Iniciar Sesión</Link>
+      </Button>
+      <Button asChild size="sm">
+        <Link href="/signup">Registrarse</Link>
+      </Button>
+    </div>
+  );
+  
+  const mobileAuthButtons = user ? (
+     <AlertDialog>
+      <AlertDialogTrigger asChild>
+         <Button variant="ghost" className="justify-start gap-4 p-4 text-base font-nunito font-medium text-muted-foreground hover:text-primary h-auto">
+           <LogOut className="h-6 w-6" />
+           Cerrar Sesión
+         </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Estás seguro que quieres cerrar sesión?</AlertDialogTitle>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setIsSheetOpen(false)}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={() => { handleSignOut(); setIsSheetOpen(false); }}>Cerrar Sesión</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ) : (
+      <>
+        <Link
+          href="/login"
+          onClick={() => setIsSheetOpen(false)}
+          className={cn(
+            "flex items-center gap-4 rounded-lg p-4 text-base font-nunito font-medium transition-all hover:bg-muted hover:text-primary",
+            "text-muted-foreground"
+          )}
+        >
+          <LogIn className="h-6 w-6" />
+          Iniciar Sesión
+        </Link>
+        <Link
+          href="/signup"
+          onClick={() => setIsSheetOpen(false)}
+          className={cn(
+            "flex items-center gap-4 rounded-lg p-4 text-base font-nunito font-medium transition-all",
+            "bg-primary text-primary-foreground hover:bg-primary/90"
+          )}
+        >
+          <UserPlus className="h-6 w-6" />
+          Registrarse
+        </Link>
+      </>
+  );
+
+  return (
+    <TooltipProvider>
+    <div className="flex min-h-screen w-full flex-col overflow-hidden">
+      <header className="sticky top-0 z-50 flex h-16 items-center border-b bg-background/95 px-4 shadow-sm backdrop-blur-sm sm:px-6">
+        <div className="flex w-full items-center justify-between gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="shrink-0 md:hidden text-foreground hover:bg-primary/20">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle navigation menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="flex flex-col p-0">
+                <SheetHeader className="p-4 border-b flex flex-row justify-between items-center">
+                   <SheetTitle asChild><AppName /></SheetTitle>
+                   <ThemeToggle />
+                </SheetHeader>
+                <nav className="flex-grow grid gap-1 p-4">
+                  {displayedNavItems.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => setIsSheetOpen(false)}
+                      className={cn(
+                        "flex items-center gap-4 rounded-lg px-4 py-3 text-base font-nunito font-medium transition-all hover:bg-muted hover:text-primary",
+                        (pathname === item.href || (item.href.length > 1 && pathname.startsWith(item.href)))
+                          ? "bg-muted text-primary font-semibold" 
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      <item.icon className="h-6 w-6" />
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+                 <div className="mt-auto border-t p-4 grid gap-2">
+                    {!loading && mobileAuthButtons}
+                 </div>
+              </SheetContent>
+            </Sheet>
+            
+            <div className="hidden md:block">
+              <AppName />
+            </div>
+          </div>
+
+          <nav className="hidden md:flex md:items-center md:gap-3 lg:gap-5">
+            {displayedNavItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={cn(
+                  "text-sm font-nunito font-semibold transition-colors hover:text-primary", 
+                  (pathname === item.href || (item.href.length > 1 && pathname.startsWith(item.href)))
+                    ? "text-primary border-b-2 border-primary pb-0.5" 
+                    : "text-foreground/70"
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {!loading && <div className="hidden sm:flex"><AuthButtons /></div>}
+          </div>
+        </div>
+      </header>
+      <main className="flex-grow flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        {children}
+      </main>
+      <footer className="border-t bg-background/95 py-4">
+        <div className="container mx-auto px-6 text-center text-xs text-muted-foreground">
+            <p>© {new Date().getFullYear()} Cultiva Colombia. Todos los derechos reservados.</p>
+        </div>
+      </footer>
+    </div>
+    </TooltipProvider>
+  );
+}
+
+function AuthButtons() {
+    const { user } = useAuth();
+    const router = useRouter();
+
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth);
+            router.push('/');
+        } catch (error) {
+            console.error("Error signing out: ", error);
+        }
+    };
+
+    if (user) {
+        return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9">
+                        <LogOut className="h-4 w-4" />
+                        <span className="sr-only">Cerrar Sesión</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Estás seguro que quieres cerrar sesión?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Podrás volver a iniciar sesión en cualquier momento.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleSignOut}>Cerrar Sesión</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Cerrar Sesión</p>
+              </TooltipContent>
+            </Tooltip>
+        );
+    }
+
+    return (
+        <div className="flex items-center gap-2">
+            <Button asChild size="sm" variant="ghost">
+                <Link href="/login">Iniciar Sesión</Link>
+            </Button>
+            <Button asChild size="sm">
+                <Link href="/signup">Registrarse</Link>
+            </Button>
+        </div>
+    );
+}
