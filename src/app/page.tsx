@@ -105,7 +105,7 @@ export default async function HomePage() {
 
       <section className="py-12">
         <h2 className="text-3xl font-nunito font-bold tracking-tight text-foreground text-center mb-8">Cultivos Populares en Colombia</h2>
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 px-4">
           {popularCrops.map((crop) => (
             <Card key={crop.name} className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow flex flex-col">
               <Image
@@ -136,7 +136,7 @@ export default async function HomePage() {
         </div>
       </section>
       
-      <section className="grid md:grid-cols-2 gap-8 items-center py-12 px-4">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center py-12 px-4">
         <div>
           <h2 className="text-3xl font-nunito font-bold tracking-tight text-foreground">Descubra los Cultivos de Colombia</h2>
           <p className="mt-4 text-muted-foreground">
@@ -162,7 +162,7 @@ export default async function HomePage() {
 
       <section className="py-12 bg-muted/30">
         <h2 className="text-3xl font-nunito font-bold tracking-tight text-foreground text-center mb-10">Guías Recientes</h2>
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 px-4">
           {recentGuides.map((guide) => (
             <Card key={guide.id} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
                <div className="w-full h-52 bg-primary/10 flex items-center justify-center">
@@ -215,3 +215,5 @@ export default async function HomePage() {
     </div>
   );
 }
+
+    

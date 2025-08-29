@@ -327,23 +327,26 @@ function DashboardContent() {
       const cropsData = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => {
         const data = doc.data();
         // Basic validation to ensure required fields exist
-        if (!data.fecha_plantacion || typeof data.daysToHarvest !== 'number' || !data.nextTask || !data.datos_programaticos) {
+        if (!data.fecha_plantacion || !data.datos_programaticos || typeof data.datos_programaticos.dias_para_cosecha !== 'number' || !data.nextTask) {
             return {
               id: doc.id,
               ...data,
               progress: 0,
-              datos_programaticos: { frecuencia_riego_dias: 7, dias_para_cosecha: data.daysToHarvest || 90 }, // Fallback
+              daysToHarvest: data.daysToHarvest || 90,
+              datos_programaticos: data.datos_programaticos || { frecuencia_riego_dias: 7, dias_para_cosecha: data.daysToHarvest || 90 }, // Fallback
             } as UserCrop;
         }
 
         const plantedDate = startOfDay(new Date(data.fecha_plantacion.seconds * 1000));
         const daysSincePlanted = differenceInDays(startOfDay(new Date()), plantedDate);
-        const progress = data.daysToHarvest > 0 ? Math.min(Math.round((daysSincePlanted / data.daysToHarvest) * 100), 100) : 0;
+        const daysToHarvest = data.datos_programaticos.dias_para_cosecha;
+        const progress = daysToHarvest > 0 ? Math.min(Math.round((daysSincePlanted / daysToHarvest) * 100), 100) : 0;
         
         return {
           id: doc.id,
           ...data,
           progress,
+          daysToHarvest,
         } as UserCrop;
       }).filter((crop): crop is UserCrop => crop !== null);
 
@@ -469,10 +472,8 @@ function DashboardContent() {
             const cropToUpdate = userCrops.find(c => c.id === alert.cropId);
 
             if (cropToUpdate && cropToUpdate.datos_programaticos) {
-                const plantedDate = startOfDay(new Date(cropToUpdate.fecha_plantacion.seconds * 1000));
-                const daysSincePlantedToday = differenceInDays(startOfDay(new Date()), plantedDate);
                 const wateringFrequency = cropToUpdate.datos_programaticos.frecuencia_riego_dias || 7;
-                const nextDueInDays = daysSincePlantedToday + wateringFrequency;
+                const nextDueInDays = wateringFrequency;
                 
                 batch.update(cropRef, { 
                     'nextTask.dueInDays': nextDueInDays,
@@ -992,3 +993,5 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
+
+    

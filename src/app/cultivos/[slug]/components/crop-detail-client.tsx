@@ -56,7 +56,7 @@ interface CropDetailClientProps {
 // --- CARD COMPONENTS ---
 
 const ItemCard = ({ item }: { item: SimplifiedItem }) => (
-  <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow w-64 flex-shrink-0">
+  <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow w-56 sm:w-64 flex-shrink-0">
      {item.imageUrl.includes('placehold.co') ? (
         <div className="w-full h-32 bg-primary/10 flex items-center justify-center">
             <BookOpen className="h-12 w-12 text-primary/50" />
@@ -257,7 +257,7 @@ export function CropDetailClient({
       </Button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-        <div className="space-y-4">
+        <div className="space-y-4 md:order-1">
           <h1 className="text-4xl font-nunito font-extrabold tracking-tight lg:text-5xl">{crop.nombre}</h1>
           <p className="text-xl text-muted-foreground font-sans italic">{crop.nombreCientifico}</p>
           <div className="flex flex-wrap gap-2">
@@ -267,7 +267,7 @@ export function CropDetailClient({
           </div>
           <p className="text-lg text-muted-foreground">{crop.descripcion}</p>
         </div>
-        <div>
+        <div className="md:order-2">
           {mainImage && (
             <Image
               src={mainImage.url}
@@ -455,3 +455,5 @@ export function CropDetailClient({
     </article>
   );
 }
+
+    
