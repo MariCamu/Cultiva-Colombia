@@ -40,7 +40,7 @@ interface SimplifiedItem {
     slug: string;
     name: string;
     imageUrl: string;
-    summary?: string; // For articles
+    summary?: string; // For articles and guides
     dataAiHint?: string; // For articles
 }
 
@@ -55,34 +55,49 @@ interface CropDetailClientProps {
 
 // --- CARD COMPONENTS ---
 
-const ItemCard = ({ item }: { item: SimplifiedItem }) => (
-  <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow w-56 sm:w-64 flex-shrink-0">
-     {item.imageUrl.includes('placehold.co') ? (
-        <div className="w-full h-32 bg-primary/10 flex items-center justify-center">
-            <BookOpen className="h-12 w-12 text-primary/50" />
-        </div>
-    ) : (
-        <Image
+const ItemCard = ({ item }: { item: SimplifiedItem }) => {
+  const isGuide = item.imageUrl.includes('placehold.co');
+  const emojiMatch = isGuide && item.name.match(/^(\p{Emoji})/u);
+  const emoji = emojiMatch ? emojiMatch[1] : null;
+  const title = emoji ? item.name.replace(emoji, '').trim() : item.name;
+
+  return (
+    <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow w-64 flex-shrink-0">
+      {isGuide ? (
+        <CardHeader className="flex-grow p-4 space-y-3">
+          {emoji && 
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl">
+              {emoji}
+            </div>
+          }
+          <CardTitle className="text-md font-nunito font-bold line-clamp-2">{title}</CardTitle>
+          {item.summary && <CardDescription className="text-xs line-clamp-3">{item.summary}</CardDescription>}
+        </CardHeader>
+      ) : (
+        <>
+          <Image
             src={item.imageUrl}
             alt={`Imagen para ${item.name}`}
             width={400}
             height={250}
             className="w-full h-32 object-cover"
             data-ai-hint={item.dataAiHint || 'crop field'}
-        />
-    )}
-    <CardHeader className="flex-grow p-4">
-      <CardTitle className="text-md font-nunito font-bold line-clamp-2">{item.name}</CardTitle>
-    </CardHeader>
-    <CardContent className="p-4 pt-0">
-      <Button asChild variant="outline" size="sm">
-        <Link href={`${item.slug}`}>
+          />
+          <CardHeader className="flex-grow p-4">
+            <CardTitle className="text-md font-nunito font-bold line-clamp-2">{item.name}</CardTitle>
+          </CardHeader>
+        </>
+      )}
+      <CardContent className="p-4 pt-0">
+        <Button asChild variant="outline" size="sm">
+          <Link href={`${item.slug}`}>
             Ver Más <ExternalLink className="ml-2 h-3 w-3" />
-        </Link>
-      </Button>
-    </CardContent>
-  </Card>
-);
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
 
 const HorizontalScroller = ({ items, title, icon: Icon }: { items: SimplifiedItem[], title: string, icon: React.ElementType }) => {
     if (items.length === 0) return null;
